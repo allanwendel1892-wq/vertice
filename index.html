@@ -195,7 +195,6 @@ Executar Análise Quantitativa
 const SUPABASE_URL = "https://modo-fila-supabase.znzrqn.easypanel.host/";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJhbm9uIiwKICAgICJpc3MiOiAic3VwYWJhc2UtZGVtbyIsCiAgICAiaWF0IjogMTY0MTc2OTIwMCwKICAgICJleHAiOiAxNzk5NTM1NjAwCn0.dc_X5iR_VP_qT0zsiyj_I_OZ2T9FtRU2BBNWN8Bu4GE";
 
-// Correção: Inicializando de forma segura a partir do objeto global exposto pela CDN
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // Dicionário de Ligas para Planilhas do Football-Data
@@ -293,7 +292,7 @@ async function syncDatabase() {
     
     const targetConfig = LEAGUE_MAP[leagueId];
     if(!targetConfig) {
-        alert("Esta liga não está configurada para sincronização automatizada via planilha.");
+        alert("Esta liga não está configurada para sincronização.");
         return;
     }
 
@@ -309,7 +308,6 @@ async function syncDatabase() {
 
     const csvUrl = `https://www.football-data.co.uk/mmz4281/${seasonFolder}/${targetConfig.csv}`;
     
-    // Pool de proxies redundantes. Se um falhar ou der 403, a engine chaveia para a próxima rota imediatamente
     const proxyPool = [
         `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(csvUrl)}`,
         `https://corsproxy.io/?${encodeURIComponent(csvUrl)}`,
@@ -325,7 +323,6 @@ async function syncDatabase() {
             const response = await fetch(proxyPool[i]);
             if (response.ok) {
                 const textResult = await response.text();
-                // Validação rudimentar para garantir que o proxy não retornou uma página de erro HTML
                 if (textResult && textResult.includes("Date") && textResult.includes("HomeTeam")) {
                     csvText = textResult;
                     success = true;
@@ -338,7 +335,7 @@ async function syncDatabase() {
     }
 
     if (!success || !csvText) {
-        writeSyncLog(`Todas as rotas automáticas falharam (Bloqueio 403 de IP corporativo).`, true);
+        writeSyncLog(`Todas as rotas automáticas falharam (Bloqueio de IP/CORS).`, true);
         writeSyncLog(`👉 Use o botão 'Importar CSV Manual' ao lado para processar o arquivo diretamente.`, false);
         badge.innerText = "BLOQUEADO";
         badge.className = "text-red-400 font-mono";
@@ -377,7 +374,6 @@ function importCSVManual(event) {
         const csvText = e.target.result;
         writeSyncLog(`Arquivo carregado em memória. Gravando dados...`);
         await processAndSaveCSV(csvText, targetConfig, badge, btn);
-        // Limpa o input de arquivo para permitir re-upload posterior se necessário
         document.getElementById('fileLoader').value = '';
     };
     reader.onerror = function() {
@@ -387,118 +383,53 @@ function importCSVManual(event) {
     };
     reader.readAsText(file);
 }
-    btn.disabled = true;
-    badge.innerText = "PROCESSANDO";
-    badge.className = "text-amber-400 font-mono";
-    writeSyncLog(`Iniciando varredura para ${targetConfig.name}...`);
-
-    const yearInt = parseInt(seasonInput);
-    const shortPrev = String(yearInt - 1).slice(-2);
-    const shortCurr = String(yearInt).slice(-2);
-    const seasonFolder = `${shortPrev}${shortCurr}`;
-
-    const csvUrl = `https://www.football-data.co.uk/mmz4281/${seasonFolder}/${targetConfig.csv}`;
-    
-    // CORREÇÃO AQUI: Mudança para um proxy CORS robusto e de alta disponibilidade
-    const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(csvUrl)}`;
-
-    try {
-        const response = await fetch(proxyUrl);
-        if(!response.ok) throw new Error("Erro na conexão com o repositório de planilhas.");
-        const csvText = await response.text();
-
-        Papa.parse(csvText, {
-            header: true,
-            skipEmptyLines: true,
-            complete: async function(results) {
-                const rawGames = results.data;
-                const processedGames = [];
-
-                rawGames.forEach(row => {
-                    const dbDate = formatToPostgresDate(row.Date);
-                    if(dbDate && row.HomeTeam && row.AwayTeam && row.FTHG !== undefined && row.FTAG !== undefined) {
-                        processedGames.push({
-                            campeonato: targetConfig.name,
-                            data_jogo: dbDate,
-                            home_team: row.HomeTeam.trim(),
-                            away_team: row.AwayTeam.trim(),
-                            fthg: parseInt(row.FTHG),
-                            ftag: parseInt(row.FTAG)
-                        });
-                    }
-                });
-
-                if(processedGames.length === 0) throw new Error("A planilha não possui jogos válidos concluídos.");
-
-                writeSyncLog(`Filtrados ${processedGames.length} jogos estruturados. Enviando ao Supabase...`);
-
-                const { error } = await supabaseClient
-                    .from('historico_jogos')
-                    .upsert(processedGames, { 
-                        onConflict: 'data_jogo,home_team,away_team',
-                        ignoreDuplicates: true 
-                    });
-
-                if(error) throw new Error(error.message);
-
-                writeSyncLog(`Sincronização bem-sucedida! Banco de dados atualizado.`, false);
-                badge.innerText = "SUCESSO";
-                badge.className = "text-emerald-400 font-mono";
-            }
-        });
-    } catch(err) {
-        writeSyncLog(`Falha Crítica: ${err.message}`, true);
-        badge.innerText = "FALHOU";
-        badge.className = "text-red-400 font-mono";
-    } finally {
-        btn.disabled = false;
-    }
-}
 
 // ==========================================
 // OPERAÇÕES MATEMÁTICAS DA ENGINE
 // ==========================================
 
-function safeNumber(value,fallback=0){
+function safeNumber(value, fallback = 0) {
     const n = parseFloat(value);
     return isNaN(n) ? fallback : n;
 }
 
-function factorial(n){
+function factorial(n) {
     if(n <= 1) return 1;
     let result = 1;
-    for(let i=2;i<=n;i++) result *= i;
+    for(let i = 2; i <= n; i++) result *= i;
     return result;
 }
 
-function poisson(k,lambda){
-    return ((Math.pow(lambda,k)) * Math.exp(-lambda)) / factorial(k);
+function poisson(k, lambda) {
+    return ((Math.pow(lambda, k)) * Math.exp(-lambda)) / factorial(k);
 }
 
-function dixonColes(x,y,lambda,mu,rho=-0.07){
-    if(x === 0 && y === 0) return Math.max(0,1 - (lambda * mu * rho));
-    if(x === 0 && y === 1) return Math.max(0,1 + (lambda * rho));
-    if(x === 1 && y === 0) return Math.max(0,1 + (mu * rho));
-    if(x === 1 && y === 1) return Math.max(0,1 - rho);
+function dixonColes(x, y, lambda, mu, rho = -0.07) {
+    if(x === 0 && y === 0) return Math.max(0, 1 - (lambda * mu * rho));
+    if(x === 0 && y === 1) return Math.max(0, 1 + (lambda * rho));
+    if(x === 1 && y === 0) return Math.max(0, 1 + (mu * rho));
+    if(x === 1 && y === 1) return Math.max(0, 1 - rho);
     return 1;
 }
 
-function calculateEV(probability,odd){ return (probability * odd) - 1; }
+function calculateEV(probability, odd) { 
+    return (probability * odd) - 1; 
+}
 
-function calculateKelly(probability,odd){
+function calculateKelly(probability, odd) {
     const b = odd - 1;
     const q = 1 - probability;
     const kelly = ((b * probability) - q) / b;
-    return Math.max(0,kelly);
+    return Math.max(0, kelly);
 }
 
-function normalize(arr){
-    const total = arr.reduce((acc,val)=>acc+val,0);
+function normalize(arr) {
+    const total = arr.reduce((acc, val) => acc + val, 0);
     return arr.map(v => v / total);
 }
 
 // 2. BUSCA DE TIMES DIRETO DO BANCO DE DADOS
-async function loadTeams(){
+async function loadTeams() {
     const button = document.getElementById('btnLoad');
     const leagueId = document.getElementById('leagueId').value;
     const targetConfig = LEAGUE_MAP[leagueId];
@@ -535,15 +466,15 @@ async function loadTeams(){
 
         sortedTeams.forEach(teamName => {
             const html = `<option value="${teamName}">${teamName}</option>`;
-            home.insertAdjacentHTML('beforeend',html);
-            away.insertAdjacentHTML('beforeend',html);
+            home.insertAdjacentHTML('beforeend', html);
+            away.insertAdjacentHTML('beforeend', html);
         });
 
         if(away.options.length > 1) away.selectedIndex = 1;
 
         document.getElementById('matchPanel').classList.remove('hidden');
         button.innerText = '📊 Carregar Dados';
-        button.classList.replace('bg-blue-600','bg-slate-700');
+        button.classList.replace('bg-blue-600', 'bg-slate-700');
     } catch(error) {
         alert(error.message);
         button.innerText = '📊 Carregar Dados';
@@ -552,8 +483,8 @@ async function loadTeams(){
     }
 }
 
-// 3. EXECUÇÃO DA ANÁLIVE QUANTITATIVA
-async function runAnalysis(){
+// 3. EXECUÇÃO DA ANÁLISE QUANTITATIVA
+async function runAnalysis() {
     const loading = document.getElementById('loading');
     const dashboard = document.getElementById('dashboard');
     const loadingText = document.getElementById('loadingText');
@@ -627,7 +558,6 @@ async function runAnalysis(){
             homeStats: mockedHomeStats,
             awayStats: mockedAwayStats,
             fixtures: mappedFixtures,
-            fixturesFromCache: true,
             h2h: mappedH2H
         });
 
@@ -642,13 +572,13 @@ async function runAnalysis(){
     }
 }
 
-// 4. CORE DO MOTOR MATEMÁTICO ORIGINAL
+// 4. CORE DO MOTOR MATEMÁTICO ORIGINAL & RENDERIZADORES
 function processEngine(data){
-    const { homeId, awayId, inputs, homeStats, awayStats, fixtures, fixturesFromCache, h2h } = data;
-    const homeScored = safeNumber(homeStats?.goals?.for?.average?.home,1.45);
-    const homeConceded = safeNumber(homeStats?.goals?.against?.average?.home,1.10);
-    const awayScored = safeNumber(awayStats?.goals?.for?.average?.away,1.15);
-    const awayConceded = safeNumber(awayStats?.goals?.against?.average?.away,1.30);
+    const { homeId, awayId, inputs, homeStats, awayStats, fixtures, h2h } = data;
+    const homeScored = safeNumber(homeStats?.goals?.for?.average?.home, 1.45);
+    const homeConceded = safeNumber(homeStats?.goals?.against?.average?.home, 1.10);
+    const awayScored = safeNumber(awayStats?.goals?.for?.average?.away, 1.15);
+    const awayConceded = safeNumber(awayStats?.goals?.against?.average?.away, 1.30);
 
     let leagueHomeAvg = 1.45;
     let leagueAwayAvg = 1.15;
@@ -675,7 +605,7 @@ function processEngine(data){
 
     if(h2h.length > 0){
         let weightedHome = 0; let weightedAway = 0; let totalWeight = 0;
-        h2h.forEach((match,index)=>{
+        h2h.forEach((match, index) => {
             const weight = Math.exp(-index * 0.45);
             const isHome = match.teams.home.id == homeId;
             const hGoals = isHome ? match.goals.home : match.goals.away;
@@ -690,30 +620,30 @@ function processEngine(data){
         mu = (mu * 0.95) + (h2hAway * 0.05);
     }
 
-    lambda = Math.max(0.25,lambda); mu = Math.max(0.25,mu);
+    lambda = Math.max(0.25, lambda); mu = Math.max(0.25, mu);
     document.getElementById('homeNameRes').innerText = inputs.homeName;
     document.getElementById('awayNameRes').innerText = inputs.awayName;
     document.getElementById('homeXg').innerText = lambda.toFixed(2);
     document.getElementById('awayXg').innerText = mu.toFixed(2);
-    document.getElementById('homeBar').style.width = `${Math.min(lambda * 25,100)}%`;
-    document.getElementById('awayBar').style.width = `${Math.min(mu * 25,100)}%`;
+    document.getElementById('homeBar').style.width = `${Math.min(lambda * 25, 100)}%`;
+    document.getElementById('awayBar').style.width = `${Math.min(mu * 25, 100)}%`;
 
     const matrixLimit = 12; const visualLimit = 5;
     let matrix = []; let probHome = 0; let probDraw = 0; let probAway = 0; let probUnder25 = 0; let probBTTS = 0;
 
-    for(let x=0;x<=matrixLimit;x++){
+    for(let x = 0; x <= matrixLimit; x++){
         matrix[x] = [];
-        for(let y=0;y<=matrixLimit;y++){
-            const pX = poisson(x,lambda); const pY = poisson(y,mu);
-            const adjustment = Math.max(0,dixonColes(x,y,lambda,mu));
+        for(let y = 0; y <= matrixLimit; y++){
+            const pX = poisson(x, lambda); const pY = poisson(y, mu);
+            const adjustment = Math.max(0, dixonColes(x, y, lambda, mu));
             const prob = pX * pY * adjustment;
             matrix[x][y] = prob;
         }
     }
     let totalMatrix = 0;
-    for(let x=0;x<=matrixLimit;x++){ for(let y=0;y<=matrixLimit;y++){ totalMatrix += matrix[x][y]; } }
-    for(let x=0;x<=matrixLimit;x++){
-        for(let y=0;y<=matrixLimit;y++){
+    for(let x = 0; x <= matrixLimit; x++){ for(let y = 0; y <= matrixLimit; y++){ totalMatrix += matrix[x][y]; } }
+    for(let x = 0; x <= matrixLimit; x++){
+        for(let y = 0; y <= matrixLimit; y++){
             matrix[x][y] /= totalMatrix; const prob = matrix[x][y];
             if(x > y){ probHome += prob; }else if(x === y){ probDraw += prob; }else{ probAway += prob; }
             if((x + y) < 3){ probUnder25 += prob; }
@@ -721,115 +651,121 @@ function processEngine(data){
         }
     }
 
-    [probHome,probDraw,probAway] = normalize([probHome,probDraw,probAway]);
+    [probHome, probDraw, probAway] = normalize([probHome, probDraw, probAway]);
     let probOver25 = 1 - probUnder25;
-    const normalizedGoals = normalize([probUnder25,probOver25]);
+    const normalizedGoals = normalize([probUnder25, probOver25]);
     probUnder25 = normalizedGoals[0]; probOver25 = normalizedGoals[1];
 
-    renderMatrix(matrix,visualLimit);
+    renderMatrix(matrix, visualLimit);
 
     const markets = [
-        { name:`Vitória ${inputs.homeName}`, probability:probHome, odd:inputs.odds.home },
-        { name:'Empate', probability:probDraw, odd:inputs.odds.draw },
-        { name:`Vitória ${inputs.awayName}`, probability:probAway, odd:inputs.odds.away }
+        { name: `Vitória ${inputs.homeName}`, probability: probHome, odd: inputs.odds.home },
+        { name: 'Empate', probability: probDraw, odd: inputs.odds.draw },
+        { name: `Vitória ${inputs.awayName}`, probability: probAway, odd: inputs.odds.away }
     ];
     const goalMarkets = [
-        { name:'Over 2.5', probability:probOver25, odd:inputs.odds.over25 },
-        { name:'BTTS Sim', probability:probBTTS, odd:inputs.odds.btts }
+        { name: 'Over 2.5', probability: probOver25, odd: inputs.odds.over25 },
+        { name: 'BTTS Sim', probability: probBTTS, odd: inputs.odds.btts }
     ];
 
     document.getElementById('marketCards').innerHTML = markets.map(renderMarketCard).join('');
     document.getElementById('goalCards').innerHTML = goalMarkets.map(renderMarketCard).join('');
+    
     document.getElementById('statsBox').innerHTML = `
         <p>🏟 Média Casa Liga: <strong>${leagueHomeAvg.toFixed(2)}</strong></p>
         <p>✈ Média Fora Liga: <strong>${leagueAwayAvg.toFixed(2)}</strong></p>
         <p>📚 H2H utilizados: <strong>${h2h.length}</strong></p>
         <p>🧠 Shrinkage aplicado: <strong>18%</strong></p>
-        <p>⚡ Origem dos Dados: <strong class="text-emerald-400">Supabase DB (Sem Custos)</strong></p>
+        <p>⚡ Origem dos Dados: <strong class="text-emerald-400">Supabase Persistent Table</strong></p>
     `;
-    buildReport([...markets,...goalMarkets]);
+
+    // Gerando Relatório Operacional Avançado
+    const allMarkets = [...markets, ...goalMarkets].map(m => ({
+        ...m,
+        ev: calculateEV(m.probability, m.odd)
+    }));
+    
+    const valueMarkets = allMarkets.filter(m => m.ev > 0.02).sort((a, b) => b.ev - a.ev);
+    const reportElement = document.getElementById('report');
+    
+    if(valueMarkets.length === 0) {
+        reportElement.innerHTML = `
+            <div class="p-4 bg-red-950/20 border-l-4 border-red-500/50 rounded-xl text-slate-400 text-xs space-y-2">
+                <p class="font-black text-red-400 uppercase tracking-wider text-sm">SINAL DE NEUTRALIDADE (NO BET)</p>
+                <p>O algoritmo concluiu que as linhas oferecidas pela casa estão **perfeitamente eficientes** ou com a margem de lucro (*Juice/Vig*) muito alta.</p>
+                <p class="text-[11px]">Nenhuma cotação pré-live possui Valor Esperado Positivo sustentável. A recomendação profissional é **ficar de fora**.</p>
+            </div>`;
+    } else {
+        const best = valueMarkets[0];
+        const kelly = calculateKelly(best.probability, best.odd);
+        const stake = kelly * 0.25 * 100; // Quarter-Kelly
+        
+        reportElement.innerHTML = `
+            <div class="space-y-4">
+                <div class="p-4 bg-emerald-950/10 border border-emerald-500/20 rounded-2xl">
+                    <p class="text-emerald-400 font-black uppercase tracking-widest text-[10px] mb-2">Melhor Oportunidade Identificada</p>
+                    <div class="bg-slate-950 border border-slate-800 rounded-2xl p-4 text-center">
+                        <p class="text-sm font-black text-white">${best.name}</p>
+                        <p class="text-xl font-black text-emerald-400 font-mono mt-1">@ ${best.odd.toFixed(2)}</p>
+                    </div>
+                </div>
+                <div class="space-y-2 text-xs text-slate-300 bg-slate-950/40 p-3 rounded-2xl border border-slate-900">
+                    <p>📈 EV: <strong class="text-emerald-400">+${(best.ev * 100).toFixed(2)}%</strong></p>
+                    <p>⚖ Odd Justa: <strong>${(1 / best.probability).toFixed(2)}</strong></p>
+                    <p>🧠 Quarter-Kelly: <strong class="text-emerald-300">${stake.toFixed(2)}% da banca</strong></p>
+                </div>
+            </div>`;
+    }
 }
 
-function renderMatrix(matrix,visualLimit){
+function renderMarketCard(market) {
+    const ev = calculateEV(market.probability, market.odd);
+    const isValue = ev > 0.02;
+    const cssClass = isValue ? 'value-bet' : 'no-bet';
+    
+    return `
+        <div class="p-4 rounded-2xl ${cssClass} space-y-2 flex flex-col justify-between">
+            <div class="flex justify-between items-start">
+                <span class="text-xs font-black text-white block">${market.name}</span>
+                ${isValue ? '<span class="bg-emerald-500/20 text-emerald-400 font-bold text-[9px] px-1.5 py-0.5 rounded uppercase tracking-wider font-mono">+EV</span>' : ''}
+            </div>
+            <div class="flex justify-between items-baseline text-xs">
+                <span class="text-slate-400">Prob: <strong>${(market.probability * 100).toFixed(1)}%</strong></span>
+                <span class="text-slate-400">Justa: <strong>${(1/market.probability).toFixed(2)}</strong></span>
+            </div>
+            <div class="flex justify-between items-center border-t border-slate-900/50 pt-2 mt-1">
+                <span class="text-[11px] font-mono text-slate-400">EV: <strong class="${isValue ? 'text-emerald-400 font-bold' : 'text-slate-500'}">${(ev*100).toFixed(1)}%</strong></span>
+                <span class="text-sm font-black font-mono text-white">@ ${market.odd.toFixed(2)}</span>
+            </div>
+        </div>
+    `;
+}
+
+function renderMatrix(matrix, limit) {
     const head = document.getElementById('matrixHead');
     const body = document.getElementById('matrixBody');
-    head.innerHTML = '<th class="p-2 text-slate-500">C \\\\ F</th>';
-    for(let i=0;i<=visualLimit;i++){ head.insertAdjacentHTML('beforeend',`<th>${i}</th>`); }
-    body.innerHTML = '';
-    for(let x=0;x<=visualLimit;x++){
-        let row = `<tr><th class="bg-slate-900 text-blue-400 p-2">${x}</th>`;
-        for(let y=0;y<=visualLimit;y++){
-            const prob = matrix[x][y] * 100; let style = 'bg-slate-950 text-slate-400';
-            if(x > y){ style = 'bg-blue-950/20 text-blue-400'; }else if(x < y){ style = 'bg-purple-950/20 text-purple-400'; }else{ style = 'bg-slate-900/70 text-slate-100 font-bold'; }
-            row += `<td class="${style}">${prob.toFixed(1)}%</td>`;
+    
+    let headHtml = '<th class="p-2 text-slate-500 font-mono text-[10px] uppercase">C\\V</th>';
+    for(let y = 0; y <= limit; y++) {
+        headHtml += `<th class="p-2 text-purple-400 font-mono font-bold">${y}</th>`;
+    }
+    head.innerHTML = headHtml;
+    
+    let bodyHtml = '';
+    for(let x = 0; x <= limit; x++) {
+        bodyHtml += `<tr><td class="font-bold text-blue-400 bg-slate-900/30">${x}</td>`;
+        for(let y = 0; y <= limit; y++) {
+            const prob = matrix[x][y];
+            const pct = (prob * 100).toFixed(1);
+            let cellClass = "";
+            if(prob > 0.05) cellClass = "bg-emerald-500/10 text-emerald-400 font-bold";
+            bodyHtml += `<td class="${cellClass}">${pct}%</td>`;
         }
-        row += '</tr>';
-        body.insertAdjacentHTML('beforeend',row);
+        bodyHtml += '</tr>';
     }
-}
-
-// Renderizadores Visuais de Cotação e EV
-function renderMarketCard(market){
-    const ev = calculateEV(market.probability,market.odd);
-    const fairOdd = 1 / market.probability;
-    const valueBet = ev > 0.02;
-    const rawKelly = calculateKelly(market.probability,market.odd);
-    const quarterKelly = Math.min(rawKelly * 0.25 * 100,5);
-
-    return `
-    <div class="p-5 rounded-3xl flex flex-col justify-between ${valueBet ? 'value-bet' : 'no-bet'}">
-        <div>
-            <h3 class="font-bold text-white text-sm mb-3">${market.name}</h3>
-            <div class="space-y-1 text-xs font-mono text-slate-400">
-                <p>Probabilidade: <span class="text-white">${(market.probability * 100).toFixed(1)}%</span></p>
-                <p>Odd Justa: <span class="text-blue-300">${fairOdd.toFixed(2)}</span></p>
-                <p>Odd Mercado: <span class="text-emerald-400 font-bold">${market.odd.toFixed(2)}</span></p>
-            </div>
-        </div>
-        <div class="mt-4 pt-4 border-t border-slate-800 flex justify-between items-center">
-            <span class="font-black text-lg ${valueBet ? 'text-emerald-400' : 'text-red-400/60'}">
-            EV ${ev > 0 ? '+' : ''}${(ev * 100).toFixed(1)}%
-            </span>
-            ${valueBet ? `<span class="text-[10px] bg-emerald-500/15 border border-emerald-500/20 text-emerald-300 px-2 py-1 rounded-full font-mono">Stake ${quarterKelly.toFixed(2)}%</span>` : `<span class="text-[10px] text-slate-500">NO BET</span>`}
-        </div>
-    </div>`;
-}
-
-function buildReport(markets){
-    const report = document.getElementById('report');
-    const valueMarkets = markets.map(m => ({ ...m, ev:calculateEV(m.probability,m.odd) })).filter(m => m.ev > 0.02).sort((a,b)=>b.ev-a.ev);
-
-    if(valueMarkets.length === 0){
-        report.innerHTML = `
-        <div class="p-5 rounded-3xl bg-red-950/10 border border-red-500/20">
-            <p class="text-red-400 font-black uppercase tracking-widest text-xs mb-3">Mercado Eficiente</p>
-            <p class="text-sm text-slate-400 leading-relaxed">O modelo não encontrou vantagem matemática suficiente nas linhas atuais.</p>
-        </div>`;
-        return;
-    }
-
-    const best = valueMarkets[0];
-    const stake = Math.min(calculateKelly(best.probability,best.odd) * 0.25 * 100,5);
-
-    report.innerHTML = `
-    <div class="p-6 rounded-3xl bg-emerald-950/20 border border-emerald-500/20 space-y-5">
-        <div>
-            <p class="text-emerald-400 font-black uppercase tracking-widest text-xs mb-3">Melhor Oportunidade Identificada</p>
-            <div class="bg-slate-950 border border-slate-800 rounded-2xl p-5 text-center">
-                <p class="text-lg font-black text-white">${best.name}</p>
-                <p class="text-2xl font-black text-emerald-400 font-mono mt-2">@ ${best.odd.toFixed(2)}</p>
-            </div>
-        </div>
-        <div class="space-y-2 text-sm text-slate-300">
-            <p>📈 EV: <strong class="text-emerald-400">+${(best.ev * 100).toFixed(2)}%</strong></p>
-            <p>⚖ Odd Justa: <strong>${(1 / best.probability).toFixed(2)}</strong></p>
-            <p>🧠 Quarter-Kelly: <strong>${stake.toFixed(2)}% da banca</strong></p>
-        </div>
-        <div class="border-t border-slate-800 pt-4 text-xs text-slate-500 leading-relaxed">
-            Modelo ajustado com dados persistidos locais, Dixon-Coles e Shrinkage Bayesiano de 18%.
-        </div>
-    </div>`;
+    body.innerHTML = bodyHtml;
 }
 </script>
+
 </body>
 </html>
