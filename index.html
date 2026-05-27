@@ -95,13 +95,17 @@ Temporada de Referência
 <input id="season" type="number" value="2026" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3 text-sm text-white font-mono"/>
 </div>
 
-<div class="flex items-end gap-2">
-<button id="btnSync" onclick="syncDatabase()" class="w-1/2 bg-emerald-600 hover:bg-emerald-500 transition-all text-slate-950 font-black uppercase tracking-wider text-[10px] p-4 rounded-2xl">
-🔄 Sincronizar Banco
-</button>
-<button id="btnLoad" onclick="loadTeams()" class="w-1/2 bg-blue-600 hover:bg-blue-500 transition-all text-white font-black uppercase tracking-wider text-[10px] p-4 rounded-2xl">
-📊 Carregar Dados
-</button>
+<div class="flex flex-col sm:flex-row items-end gap-2">
+    <button id="btnSync" onclick="syncDatabase()" class="w-full sm:w-1/3 bg-emerald-600 hover:bg-emerald-500 transition-all text-slate-950 font-black uppercase tracking-wider text-[10px] p-4 rounded-2xl">
+        🔄 Sincronizar via Web
+    </button>
+    <label class="w-full sm:w-1/3 bg-slate-800 hover:bg-slate-700 transition-all text-white font-black uppercase tracking-wider text-[10px] p-4 rounded-2xl text-center cursor-pointer flex items-center justify-center gap-1">
+        📁 Importar CSV Manual
+        <input id="fileLoader" type="file" accept=".csv" onchange="importCSVManual(event)" class="hidden">
+    </label>
+    <button id="btnLoad" onclick="loadTeams()" class="w-full sm:w-1/3 bg-blue-600 hover:bg-blue-500 transition-all text-white font-black uppercase tracking-wider text-[10px] p-4 rounded-2xl">
+        📊 Carregar Dados
+    </button>
 </div>
 
 </div>
@@ -225,7 +229,62 @@ function formatToPostgresDate(dateStr) {
     return `${year}-${month}-${day}`;
 }
 
-// 1. ENGINE DE SINCRONIZAÇÃO
+// =================================================================
+// ENGINE DE INTEGRAÇÃO E PROCESSAMENTO DE ARQUIVOS (WEB & LOCAL)
+// =================================================================
+
+// Função compartilhada que faz o parse do CSV e injeta os registros no banco Supabase
+async function processAndSaveCSV(csvText, targetConfig, badge, btn) {
+    Papa.parse(csvText, {
+        header: true,
+        skipEmptyLines: true,
+        complete: async function(results) {
+            try {
+                const rawGames = results.data;
+                const processedGames = [];
+
+                rawGames.forEach(row => {
+                    const dbDate = formatToPostgresDate(row.Date);
+                    if(dbDate && row.HomeTeam && row.AwayTeam && row.FTHG !== undefined && row.FTAG !== undefined) {
+                        processedGames.push({
+                            campeonato: targetConfig.name,
+                            data_jogo: dbDate,
+                            home_team: row.HomeTeam.trim(),
+                            away_team: row.AwayTeam.trim(),
+                            fthg: parseInt(row.FTHG),
+                            ftag: parseInt(row.FTAG)
+                        });
+                    }
+                });
+
+                if(processedGames.length === 0) throw new Error("A planilha não possui jogos válidos concluídos.");
+
+                writeSyncLog(`Filtrados ${processedGames.length} jogos estruturados. Enviando ao Supabase...`);
+
+                const { error } = await supabaseClient
+                    .from('historico_jogos')
+                    .upsert(processedGames, { 
+                        onConflict: 'data_jogo,home_team,away_team',
+                        ignoreDuplicates: true 
+                    });
+
+                if(error) throw new Error(error.message);
+
+                writeSyncLog(`Sincronização bem-sucedida! Banco de dados atualizado.`, false);
+                badge.innerText = "SUCESSO";
+                badge.className = "text-emerald-400 font-mono";
+            } catch (err) {
+                writeSyncLog(`Falha Crítica no Processamento: ${err.message}`, true);
+                badge.innerText = "FALHOU";
+                badge.className = "text-red-400 font-mono";
+            } finally {
+                btn.disabled = false;
+            }
+        }
+    });
+}
+
+// 1A. SINCRONIZAÇÃO AUTOMÁTICA VIA WEB (ROTA ROTATIVA DE PROXIES CONTRA ERROS 403)
 async function syncDatabase() {
     const btn = document.getElementById('btnSync');
     const badge = document.getElementById('syncStatusBadge');
@@ -238,6 +297,96 @@ async function syncDatabase() {
         return;
     }
 
+    btn.disabled = true;
+    badge.innerText = "PROCESSANDO";
+    badge.className = "text-amber-400 font-mono";
+    writeSyncLog(`Iniciando varredura automatizada para ${targetConfig.name}...`);
+
+    const yearInt = parseInt(seasonInput);
+    const shortPrev = String(yearInt - 1).slice(-2);
+    const shortCurr = String(yearInt).slice(-2);
+    const seasonFolder = `${shortPrev}${shortCurr}`;
+
+    const csvUrl = `https://www.football-data.co.uk/mmz4281/${seasonFolder}/${targetConfig.csv}`;
+    
+    // Pool de proxies redundantes. Se um falhar ou der 403, a engine chaveia para a próxima rota imediatamente
+    const proxyPool = [
+        `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(csvUrl)}`,
+        `https://corsproxy.io/?${encodeURIComponent(csvUrl)}`,
+        `https://api.allorigins.win/raw?url=${encodeURIComponent(csvUrl)}`
+    ];
+
+    let csvText = null;
+    let success = false;
+
+    for (let i = 0; i < proxyPool.length; i++) {
+        try {
+            writeSyncLog(`Tentando conexão via Rota de Contingência ${i + 1}...`);
+            const response = await fetch(proxyPool[i]);
+            if (response.ok) {
+                const textResult = await response.text();
+                // Validação rudimentar para garantir que o proxy não retornou uma página de erro HTML
+                if (textResult && textResult.includes("Date") && textResult.includes("HomeTeam")) {
+                    csvText = textResult;
+                    success = true;
+                    break;
+                }
+            }
+        } catch (e) {
+            console.warn(`Rota de proxy ${i + 1} indisponível.`);
+        }
+    }
+
+    if (!success || !csvText) {
+        writeSyncLog(`Todas as rotas automáticas falharam (Bloqueio 403 de IP corporativo).`, true);
+        writeSyncLog(`👉 Use o botão 'Importar CSV Manual' ao lado para processar o arquivo diretamente.`, false);
+        badge.innerText = "BLOQUEADO";
+        badge.className = "text-red-400 font-mono";
+        btn.disabled = false;
+        return;
+    }
+
+    writeSyncLog(`Dados brutos baixados com sucesso. Iniciando parser quantitativo...`);
+    await processAndSaveCSV(csvText, targetConfig, badge, btn);
+}
+
+// 1B. PLANO DE CONTINGÊNCIA: CARREGAMENTO DE ARQUIVO LOCAL (IMUNE A ERROS DE CORS/PROXY)
+function importCSVManual(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const btn = document.getElementById('btnSync');
+    const badge = document.getElementById('syncStatusBadge');
+    const leagueId = document.getElementById('leagueId').value;
+    const targetConfig = LEAGUE_MAP[leagueId];
+
+    if(!targetConfig) {
+        alert("Por favor, selecione a liga correta acima antes de importar o arquivo.");
+        return;
+    }
+
+    btn.disabled = true;
+    badge.innerText = "LENDO ARQUIVO";
+    badge.className = "text-amber-400 font-mono";
+    
+    document.getElementById('terminalContainer').classList.remove('hidden');
+    writeSyncLog(`Carregando planilha local: ${file.name}...`);
+
+    const reader = new FileReader();
+    reader.onload = async function(e) {
+        const csvText = e.target.result;
+        writeSyncLog(`Arquivo carregado em memória. Gravando dados...`);
+        await processAndSaveCSV(csvText, targetConfig, badge, btn);
+        // Limpa o input de arquivo para permitir re-upload posterior se necessário
+        document.getElementById('fileLoader').value = '';
+    };
+    reader.onerror = function() {
+        writeSyncLog(`Erro fatal ao processar leitura do arquivo em disco.`, true);
+        badge.innerText = "FALHOU";
+        btn.disabled = false;
+    };
+    reader.readAsText(file);
+}
     btn.disabled = true;
     badge.innerText = "PROCESSANDO";
     badge.className = "text-amber-400 font-mono";
