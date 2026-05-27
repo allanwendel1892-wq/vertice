@@ -3,84 +3,67 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analisador Estatístico de Partidas</title>
+    <title>Analisador Estatístico Automático</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #f8fafc; }
-        .result-card { transition: all 0.3s ease; }
     </style>
 </head>
 <body class="min-h-screen p-4 md:p-8">
 
     <div class="max-w-4xl mx-auto bg-slate-800 rounded-xl shadow-2xl overflow-hidden border border-slate-700">
         <div class="bg-indigo-600 p-6 text-center">
-            <h1 class="text-3xl font-bold text-white">Analisador Preditivo de Partidas</h1>
-            <p class="text-indigo-200 mt-2">Insira os dados estatísticos recentes das equipes para calcular as probabilidades e obter sugestões de apostas.</p>
+            <h1 class="text-3xl font-bold text-white">Analisador Preditivo Automático</h1>
+            <p class="text-indigo-200 mt-2">Digite o nome dos times. A API buscará o retrospecto recente dos últimos 10 jogos para calcular as probabilidades.</p>
         </div>
 
         <div class="p-6 md:p-8">
-            <form id="analyzerForm" class="space-y-8">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    
-                    <div class="bg-slate-750 p-5 rounded-lg border border-slate-600">
-                        <h2 class="text-xl font-semibold mb-4 text-indigo-400">Time Mandante (Casa)</h2>
-                        
-                        <div class="space-y-4">
-                            <div>
-                                <label class="block text-sm font-medium text-slate-300">Nome do Time</label>
-                                <input type="text" id="homeName" required class="mt-1 block w-full rounded-md bg-slate-900 border-slate-600 text-white px-3 py-2 focus:border-indigo-500 focus:ring-indigo-500" placeholder="Ex: Flamengo">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-slate-300">Taxa de Vitórias Recentes (%)</label>
-                                <input type="number" id="homeWinRate" min="0" max="100" required class="mt-1 block w-full rounded-md bg-slate-900 border-slate-600 text-white px-3 py-2 focus:border-indigo-500 focus:ring-indigo-500" placeholder="Ex: 60">
-                            </div>
-                            <div class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-sm font-medium text-slate-300">Média Gols Pró</label>
-                                    <input type="number" id="homeGoalsFor" step="0.1" min="0" required class="mt-1 block w-full rounded-md bg-slate-900 border-slate-600 text-white px-3 py-2" placeholder="Ex: 1.8">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-slate-300">Média Gols Sofridos</label>
-                                    <input type="number" id="homeGoalsAgainst" step="0.1" min="0" required class="mt-1 block w-full rounded-md bg-slate-900 border-slate-600 text-white px-3 py-2" placeholder="Ex: 0.9">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+            <form id="apiAnalyzerForm" class="space-y-6">
+                
+                <div class="bg-slate-900 p-4 rounded-lg border border-slate-700">
+                    <label class="block text-sm font-medium text-indigo-300">Sua API-Sports Key (Fica salva no navegador)</label>
+                    <input type="password" id="apiKey" required class="mt-1 block w-full rounded-md bg-slate-800 border-slate-600 text-white px-3 py-2 text-sm focus:border-indigo-500 focus:ring-indigo-500" placeholder="Cole sua chave aqui">
+                </div>
 
-                    <div class="bg-slate-750 p-5 rounded-lg border border-slate-600">
-                        <h2 class="text-xl font-semibold mb-4 text-emerald-400">Time Visitante (Fora)</h2>
-                        
-                        <div class="space-y-4">
-                            <div>
-                                <label class="block text-sm font-medium text-slate-300">Nome do Time</label>
-                                <input type="text" id="awayName" required class="mt-1 block w-full rounded-md bg-slate-900 border-slate-600 text-white px-3 py-2 focus:border-emerald-500 focus:ring-emerald-500" placeholder="Ex: Palmeiras">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-slate-300">Taxa de Vitórias Recentes (%)</label>
-                                <input type="number" id="awayWinRate" min="0" max="100" required class="mt-1 block w-full rounded-md bg-slate-900 border-slate-600 text-white px-3 py-2 focus:border-emerald-500 focus:ring-emerald-500" placeholder="Ex: 50">
-                            </div>
-                            <div class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-sm font-medium text-slate-300">Média Gols Pró</label>
-                                    <input type="number" id="awayGoalsFor" step="0.1" min="0" required class="mt-1 block w-full rounded-md bg-slate-900 border-slate-600 text-white px-3 py-2" placeholder="Ex: 1.2">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-slate-300">Média Gols Sofridos</label>
-                                    <input type="number" id="awayGoalsAgainst" step="0.1" min="0" required class="mt-1 block w-full rounded-md bg-slate-900 border-slate-600 text-white px-3 py-2" placeholder="Ex: 1.5">
-                                </div>
-                            </div>
-                        </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300">Time Mandante (Casa)</label>
+                        <input type="text" id="homeName" required class="mt-1 block w-full rounded-md bg-slate-900 border-slate-600 text-white px-3 py-2 focus:border-indigo-500 focus:ring-indigo-500" placeholder="Ex: Flamengo ou Real Madrid">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-300">Time Visitante (Fora)</label>
+                        <input type="text" id="awayName" required class="mt-1 block w-full rounded-md bg-slate-900 border-slate-600 text-white px-3 py-2 focus:border-emerald-500 focus:ring-emerald-500" placeholder="Ex: Palmeiras ou Barcelona">
                     </div>
                 </div>
 
-                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-8 rounded-lg shadow-lg transition duration-200 transform hover:scale-[1.02]">
-                    GERAR ANÁLISE ESTATÍSTICA
+                <button type="submit" id="btnSubmit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-8 rounded-lg shadow-lg transition duration-200 transform hover:scale-[1.01]">
+                    BUSCAR DADOS E ANALISAR
                 </button>
             </form>
+
+            <div id="loadingState" class="hidden text-center py-8">
+                <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500 mx-auto mb-4"></div>
+                <p class="text-slate-400 text-sm" id="loadingText">Consultando API-Sports e processando métricas...</p>
+            </div>
 
             <div id="resultsSection" class="hidden mt-10 space-y-6">
                 <hr class="border-slate-600">
                 <h3 class="text-2xl font-bold text-center mb-6">Relatório da Partida: <span id="matchTitle" class="text-indigo-400"></span></h3>
+
+                <div class="bg-slate-900/50 p-4 rounded-lg border border-slate-700 text-xs md:text-sm grid grid-cols-2 gap-4 text-slate-300">
+                    <div>
+                        <p class="font-bold text-indigo-400 mb-1" id="lblHomeTeam">Mandante:</p>
+                        <p>Vitórias (Últimos 10j): <span id="statHomeWin" class="text-white font-semibold"></span></p>
+                        <p>Média Gols Pró: <span id="statHomeGF" class="text-white font-semibold"></span></p>
+                        <p>Média Gols Sofridos: <span id="statHomeGA" class="text-white font-semibold"></span></p>
+                    </div>
+                    <div>
+                        <p class="font-bold text-emerald-400 mb-1" id="lblAwayTeam">Visitante:</p>
+                        <p>Vitórias (Últimos 10j): <span id="statAwayWin" class="text-white font-semibold"></span></p>
+                        <p>Média Gols Pró: <span id="statAwayGF" class="text-white font-semibold"></span></p>
+                        <p>Média Gols Sofridos: <span id="statAwayGA" class="text-white font-semibold"></span></p>
+                    </div>
+                </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div class="bg-slate-900 p-4 rounded-lg border border-slate-700 text-center">
@@ -125,60 +108,153 @@
     </div>
 
     <script>
-        document.getElementById('analyzerForm').addEventListener('submit', function(e) {
+        // Carrega a chave salva do localStorage ao iniciar
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedKey = localStorage.getItem('football_api_key');
+            if (savedKey) document.getElementById('apiKey').value = savedKey;
+        });
+
+        document.getElementById('apiAnalyzerForm').addEventListener('submit', async function(e) {
             e.preventDefault();
 
-            // Coleta de Dados
-            const homeName = document.getElementById('homeName').value;
-            const homeWinRate = parseFloat(document.getElementById('homeWinRate').value) / 100;
-            const homeGF = parseFloat(document.getElementById('homeGoalsFor').value);
-            const homeGA = parseFloat(document.getElementById('homeGoalsAgainst').value);
+            const apiKey = document.getElementById('apiKey').value.trim();
+            const homeInput = document.getElementById('homeName').value.trim();
+            const awayInput = document.getElementById('awayName').value.trim();
 
-            const awayName = document.getElementById('awayName').value;
-            const awayWinRate = parseFloat(document.getElementById('awayWinRate').value) / 100;
-            const awayGF = parseFloat(document.getElementById('awayGoalsFor').value);
-            const awayGA = parseFloat(document.getElementById('awayGoalsAgainst').value);
+            // Salva a chave para facilitar o próximo uso
+            localStorage.setItem('football_api_key', apiKey);
 
-            // Título
-            document.getElementById('matchTitle').textContent = `${homeName} vs ${awayName}`;
+            const btn = document.getElementById('btnSubmit');
+            const loading = document.getElementById('loadingState');
+            const results = document.getElementById('resultsSection');
+            const loadingText = document.getElementById('loadingText');
 
-            // Algoritmo Estatístico (Heurística baseada em xG e Forma)
-            // 1. Força Ofensiva/Defensiva (xG Esperado)
-            // Calculado cruzando o ataque de um com a defesa do outro
-            const home_xG = (homeGF + awayGA) / 2;
-            const away_xG = (awayGF + homeGA) / 2;
+            // Reset de tela
+            btn.disabled = true;
+            results.classList.add('hidden');
+            loading.classList.remove('hidden');
+
+            try {
+                // 1. Busca IDs dos times
+                loadingText.textContent = `Buscando identificadores para os times...`;
+                const homeId = await getTeamId(homeInput, apiKey);
+                const awayId = await getTeamId(awayInput, apiKey);
+
+                // 2. Busca histórico recente (últimos 10 jogos) de cada um
+                loadingText.textContent = `Coletando histórico recente do ${homeInput}...`;
+                const homeStats = await getTeamStatsFromFixtures(homeId, apiKey);
+                
+                loadingText.textContent = `Coletando histórico recente do ${awayInput}...`;
+                const awayStats = await getTeamStatsFromFixtures(awayId, apiKey);
+
+                // Exibe as métricas tratadas na tela
+                document.getElementById('lblHomeTeam').textContent = `Mandante: ${homeInput}`;
+                document.getElementById('statHomeWin').textContent = `${homeStats.winRate.toFixed(0)}%`;
+                document.getElementById('statHomeGF').textContent = homeStats.goalsFor.toFixed(2);
+                document.getElementById('statHomeGA').textContent = homeStats.goalsAgainst.toFixed(2);
+
+                document.getElementById('lblAwayTeam').textContent = `Visitante: ${awayInput}`;
+                document.getElementById('statAwayWin').textContent = `${awayStats.winRate.toFixed(0)}%`;
+                document.getElementById('statAwayGF').textContent = awayStats.goalsFor.toFixed(2);
+                document.getElementById('statAwayGA').textContent = awayStats.goalsAgainst.toFixed(2);
+
+                // 3. Executa Motor Estatístico
+                document.getElementById('matchTitle').textContent = `${homeInput} vs ${awayInput}`;
+                runStatisticalModel(homeInput, awayInput, homeStats, awayStats);
+
+                loading.classList.add('hidden');
+                results.classList.remove('hidden');
+                results.scrollIntoView({ behavior: 'smooth' });
+
+            } catch (error) {
+                alert(`Erro: ${error.message}`);
+                loading.classList.add('hidden');
+            } finally {
+                btn.disabled = false;
+            }
+        });
+
+        // Helper para buscar ID do time por string de busca
+        async function getTeamId(name, key) {
+            const response = await fetch(`https://v3.football.api-sports.io/teams?search=${encodeURIComponent(name)}`, {
+                method: "GET",
+                headers: { "x-apisports-key": key }
+            });
+            const data = await response.json();
+            if (!data.response || data.response.length === 0) {
+                throw new Error(`Time "${name}" não foi encontrado na base de dados da API.`);
+            }
+            return data.response[0].team.id;
+        }
+
+        // Helper para puxar os últimos 10 jogos e calcular médias reais de forma dinâmica
+        async function getTeamStatsFromFixtures(teamId, key) {
+            const response = await fetch(`https://v3.football.api-sports.io/fixtures?team=${teamId}&last=10`, {
+                method: "GET",
+                headers: { "x-apisports-key": key }
+            });
+            const data = await response.json();
+            const fixtures = data.response;
+
+            if (!fixtures || fixtures.length === 0) {
+                throw new Error(`Não foram encontrados registros de jogos recentes para o ID ${teamId}.`);
+            }
+
+            let wins = 0;
+            let goalsFor = 0;
+            let goalsAgainst = 0;
+            const totalGames = fixtures.length;
+
+            fixtures.forEach(match => {
+                const isHome = match.teams.home.id === teamId;
+                const scored = isHome ? match.goals.home : match.goals.away;
+                const conceded = isHome ? match.goals.away : match.goals.home;
+
+                goalsFor += (scored !== null ? scored : 0);
+                goalsAgainst += (conceded !== null ? conceded : 0);
+
+                const teamWon = isHome ? match.teams.home.winner : match.teams.away.winner;
+                if (teamWon === true) wins++;
+            });
+
+            return {
+                winRate: (wins / totalGames) * 100,
+                goalsFor: goalsFor / totalGames,
+                goalsAgainst: goalsAgainst / totalGames
+            };
+        }
+
+        // Processamento Estatístico
+        function runStatisticalModel(homeName, awayName, home, away) {
+            const homeWinRateRatio = home.winRate / 100;
+            const awayWinRateRatio = away.winRate / 100;
+
+            const home_xG = (home.goalsFor + away.goalsAgainst) / 2;
+            const away_xG = (away.goalsFor + home.goalsAgainst) / 2;
             
-            // Fator Casa (Geralmente mandantes tem ~15% de vantagem na base de dados histórica)
-            const homeAdvantage = 1.15; 
+            const homeAdvantage = 1.12; // Ajuste dinâmico leve para o mando
             
-            // 2. Pontuação de Força Total (Mistura xG com Taxa de Vitórias)
-            const homeStrength = (home_xG * homeAdvantage) + (homeWinRate * 1.5);
-            const awayStrength = away_xG + (awayWinRate * 1.5);
+            const homeStrength = (home_xG * homeAdvantage) + (homeWinRateRatio * 1.3);
+            const awayStrength = away_xG + (awayWinRateRatio * 1.3);
             
-            // Base de Empate (Jogos mais equilibrados tendem a ter maior chance de empate)
             const diff = Math.abs(homeStrength - awayStrength);
-            let drawStrength = 1.2 - (diff * 0.4); 
-            if (drawStrength < 0.3) drawStrength = 0.3; // Piso para empate
+            let drawStrength = 1.1 - (diff * 0.4); 
+            if (drawStrength < 0.25) drawStrength = 0.25;
 
             const totalStrength = homeStrength + awayStrength + drawStrength;
 
-            // 3. Probabilidades de Resultado (Match Odds)
             const pHome = (homeStrength / totalStrength) * 100;
             const pDraw = (drawStrength / totalStrength) * 100;
             const pAway = (awayStrength / totalStrength) * 100;
 
-            // 4. Mercado de Gols (Over/Under & BTTS)
             const total_xG = home_xG + away_xG;
+            const pOver15 = Math.min(96, (total_xG / 1.5) * 58);
+            const pOver25 = Math.min(88, (total_xG / 2.5) * 44);
             
-            // Aproximações baseadas na média de Gols
-            const pOver15 = Math.min(95, (total_xG / 1.5) * 60);
-            const pOver25 = Math.min(85, (total_xG / 2.5) * 45);
-            
-            // Ambas Marcam (Depende de ambos terem xG decente)
             const min_xG = Math.min(home_xG, away_xG);
-            const pBtts = Math.min(85, (min_xG / 1.2) * 55);
+            const pBtts = Math.min(85, (min_xG / 1.1) * 52);
 
-            // Atualização da Interface
+            // Atualiza a tela
             document.getElementById('probHome').textContent = pHome.toFixed(1) + '%';
             document.getElementById('probDraw').textContent = pDraw.toFixed(1) + '%';
             document.getElementById('probAway').textContent = pAway.toFixed(1) + '%';
@@ -187,43 +263,31 @@
             document.getElementById('probOver25').textContent = pOver25.toFixed(1) + '%';
             document.getElementById('probBtts').textContent = pBtts.toFixed(1) + '%';
 
-            // 5. Geração de Veredito / Dicas de Aposta
             const adviceDiv = document.getElementById('bettingAdvice');
-            adviceDiv.innerHTML = ''; // Clear previous
+            adviceDiv.innerHTML = ''; 
 
             let advices = [];
 
-            // Regras de Valor (Value Bets)
             if (pHome > 55) {
-                advices.push(`<div class="p-3 bg-indigo-900/50 border-l-4 border-indigo-500 rounded text-indigo-100">🔥 <strong>Aposta Principal:</strong> Back (Vitória) ${homeName}. Probabilidade alta de domínio do mandante.</div>`);
+                advices.push(`<div class="p-3 bg-indigo-900/50 border-l-4 border-indigo-500 rounded text-indigo-100 text-xs md:text-sm">🔥 <strong>Aposta Principal:</strong> Vitória de ${homeName}. Retrospecto apoia favoritismo doméstico.</div>`);
             } else if (pAway > 50) {
-                advices.push(`<div class="p-3 bg-emerald-900/50 border-l-4 border-emerald-500 rounded text-emerald-100">🔥 <strong>Aposta Principal:</strong> Back (Vitória) ${awayName}. Valor encontrado no visitante.</div>`);
+                advices.push(`<div class="p-3 bg-emerald-900/50 border-l-4 border-emerald-500 rounded text-emerald-100 text-xs md:text-sm">🔥 <strong>Aposta Principal:</strong> Vitória de ${awayName}. Dados indicam valor no visitante.</div>`);
             } else {
-                advices.push(`<div class="p-3 bg-yellow-900/50 border-l-4 border-yellow-500 rounded text-yellow-100">⚖️ <strong>Mercado de Resultado:</strong> Jogo sem claro favorito. Sugere-se Dupla Chance ou evitar apostar no vencedor (Match Odds).</div>`);
+                advices.push(`<div class="p-3 bg-yellow-900/50 border-l-4 border-yellow-500 rounded text-yellow-100 text-xs md:text-sm">⚖️ <strong>Mercado de Resultado:</strong> Confronto equilibrado. Evite Match Odds puro; considere Dupla Chance.</div>`);
             }
 
-            if (pOver25 > 60) {
-                advices.push(`<div class="p-3 bg-blue-900/50 border-l-4 border-blue-500 rounded text-blue-100">⚽ <strong>Mercado de Gols:</strong> Over 2.5 Gols tem excelente valor matemático. Cenário de jogo aberto.</div>`);
-            } else if (pOver25 < 40) {
-                advices.push(`<div class="p-3 bg-slate-700/50 border-l-4 border-slate-500 rounded text-slate-200">🛡️ <strong>Mercado de Gols:</strong> Tendência forte para Under 2.5 Gols. Jogo truncado projetado.</div>`);
+            if (pOver25 > 58) {
+                advices.push(`<div class="p-3 bg-blue-900/50 border-l-4 border-blue-500 rounded text-blue-100 text-xs md:text-sm">⚽ <strong>Mercado de Gols:</strong> Over 2.5 Gols recomendado com base no volume ofensivo recente.</div>`);
+            } else if (pOver25 < 38) {
+                advices.push(`<div class="p-3 bg-slate-700/50 border-l-4 border-slate-500 rounded text-slate-200 text-xs md:text-sm">🛡️ <strong>Mercado de Gols:</strong> Tendência para Under 2.5 Gols. Defesas sólidas ou ataques ineficientes.</div>`);
             }
 
-            if (pBtts > 60) {
-                advices.push(`<div class="p-3 bg-purple-900/50 border-l-4 border-purple-500 rounded text-purple-100">🎯 <strong>Ambas Marcam:</strong> SIM. Ambas as defesas têm cedido espaços historicamente.</div>`);
-            }
-
-            if (advices.length === 0) {
-                 advices.push(`<div class="p-3 bg-red-900/50 border-l-4 border-red-500 rounded text-red-100">⚠️ <strong>Aviso Preditivo:</strong> As métricas não apontam nenhuma assimetria clara. A recomendação do modelo é <strong>No Bet (Não Apostar)</strong> nesta partida.</div>`);
+            if (pBtts > 58) {
+                advices.push(`<div class="p-3 bg-purple-900/50 border-l-4 border-purple-500 rounded text-purple-100 text-xs md:text-sm">🎯 <strong>Ambas Marcam:</strong> SIM. Ambos pontuam com consistência no recorte analisado.</div>`);
             }
 
             adviceDiv.innerHTML = advices.join('');
-
-            // Mostrar resultados
-            document.getElementById('resultsSection').classList.remove('hidden');
-            
-            // Rolar suavemente para os resultados
-            document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
-        });
+        }
     </script>
 </body>
 </html>
