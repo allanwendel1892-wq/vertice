@@ -249,7 +249,9 @@ async function syncDatabase() {
     const seasonFolder = `${shortPrev}${shortCurr}`;
 
     const csvUrl = `https://www.football-data.co.uk/mmz4281/${seasonFolder}/${targetConfig.csv}`;
-    const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(csvUrl)}`;
+    
+    // CORREÇÃO AQUI: Mudança para um proxy CORS robusto e de alta disponibilidade
+    const proxyUrl = `https://corsproxy.io/?${encodeURIComponent(csvUrl)}`;
 
     try {
         const response = await fetch(proxyUrl);
