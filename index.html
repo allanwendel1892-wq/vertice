@@ -186,12 +186,13 @@ Executar Análise Quantitativa
 
 <script>
 // ==========================================
-// CONFIGURAÇÃO DO SEU SUPABASE
+// CONFIGURAÇÃO DO SEU SUPABASE (API/KONG)
 // ==========================================
 const SUPABASE_URL = "https://modo-fila-supabase-api.znzrqn.easypanel.host";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJhbm9uIiwKICAgICJpc3MiOiAic3VwYWJhc2UtZGVtbyIsCiAgICAiaWF0IjogMTY0MTc2OTIwMCwKICAgICJleHAiOiAxNzk5NTM1NjAwCn0.dc_X5iR_VP_qT0zsiyj_I_OZ2T9FtRU2BBNWN8Bu4GE";
 
-const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Renomeado para evitar conflito com o objeto global da biblioteca
+const supabaseClient = Supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // Dicionário de Ligas para Planilhas do Football-Data
 const LEAGUE_MAP = {
@@ -224,7 +225,7 @@ function formatToPostgresDate(dateStr) {
     return `${year}-${month}-${day}`;
 }
 
-// 1. ENGINE DE SINCRONIZAÇÃO (Puxa planilhas e salva sem duplicados)
+// 1. ENGINE DE SINCRONIZAÇÃO
 async function syncDatabase() {
     const btn = document.getElementById('btnSync');
     const badge = document.getElementById('syncStatusBadge');
@@ -242,7 +243,6 @@ async function syncDatabase() {
     badge.className = "text-amber-400 font-mono";
     writeSyncLog(`Iniciando varredura para ${targetConfig.name}...`);
 
-    // Geração dinâmica do ano da pasta (Ex: 2026 -> "2526")
     const yearInt = parseInt(seasonInput);
     const shortPrev = String(yearInt - 1).slice(-2);
     const shortCurr = String(yearInt).slice(-2);
@@ -281,8 +281,7 @@ async function syncDatabase() {
 
                 writeSyncLog(`Filtrados ${processedGames.length} jogos estruturados. Enviando ao Supabase...`);
 
-                // Comando Upsert Inteligente: Barra duplicações nativamente baseado na Constraint Única
-                const { error } = await supabase
+                const { error } = await supabaseClient
                     .from('historico_jogos')
                     .upsert(processedGames, { 
                         onConflict: 'data_jogo,home_team,away_team',
@@ -306,7 +305,7 @@ async function syncDatabase() {
 }
 
 // ==========================================
-// ADAPTAÇÃO DA ENGINE MATEMÁTICA PARA SUPABASE
+// OPERAÇÕES MATEMÁTICAS DA ENGINE
 // ==========================================
 
 function safeNumber(value,fallback=0){
@@ -347,7 +346,7 @@ function normalize(arr){
     return arr.map(v => v / total);
 }
 
-// 2. BUSCA DE TIMES DIRETO DO BANCO DE DADOS PERSISTENTE
+// 2. BUSCA DE TIMES DIRETO DO BANCO DE DADOS
 async function loadTeams(){
     const button = document.getElementById('btnLoad');
     const leagueId = document.getElementById('leagueId').value;
@@ -362,8 +361,7 @@ async function loadTeams(){
     button.innerText = 'Carregando Banco...';
 
     try {
-        // Coleta os times a partir do histórico já inserido na tabela
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('historico_jogos')
             .select('home_team, away_team')
             .eq('campeonato', targetConfig.name);
@@ -393,17 +391,17 @@ async function loadTeams(){
         if(away.options.length > 1) away.selectedIndex = 1;
 
         document.getElementById('matchPanel').classList.remove('hidden');
-        button.innerText = '✔ Dados Prontos';
+        button.innerText = '📊 Carregar Dados';
         button.classList.replace('bg-blue-600','bg-slate-700');
     } catch(error) {
         alert(error.message);
-        button.innerText = 'Carregar Dados';
+        button.innerText = '📊 Carregar Dados';
     } finally {
         button.disabled = false;
     }
 }
 
-// 3. EXECUÇÃO DA ANÁLISE QUANTITATIVA SEM CONSUMIR API PAGA
+// 3. EXECUÇÃO DA ANÁLISE QUANTITATIVA
 async function runAnalysis(){
     const loading = document.getElementById('loading');
     const dashboard = document.getElementById('dashboard');
@@ -427,16 +425,14 @@ async function runAnalysis(){
     try {
         loadingText.innerText = 'Calculando Métricas de Distribuição...';
 
-        // 1. Busca todo o histórico da liga para cálculo da Média da Liga e xG Real
-        const { data: allFixtures, error: errFixtures } = await supabase
+        const { data: allFixtures, error: errFixtures } = await supabaseClient
             .from('historico_jogos')
             .select('*')
             .eq('campeonato', targetConfig.name);
 
         if(errFixtures) throw new Error(errFixtures.message);
 
-        // 2. Busca H2H direto na tabela histórica por cruzamento de strings
-        const { data: rawH2H, error: errH2H } = await supabase
+        const { data: rawH2H, error: errH2H } = await supabaseClient
             .from('historico_jogos')
             .select('*')
             .eq('campeonato', targetConfig.name)
@@ -446,7 +442,6 @@ async function runAnalysis(){
 
         if(errH2H) throw new Error(errH2H.message);
 
-        // Processa médias dinâmicas locais para gerar a estrutura mock idêntica à antiga API
         const homeGames = allFixtures.filter(g => g.home_team === homeName);
         const homeScoredAvg = homeGames.reduce((s, g) => s + g.fthg, 0) / (homeGames.length || 1);
         const homeConcededAvg = homeGames.reduce((s, g) => s + g.ftag, 0) / (homeGames.length || 1);
@@ -455,7 +450,6 @@ async function runAnalysis(){
         const awayScoredAvg = awayGames.reduce((s, g) => s + g.ftag, 0) / (awayGames.length || 1);
         const awayConcededAvg = awayGames.reduce((s, g) => s + g.fthg, 0) / (awayGames.length || 1);
 
-        // Objetos Mocks estruturados cirurgicamente para não quebrar a lógica matemática do processEngine
         const mockedHomeStats = { goals: { for: { average: { home: homeScoredAvg } }, against: { average: { home: homeConcededAvg } } } };
         const mockedAwayStats = { goals: { for: { average: { away: awayScoredAvg } }, against: { average: { away: awayConcededAvg } } } };
         
@@ -465,7 +459,6 @@ async function runAnalysis(){
             goals: { home: h.fthg, away: h.ftag }
         }));
 
-        // Aciona o processador matemático original do seu sistema
         processEngine({
             homeId: homeName,
             awayId: awayName,
@@ -498,7 +491,7 @@ async function runAnalysis(){
     }
 }
 
-// 4. RETORNO DO CORE DO SEU MOTOR MATEMÁTICO ORIGINAL (Inalterado)
+// 4. CORE DO MOTOR MATEMÁTICO ORIGINAL
 function processEngine(data){
     const { homeId, awayId, inputs, homeStats, awayStats, fixtures, fixturesFromCache, h2h } = data;
     const homeScored = safeNumber(homeStats?.goals?.for?.average?.home,1.45);
@@ -624,6 +617,7 @@ function renderMatrix(matrix,visualLimit){
     }
 }
 
+// Renderizadores Visuais de Cotação e EV
 function renderMarketCard(market){
     const ev = calculateEV(market.probability,market.odd);
     const fairOdd = 1 / market.probability;
