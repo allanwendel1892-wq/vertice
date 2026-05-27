@@ -3,866 +3,472 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>QUANT ENGINE V5 PRO ELITE</title>
+    <title>QUANT ENGINE V5 – AUTOMATIZADO</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
-    
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
 
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background: #030712;
-            color: #f3f4f6;
-            overflow-x: hidden;
-        }
-        .font-mono-data {
-            font-family: 'JetBrains Mono', monospace;
-        }
-        .glass-panel {
-            background: rgba(17, 24, 39, 0.7);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-        }
-        .glass-card {
-            background: rgba(31, 41, 55, 0.4);
-            border: 1px solid rgba(255, 255, 255, 0.03);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .glass-card:hover {
-            border-color: rgba(16, 185, 129, 0.2);
-            transform: translateY(-2px);
-        }
-        .matrix-table td {
-            width: 56px;
-            height: 52px;
-            text-align: center;
-            border: 1px solid rgba(255, 255, 255, 0.02);
-            font-size: 0.75rem;
-            font-family: 'JetBrains Mono', monospace;
-            transition: all 0.2s ease;
-        }
-        .matrix-table td:hover {
-            filter: brightness(1.4);
-            transform: scale(1.05);
-            z-index: 10;
-            position: relative;
-            cursor: crosshair;
-        }
-        .value-bet-active {
-            background: rgba(16, 185, 129, 0.06);
-            border: 1px solid rgba(16, 185, 129, 0.35) !important;
-            box-shadow: inset 0 0 12px rgba(16, 185, 129, 0.05);
-        }
-        .no-bet-active {
-            background: rgba(239, 68, 68, 0.02);
-            border: 1px solid rgba(239, 68, 68, 0.15) !important;
-        }
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background: rgba(0, 0, 0, 0.2);
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: rgba(156, 163, 175, 0.2);
-            border-radius: 99px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-            background: rgba(156, 163, 175, 0.4);
-        }
-        .loader-ring {
-            border-top-color: #10b981;
-            animation: spin 0.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-        }
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
+        body { font-family: 'Inter', sans-serif; background: #030712; color: #f3f4f6; overflow-x: hidden; }
+        .font-mono-data { font-family: 'JetBrains Mono', monospace; }
+        .glass-panel { background: rgba(17, 24, 39, 0.7); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.05); }
+        .glass-card { background: rgba(31, 41, 55, 0.4); border: 1px solid rgba(255, 255, 255, 0.03); transition: all 0.3s ease; }
+        .glass-card:hover { border-color: rgba(16, 185, 129, 0.2); transform: translateY(-2px); }
+        .matrix-table td { width: 56px; height: 52px; text-align: center; border: 1px solid rgba(255, 255, 255, 0.02); font-size: 0.75rem; font-family: 'JetBrains Mono', monospace; }
+        .value-bet-active { background: rgba(16, 185, 129, 0.06); border: 1px solid rgba(16, 185, 129, 0.35) !important; }
+        .no-bet-active { background: rgba(239, 68, 68, 0.02); border: 1px solid rgba(239, 68, 68, 0.15) !important; }
+        .loader-ring { border-top-color: #10b981; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 
-<body class="min-h-screen p-4 md:p-8 custom-scrollbar">
-
+<body class="min-h-screen p-4 md:p-8">
 <div class="max-w-7xl mx-auto space-y-6">
 
-    <header class="glass-panel rounded-3xl p-6 md:p-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 relative overflow-hidden">
-        <div class="absolute top-0 right-0 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl pointer-events-none"></div>
-        <div class="absolute bottom-0 left-0 w-96 h-96 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none"></div>
-        
-        <div class="space-y-2 relative z-10">
-            <div class="flex flex-wrap items-center gap-3">
-                <h1 class="text-3xl md:text-4xl font-extrabold text-white tracking-tight font-mono-data">
-                    QUANT<span class="text-emerald-400 font-light">ENGINE</span> <span class="text-xs bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/20 tracking-widest font-bold">V5 PRO</span>
-                </h1>
-                <span class="px-3 py-1 rounded-full bg-slate-800 text-slate-400 text-[10px] uppercase tracking-[0.15em] font-bold border border-slate-700/50">
-                    Standalone Quantitative Terminal
-                </span>
-            </div>
-            <p class="text-slate-400 text-xs max-w-3xl leading-relaxed">
-                Algoritmo preditivo de alta precisão com distribuição bivariada de Poisson corrigida por Dixon-Coles, encolhimento bayesiano das médias latentes, fator de atenuação por recência exponencial profunda e cálculo automatizado de utilidade via critério fracionário de Kelly.
+    <header class="glass-panel rounded-3xl p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+            <h1 class="text-3xl font-extrabold text-white font-mono-data">
+                QUANT<span class="text-emerald-400 font-light">ENGINE</span> <span class="text-xs bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/20 font-bold">V5 CSV AUTOMATED</span>
+            </h1>
+            <p class="text-slate-400 text-xs mt-1">
+                Análise quantitativa baseada no processamento matricial de dados históricos extraídos em tempo real. Sem chaves de API.
             </p>
-        </div>
-        <div class="flex items-center gap-2 bg-slate-950/60 border border-slate-800 rounded-2xl px-4 py-2.5">
-            <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-            <span class="text-xs font-mono-data text-slate-400 uppercase tracking-wider">Engine Status: Ready</span>
         </div>
     </header>
 
-    <section class="glass-panel rounded-3xl p-6 space-y-5">
+    <section class="glass-panel rounded-3xl p-6 grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
-            <label class="block text-[11px] uppercase tracking-[0.2em] text-slate-400 font-bold mb-2">
-                Chave de Autenticação API-Sports
-            </label>
-            <input
-                id="apiKey"
-                type="password"
-                placeholder="Introduza o token x-apisports-key"
-                class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3.5 font-mono text-sm text-white focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/30 transition-all placeholder-slate-600"
-            />
+            <label class="block text-[11px] uppercase tracking-wider text-slate-400 font-bold mb-2">Temporada</label>
+            <select id="season" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3.5 text-sm text-white focus:outline-none">
+                <option value="2526">2025 / 2026</option>
+                <option value="2425">2024 / 2025</option>
+                <option value="2324">2023 / 2024</option>
+            </select>
         </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-                <label class="block text-[11px] uppercase tracking-[0.2em] text-slate-400 font-bold mb-2">
-                    Competição / Liga
-                </label>
-                <select id="leagueId" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3.5 text-sm text-slate-200 focus:outline-none focus:border-emerald-500">
-                    <option value="71">Brasileirão Série A (Brasil)</option>
-                    <option value="72">Brasileirão Série B (Brasil)</option>
-                    <option value="39">Premier League (Inglaterra)</option>
-                    <option value="140">La Liga (Espanha)</option>
-                    <option value="135">Serie A (Itália)</option>
-                    <option value="78">Bundesliga (Alemanha)</option>
-                    <option value="61">Ligue 1 (França)</option>
-                    <option value="94">Primeira Liga (Portugal)</option>
-                    <option value="2">UEFA Champions League</option>
-                    <option value="13">CONMEBOL Libertadores</option>
-                </select>
-            </div>
-
-            <div>
-                <label class="block text-[11px] uppercase tracking-[0.2em] text-slate-400 font-bold mb-2">
-                    Temporada / Época
-                </label>
-                <input
-                    id="season"
-                    type="number"
-                    value="2026"
-                    class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3.5 text-sm text-white font-mono-data focus:outline-none focus:border-emerald-500"
-                />
-            </div>
-
-            <div class="md:col-span-2 flex items-end">
-                <button
-                    id="btnLoad"
-                    onclick="loadTeams()"
-                    class="w-full bg-blue-600 hover:bg-blue-500 active:scale-[0.99] transition-all text-white font-extrabold uppercase tracking-widest text-xs p-4 rounded-2xl shadow-lg shadow-blue-600/15"
-                >
-                    Sincronizar Dados da Liga
-                </button>
-            </div>
+        <div>
+            <label class="block text-[11px] uppercase tracking-wider text-slate-400 font-bold mb-2">Liga / Competição</label>
+            <select id="league" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3.5 text-sm text-white focus:outline-none">
+                <option value="E0">Premier League (Inglaterra)</option>
+                <option value="E1">Championship (Inglaterra)</option>
+                <option value="SP1">La Liga (Espanha)</option>
+                <option value="D1">Bundesliga (Alemanha)</option>
+                <option value="I1">Serie A (Itália)</option>
+                <option value="F1">Ligue 1 (França)</option>
+            </select>
         </div>
-    </section>
-
-    <section id="matchPanel" class="hidden space-y-6">
-        <div class="glass-panel rounded-3xl p-6 grid grid-cols-1 md:grid-cols-2 gap-5">
-            <div>
-                <label class="block text-[11px] uppercase tracking-[0.2em] text-slate-400 font-bold mb-2">
-                    Equipa Mandante (Casa)
-                </label>
-                <select id="homeTeam" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3.5 text-sm text-blue-400 font-semibold focus:outline-none focus:border-blue-500"></select>
-            </div>
-
-            <div>
-                <label class="block text-[11px] uppercase tracking-[0.2em] text-slate-400 font-bold mb-2">
-                    Equipa Visitante (Fora)
-                </label>
-                <select id="awayTeam" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3.5 text-sm text-purple-400 font-semibold focus:outline-none focus:border-purple-500"></select>
-            </div>
-        </div>
-
-        <div class="glass-panel rounded-3xl p-6 space-y-5">
-            <h2 class="text-xs uppercase tracking-[0.2em] font-black text-slate-400 flex items-center gap-2">
-                <span>Mapeamento de Odds Atuais do Mercado</span>
-                <span class="w-1.5 h-1.5 rounded-full bg-slate-600"></span>
-                <span class="text-[10px] text-slate-500 font-normal normal-case">Introduza as linhas oferecidas pela casa de apostas</span>
-            </h2>
-
-            <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
-                <div>
-                    <label class="block text-[10px] uppercase text-slate-500 font-bold mb-1.5 text-center">Casa (1)</label>
-                    <input id="oddHome" type="number" step="0.01" value="2.10" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3.5 text-center font-mono-data font-bold text-emerald-400 text-lg focus:outline-none focus:border-emerald-500">
-                </div>
-
-                <div>
-                    <label class="block text-[10px] uppercase text-slate-500 font-bold mb-1.5 text-center">Empate (X)</label>
-                    <input id="oddDraw" type="number" step="0.01" value="3.30" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3.5 text-center font-mono-data font-bold text-emerald-400 text-lg focus:outline-none focus:border-emerald-500">
-                </div>
-
-                <div>
-                    <label class="block text-[10px] uppercase text-slate-500 font-bold mb-1.5 text-center">Fora (2)</label>
-                    <input id="oddAway" type="number" step="0.01" value="3.60" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3.5 text-center font-mono-data font-bold text-emerald-400 text-lg focus:outline-none focus:border-emerald-500">
-                </div>
-
-                <div>
-                    <label class="block text-[10px] uppercase text-slate-500 font-bold mb-1.5 text-center">Over 2.5</label>
-                    <input id="oddOver" type="number" step="0.01" value="1.90" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3.5 text-center font-mono-data font-bold text-emerald-400 text-lg focus:outline-none focus:border-emerald-500">
-                </div>
-
-                <div>
-                    <label class="block text-[10px] uppercase text-slate-500 font-bold mb-1.5 text-center">Ambas Marcam (BTTS)</label>
-                    <input id="oddBTTS" type="number" step="0.01" value="1.80" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3.5 text-center font-mono-data font-bold text-emerald-400 text-lg focus:outline-none focus:border-emerald-500">
-                </div>
-            </div>
-
-            <button
-                id="btnAnalyze"
-                onclick="runAnalysis()"
-                class="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 active:scale-[0.99] transition-all text-white font-black uppercase tracking-widest text-xs p-4 rounded-2xl shadow-lg shadow-emerald-600/20"
-            >
-                Processar Modelagem Quantitativa Bivariada
+        <div class="flex items-end">
+            <button id="btnLoadCSV" onclick="fetchAndParseCSV()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold uppercase tracking-wider text-xs p-4 rounded-2xl transition-all">
+                Sincronizar e Extrair CSV
             </button>
         </div>
     </section>
 
     <div id="loading" class="hidden text-center py-12 glass-panel rounded-3xl space-y-4">
-        <div class="loader-ring rounded-full h-14 w-14 border-4 border-slate-800 mx-auto"></div>
-        <p id="loadingText" class="text-emerald-400 text-xs uppercase tracking-[0.3em] font-mono-data font-bold">
-            A aceder ao barramento de dados...
-        </p>
+        <div class="loader-ring rounded-full h-12 w-12 border-4 border-slate-800 mx-auto"></div>
+        <p id="loadingText" class="text-emerald-400 text-xs uppercase tracking-widest font-mono-data font-bold">Invocando proxy interno...</p>
     </div>
 
+    <section id="matchPanel" class="hidden space-y-6">
+        <div class="glass-panel rounded-3xl p-6 grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div>
+                <label class="block text-[11px] uppercase tracking-wider text-slate-400 font-bold mb-2">Equipa Casa (Mandante)</label>
+                <select id="homeTeam" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3.5 text-sm text-blue-400 font-semibold focus:outline-none"></select>
+            </div>
+            <div>
+                <label class="block text-[11px] uppercase tracking-wider text-slate-400 font-bold mb-2">Equipa Fora (Visitante)</label>
+                <select id="awayTeam" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3.5 text-sm text-purple-400 font-semibold focus:outline-none"></select>
+            </div>
+        </div>
+
+        <div class="glass-panel rounded-3xl p-6 space-y-5">
+            <h2 class="text-xs uppercase tracking-widest font-black text-slate-400">Linhas de Odds do Mercado</h2>
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+                <div>
+                    <label class="block text-[10px] uppercase text-slate-500 font-bold mb-1.5 text-center">Casa (1)</label>
+                    <input id="oddHome" type="number" step="0.01" value="2.10" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3.5 text-center font-mono-data font-bold text-emerald-400 text-lg focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-[10px] uppercase text-slate-500 font-bold mb-1.5 text-center">Empate (X)</label>
+                    <input id="oddDraw" type="number" step="0.01" value="3.30" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3.5 text-center font-mono-data font-bold text-emerald-400 text-lg focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-[10px] uppercase text-slate-500 font-bold mb-1.5 text-center">Fora (2)</label>
+                    <input id="oddAway" type="number" step="0.01" value="3.60" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3.5 text-center font-mono-data font-bold text-emerald-400 text-lg focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-[10px] uppercase text-slate-500 font-bold mb-1.5 text-center">Over 2.5</label>
+                    <input id="oddOver" type="number" step="0.01" value="1.95" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3.5 text-center font-mono-data font-bold text-emerald-400 text-lg focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-[10px] uppercase text-slate-500 font-bold mb-1.5 text-center">BTTS (Sim)</label>
+                    <input id="oddBTTS" type="number" step="0.01" value="1.80" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3.5 text-center font-mono-data font-bold text-emerald-400 text-lg focus:outline-none">
+                </div>
+            </div>
+
+            <button onclick="calculateModel()" class="w-full bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-black uppercase tracking-widest text-xs p-4 rounded-2xl shadow-lg transition-all">
+                Executar Análise de Distribuição Poisson
+            </button>
+        </div>
+    </section>
+
     <section id="dashboard" class="hidden space-y-6">
-        
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            
             <div class="glass-panel rounded-3xl p-6 flex flex-col justify-between space-y-5">
                 <div>
-                    <h2 class="text-xs uppercase tracking-widest font-black text-slate-400 border-b border-slate-800 pb-3 flex justify-between items-center">
-                        <span>Média xG Projetada</span>
-                        <span class="text-[10px] text-slate-500 font-mono-data">λ & μ Estáveis</span>
-                    </h2>
-                    
+                    <h2 class="text-xs uppercase tracking-widest font-black text-slate-400 border-b border-slate-800 pb-3">Golos Esperados Calculados (xG)</h2>
                     <div class="space-y-4 mt-4">
                         <div>
-                            <div class="flex justify-between items-end mb-1.5">
-                                <span id="homeNameRes" class="font-bold text-sm text-blue-400 truncate max-w-[180px]">Mandante</span>
-                                <span id="homeXg" class="text-3xl font-black text-white font-mono-data tracking-tight">0.00</span>
+                            <div class="flex justify-between items-end mb-1">
+                                <span id="homeLabel" class="font-bold text-sm text-blue-400">Casa</span>
+                                <span id="homeXG" class="text-3xl font-black font-mono-data text-white">0.00</span>
                             </div>
-                            <div class="w-full bg-slate-900 rounded-full h-2.5 overflow-hidden border border-slate-800">
-                                <div id="homeBar" class="bg-gradient-to-r from-blue-600 to-blue-400 h-full rounded-full transition-all duration-500"></div>
+                            <div class="w-full bg-slate-900 rounded-full h-2 border border-slate-800 overflow-hidden">
+                                <div id="homeBar" class="bg-blue-500 h-full transition-all duration-500"></div>
                             </div>
                         </div>
-
                         <div>
-                            <div class="flex justify-between items-end mb-1.5">
-                                <span id="awayNameRes" class="font-bold text-sm text-purple-400 truncate max-w-[180px]">Visitante</span>
-                                <span id="awayXg" class="text-3xl font-black text-white font-mono-data tracking-tight">0.00</span>
+                            <div class="flex justify-between items-end mb-1">
+                                <span id="awayLabel" class="font-bold text-sm text-purple-400">Fora</span>
+                                <span id="awayXG" class="text-3xl font-black font-mono-data text-white">0.00</span>
                             </div>
-                            <div class="w-full bg-slate-900 rounded-full h-2.5 overflow-hidden border border-slate-800">
-                                <div id="awayBar" class="bg-gradient-to-r from-purple-600 to-purple-400 h-full rounded-full transition-all duration-500"></div>
+                            <div class="w-full bg-slate-900 rounded-full h-2 border border-slate-800 overflow-hidden">
+                                <div id="awayBar" class="bg-purple-500 h-full transition-all duration-500"></div>
                             </div>
                         </div>
                     </div>
                 </div>
-
-                <div id="statsBox" class="text-xs text-slate-400 border-t border-slate-800 pt-4 space-y-2 font-mono-data">
-                    </div>
+                <div id="leagueStats" class="text-xs text-slate-500 font-mono-data pt-3 border-t border-slate-800 space-y-1"></div>
             </div>
 
             <div class="glass-panel rounded-3xl p-6 md:col-span-2 space-y-4">
-                <h2 class="text-xs uppercase tracking-widest font-black text-slate-400 border-b border-slate-800 pb-3 flex justify-between items-center">
-                    <span>Oportunidades de Valor Esperado (EV)</span>
-                    <span class="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded font-mono-data font-bold">Edge Mínimo > +2.0%</span>
-                </h2>
-                
+                <h2 class="text-xs uppercase tracking-widest font-black text-slate-400 border-b border-slate-800 pb-3">Vantagem Matemática Comercial (+EV)</h2>
                 <div id="marketCards" class="grid grid-cols-1 sm:grid-cols-3 gap-4"></div>
                 <div id="goalCards" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
             </div>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            
-            <div class="glass-panel rounded-3xl p-6 lg:col-span-7 overflow-hidden flex flex-col">
-                <h2 class="text-xs uppercase tracking-widest font-black text-slate-400 border-b border-slate-800 pb-3 mb-4 flex justify-between items-center">
-                    <span>Matriz de Distribuição Bivariada Exata</span>
-                    <span class="text-[10px] text-slate-500 font-mono-data">Filtro de Visualização: 5x5</span>
-                </h2>
-                
-                <div class="overflow-x-auto custom-scrollbar rounded-2xl bg-slate-950/60 p-2 border border-slate-900">
-                    <table class="w-full matrix-table">
-                        <thead>
-                            <tr id="matrixHead"></tr>
-                        </thead>
-                        <tbody id="matrixBody"></tbody>
-                    </table>
-                </div>
-                <div class="mt-3 flex gap-4 text-[10px] text-slate-500 justify-center font-mono-data">
-                    <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded bg-blue-950/40 border border-blue-800/40"></span>Predomínio Casa</div>
-                    <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded bg-slate-900 border border-slate-700"></span>Zonas de Empate</div>
-                    <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded bg-purple-950/40 border border-purple-800/40"></span>Predomínio Fora</div>
-                </div>
+            <div class="glass-panel rounded-3xl p-6 lg:col-span-7 overflow-x-auto">
+                <h2 class="text-xs uppercase tracking-widest font-black text-slate-400 mb-4">Matriz Probabilística de Placar Exato (5x5)</h2>
+                <table class="w-full matrix-table">
+                    <thead><tr id="matrixHead"></tr></thead>
+                    <tbody id="matrixBody"></tbody>
+                </table>
             </div>
-
             <div class="glass-panel rounded-3xl p-6 lg:col-span-5 flex flex-col justify-between">
                 <div>
-                    <h2 class="text-xs uppercase tracking-widest font-black text-slate-400 border-b border-slate-800 pb-3 mb-4">
-                        Diretriz Operacional do Modelo
-                    </h2>
-                    <div id="report" class="space-y-4"></div>
+                    <h2 class="text-xs uppercase tracking-widest font-black text-slate-400 border-b border-slate-800 pb-3 mb-4">Diretriz de Entrada Recomendada</h2>
+                    <div id="reportContainer"></div>
                 </div>
             </div>
         </div>
-
     </section>
 </div>
 
 <script>
-    // Configurações Globais Estruturadas
-    const CONFIG = {
-        cacheTtl: 1000 * 60 * 60 * 6, // TTL Cache de 6 horas
-        defaultBaseHomeAvg: 1.45,     // Médias globais de fallback neutro
-        defaultBaseAwayAvg: 1.15,
-        shrinkageFactor: 0.18,        // Coeficiente de encolhimento bayesiano (Bayesian Shrinkage)
-        dixonColesRho: -0.075,        // Parâmetro de correção de dependência de golos baixos
-        minXgLimit: 0.20,              // Fronteira de segurança para evitar underflow analítico
-        valueBetThreshold: 0.02,       // Vantagem matemática de corte (+2.0% EV)
-        maxKellyAllocation: 0.05       // Limite estrito de alocação de banca por entrada (5%)
-    };
+    let csvMatches = [];
+    let uniqueTeams = [];
+    let leagueAverages = { homeAvg: 1.40, awayAvg: 1.15 };
 
-    // Inicialização do Token no LocalStorage de forma limpa
-    document.addEventListener('DOMContentLoaded', () => {
-        const cachedKey = localStorage.getItem('quant_api_key_v5');
-        if (cachedKey) {
-            document.getElementById('apiKey').value = cachedKey;
-        }
-    });
+    // Parser manual ultra-leve para ignorar quebras de linhas complexas do Excel/CSV do site
+    function parseCSVText(text) {
+        const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+        if (lines.length === 0) return [];
+        
+        const headers = lines[0].split(',');
+        const homeIdx = headers.indexOf('HomeTeam');
+        const awayIdx = headers.indexOf('AwayTeam');
+        const fthgIdx = headers.indexOf('FTHG');
+        const ftagIdx = headers.indexOf('FTAG');
 
-    // Sanitização e Coerção Numérica Defensiva
-    function safeNumber(value, fallback = 0) {
-        if (value === null || value === undefined) return fallback;
-        const parsed = parseFloat(value);
-        return isNaN(parsed) ? fallback : parsed;
-    }
-
-    // Fatorial Iterativo Pré-otimizado de Alto Desempenho
-    const factorialCache = [1, 1, 2, 6, 24, 120, 720, 5040, 40320, 362880, 3628800, 39916800, 479001600];
-    function factorial(n) {
-        if (n < 0) return 1;
-        if (n < factorialCache.length) return factorialCache[n];
-        let res = factorialCache[factorialCache.length - 1];
-        for (let i = factorialCache.length; i <= n; i++) {
-            res *= i;
-        }
-        return res;
-    }
-
-    // Cálculo da Distribuição Discreta de Poisson
-    function poisson(k, lambda) {
-        return (Math.pow(lambda, k) * Math.exp(-lambda)) / factorial(k);
-    }
-
-    // Ajuste de Correção Bivariada Dixon-Coles para Interdependência Indevida
-    function dixonColes(x, y, lambda, mu, rho = CONFIG.dixonColesRho) {
-        if (x === 0 && y === 0) return Math.max(0, 1 - (lambda * mu * rho));
-        if (x === 0 && y === 1) return Math.max(0, 1 + (lambda * rho));
-        if (x === 1 && y === 0) return Math.max(0, 1 + (mu * rho));
-        if (x === 1 && y === 1) return Math.max(0, 1 - rho);
-        return 1;
-    }
-
-    // Equação de Valor Esperado Preditivo (Expected Value)
-    function calculateEV(probability, odd) {
-        return (probability * odd) - 1;
-    }
-
-    // Gestão de Risco Kelly Criterion Fracionária Integrada
-    function calculateKelly(probability, odd) {
-        if (odd <= 1) return 0;
-        const b = odd - 1;
-        const q = 1 - probability;
-        const kelly = ((b * probability) - q) / b;
-        return Math.max(0, kelly);
-    }
-
-    // Normalização Estocástica Totalvetorial
-    function normalize(array) {
-        const sum = array.reduce((acc, v) => acc + v, 0);
-        return sum === 0 ? array.map(() => 0) : array.map(v => v / sum);
-    }
-
-    // Abstrações Camada Cache Local (SessionStorage)
-    function setCache(key, data) {
-        try {
-            const payload = { timestamp: Date.now(), data };
-            sessionStorage.setItem(key, JSON.stringify(payload));
-        } catch (e) { console.warn("Falha ao injetar cache local: ", e); }
-    }
-
-    function getCache(key) {
-        try {
-            const raw = sessionStorage.getItem(key);
-            if (!raw) return null;
-            const parsed = JSON.parse(raw);
-            if (Date.now() - parsed.timestamp > CONFIG.cacheTtl) {
-                sessionStorage.removeItem(key);
-                return null;
+        const parsed = [];
+        for (let i = 1; i < lines.length; i++) {
+            const cols = lines[i].split(',');
+            if (cols[homeIdx] && cols[awayIdx]) {
+                parsed.push({
+                    HomeTeam: cols[homeIdx].trim(),
+                    AwayTeam: cols[awayIdx].trim(),
+                    FTHG: parseFloat(cols[fthgIdx]),
+                    FTAG: parseFloat(cols[ftagIdx])
+                });
             }
-            return parsed.data;
-        } catch (e) { return null; }
-    }
-
-    // Cliente HTTP Abstrato para a API-Sports
-    async function fetchAPI(endpoint) {
-        const key = document.getElementById('apiKey').value.trim();
-        if (!key) throw new Error('Token de API ausente ou inválido.');
-        
-        localStorage.setItem('quant_api_key_v5', key);
-        
-        const response = await fetch(`https://v3.football.api-sports.io/${endpoint}`, {
-            method: 'GET',
-            headers: { 'x-apisports-key': key }
-        });
-
-        if (response.status === 429) throw new Error('Quota diária excedida na API-Sports (Rate Limit).');
-        if (!response.ok) throw new Error(`Falha HTTP Crítica: Status ${response.status}`);
-
-        const payload = await response.json();
-        if (payload.errors && Object.keys(payload.errors).length > 0) {
-            throw new Error(`Erro API-Sports: ${JSON.stringify(payload.errors)}`);
         }
-        return payload;
+        return parsed;
     }
 
-    // Processamento Dinâmico de Elencos da Competição
-    async function loadTeams() {
-        const btn = document.getElementById('btnLoad');
-        const leagueId = document.getElementById('leagueId').value;
-        const season = document.getElementById('season').value;
-
-        btn.disabled = true;
-        btn.innerText = 'A processar pipeline...';
-
-        try {
-            const cacheKey = `teams_${leagueId}_${season}`;
-            let teams = getCache(cacheKey);
-
-            if (!teams) {
-                const res = await fetchAPI(`teams?league=${leagueId}&season=${season}`);
-                if (!res.response || res.response.length === 0) throw new Error('Nenhuma equipa localizada para estes parâmetros.');
-                
-                teams = res.response.map(item => ({
-                    id: item.team.id,
-                    name: item.team.name
-                }));
-                setCache(cacheKey, teams);
-            }
-
-            teams.sort((a, b) => a.name.localeCompare(b.name));
-
-            const homeSelect = document.getElementById('homeTeam');
-            const awaySelect = document.getElementById('awayTeam');
-            homeSelect.innerHTML = '';
-            awaySelect.innerHTML = '';
-
-            teams.forEach(t => {
-                const opt = `<option value="${t.id}">${t.name}</option>`;
-                homeSelect.insertAdjacentHTML('beforeend', opt);
-                awaySelect.insertAdjacentHTML('beforeend', opt);
-            });
-
-            if (awaySelect.options.length > 1) awaySelect.selectedIndex = 1;
-
-            document.getElementById('matchPanel').classList.remove('hidden');
-            btn.innerText = '✔ Base Sincronizada';
-            btn.className = btn.className.replace('bg-blue-600 hover:bg-blue-500', 'bg-slate-800 text-slate-400 border border-slate-700 pointer-events-none');
-        } catch (err) {
-            alert(err.message);
-            btn.innerText = 'Sincronizar Dados da Liga';
-            btn.disabled = false;
-        }
-    }
-
-    // Agregação de Estatísticas Estruturadas por Equipa
-    async function getTeamStatistics(leagueId, season, teamId) {
-        const cacheKey = `stats_${leagueId}_${season}_${teamId}`;
-        let stats = getCache(cacheKey);
-        if (stats) return stats;
-
-        const res = await fetchAPI(`teams/statistics?league=${leagueId}&season=${season}&team=${teamId}`);
-        stats = res.response || null;
-        setCache(cacheKey, stats);
-        return stats;
-    }
-
-    // Resgate Histórico de Calendário/Jogos Concluídos
-    async function getLeagueFixtures(leagueId, season) {
-        const cacheKey = `fixtures_${leagueId}_${season}`;
-        let fixtures = getCache(cacheKey);
-        if (fixtures) return { data: fixtures, fromCache: true };
-
-        const res = await fetchAPI(`fixtures?league=${leagueId}&season=${season}&status=FT`);
-        fixtures = res.response || [];
-        setCache(cacheKey, fixtures);
-        return { data: fixtures, fromCache: false };
-    }
-
-    // Resgate e Ordenação Cronológica Estrita de Head-to-Head (H2H)
-    async function getH2H(homeId, awayId) {
-        const cacheKey = `h2h_${homeId}_${awayId}`;
-        let data = getCache(cacheKey);
-        if (data) return data;
-
-        const res = await fetchAPI(`fixtures/headtohead?h2h=${homeId}-${awayId}`);
-        const raw = res.response || [];
-        
-        data = raw
-            .sort((a, b) => new Date(b.fixture.date) - new Date(a.fixture.date))
-            .slice(0, 6);
-            
-        setCache(cacheKey, data);
-        return data;
-    }
-
-    // Coordenação do Fluxo de Execução da Análise Preditiva
-    async function runAnalysis() {
+    // Busca o arquivo diretamente usando o proxy da Vercel criado no passo 1
+    async function fetchAndParseCSV() {
+        const button = document.getElementById('btnLoadCSV');
         const loading = document.getElementById('loading');
+        const matchPanel = document.getElementById('matchPanel');
         const dashboard = document.getElementById('dashboard');
-        const loadingText = document.getElementById('loadingText');
-        const btn = document.getElementById('btnAnalyze');
-
-        const leagueId = document.getElementById('leagueId').value;
+        
         const season = document.getElementById('season').value;
-        const homeSelect = document.getElementById('homeTeam');
-        const awaySelect = document.getElementById('awayTeam');
+        const league = document.getElementById('league').value;
+        const targetCsvUrl = `https://www.football-data.co.uk/mmz4281/${season}/${league}.csv`;
 
-        const homeId = homeSelect.value;
-        const awayId = awaySelect.value;
-
-        if (homeId === awayId) return alert('Erro Operacional: Escolha equipas distintas para o confronto.');
-
-        btn.disabled = true;
+        button.disabled = true;
+        matchPanel.classList.add('hidden');
         dashboard.classList.add('hidden');
         loading.classList.remove('hidden');
 
         try {
-            loadingText.innerText = 'Etapa 1: Coletando estatísticas latentes...';
-            const [homeStats, awayStats, fixturesResult, h2h] = await Promise.all([
-                getTeamStatistics(leagueId, season, homeId),
-                getTeamStatistics(leagueId, season, awayId),
-                getLeagueFixtures(leagueId, season),
-                getH2H(homeId, awayId)
-            ]);
-
-            loadingText.innerText = 'Etapa 2: Executando matriz preditiva...';
+            const response = await fetch(`/api/fetch-football?url=${encodeURIComponent(targetCsvUrl)}`);
+            if (!response.ok) throw new Error('Não foi possível obter os dados do servidor Proxy.');
             
-            processEngine({
-                homeId, awayId,
-                inputs: {
-                    homeName: homeSelect.options[homeSelect.selectedIndex].text,
-                    awayName: awaySelect.options[awaySelect.selectedIndex].text,
-                    odds: {
-                        home: safeNumber(document.getElementById('oddHome').value, 2.0),
-                        draw: safeNumber(document.getElementById('oddDraw').value, 3.3),
-                        away: safeNumber(document.getElementById('oddAway').value, 3.5),
-                        over25: safeNumber(document.getElementById('oddOver').value, 1.9),
-                        btts: safeNumber(document.getElementById('oddBTTS').value, 1.8)
-                    }
-                },
-                homeStats, awayStats,
-                fixtures: fixturesResult.data,
-                fixturesFromCache: fixturesResult.fromCache,
-                h2h
-            });
+            const rawText = await response.text();
+            csvMatches = parseCSVText(rawText);
 
-            loading.classList.add('hidden');
-            dashboard.classList.remove('hidden');
-            dashboard.scrollIntoView({ behavior: 'smooth' });
-        } catch (err) {
-            alert(err.message);
-            loading.classList.add('hidden');
-        } finally {
-            btn.disabled = false;
-        }
-    }
+            if (csvMatches.length === 0) throw new Error('O arquivo CSV foi lido, mas nenhum dado válido de partida foi processado.');
 
-    // Núcleo Algorítmico Preditivo (Process Engine)
-    function processEngine(payload) {
-        const { homeId, awayId, inputs, homeStats, awayStats, fixtures, fixturesFromCache, h2h } = payload;
+            // Extrai times únicos
+            const teamSet = new Set();
+            let totalHomeGoals = 0, totalAwayGoals = 0, validMatches = 0;
 
-        // Extração de médias brutas por amostragem de mando de campo
-        const homeScored = safeNumber(homeStats?.goals?.for?.average?.home, CONFIG.defaultBaseHomeAvg);
-        const homeConceded = safeNumber(homeStats?.goals?.against?.average?.home, CONFIG.defaultBaseAwayAvg);
-        const awayScored = safeNumber(awayStats?.goals?.for?.average?.away, CONFIG.defaultBaseAwayAvg);
-        const awayConceded = safeNumber(awayStats?.goals?.against?.average?.away, CONFIG.defaultBaseHomeAvg);
-
-        let leagueHomeAvg = CONFIG.defaultBaseHomeAvg;
-        let leagueAwayAvg = CONFIG.defaultBaseAwayAvg;
-
-        // Cálculo dinâmico das médias reais de golos da liga corrente
-        if (fixtures && fixtures.length > 10) {
-            let totalH = 0, totalA = 0, count = 0;
-            fixtures.forEach(f => {
-                const h = f?.goals?.home;
-                const a = f?.goals?.away;
-                if (h !== null && a !== null && h !== undefined && a !== undefined) {
-                    totalH += h; totalA += a; count++;
+            csvMatches.forEach(m => {
+                if (m.HomeTeam && m.AwayTeam && !isNaN(m.FTHG) && !isNaN(m.FTAG)) {
+                    teamSet.add(m.HomeTeam);
+                    teamSet.add(m.AwayTeam);
+                    totalHomeGoals += m.FTHG;
+                    totalAwayGoals += m.FTAG;
+                    validMatches++;
                 }
             });
-            if (count > 0) {
-                leagueHomeAvg = totalH / count;
-                leagueAwayAvg = totalA / count;
-            }
-        }
 
-        // Fatores Relativos de Ataque e Defesa (Capacidade Latente)
-        const attackHome = homeScored / leagueHomeAvg;
-        const defenseHome = homeConceded / leagueAwayAvg;
-        const attackAway = awayScored / leagueAwayAvg;
-        const defenseAway = awayConceded / leagueHomeAvg;
+            uniqueTeams = Array.from(teamSet).sort();
+            leagueAverages.homeAvg = totalHomeGoals / validMatches;
+            leagueAverages.awayAvg = totalAwayGoals / validMatches;
 
-        // Atribuição inicial de parâmetros básicos de intensidade xG (Poisson Lambda & Mu)
-        let lambda = attackHome * defenseAway * leagueHomeAvg;
-        let mu = attackAway * defenseHome * leagueAwayAvg;
+            // Injeta nos selects
+            const homeSel = document.getElementById('homeTeam');
+            const awaySel = document.getElementById('awayTeam');
+            homeSel.innerHTML = '';
+            awaySel.innerHTML = '';
 
-        // Aplicação de Bayesian Shrinkage (Controle de regressão à média para amostras curtas)
-        lambda = (lambda * (1 - CONFIG.shrinkageFactor)) + (leagueHomeAvg * CONFIG.shrinkageFactor);
-        mu = (mu * (1 - CONFIG.shrinkageFactor)) + (leagueAwayAvg * CONFIG.shrinkageFactor);
-
-        // Ajuste Fino por Recência Exponencial sobre Amostragem Histórica H2H
-        if (h2h && h2h.length > 0) {
-            let weightedHome = 0, weightedAway = 0, totalWeight = 0;
-            h2h.forEach((match, index) => {
-                // Decaimento exponencial: confrontos mais distantes perdem relevância estatística rapidamente
-                const weight = Math.exp(-index * 0.45);
-                const isHome = match.teams.home.id == homeId;
-                const hG = isHome ? safeNumber(match.goals.home) : safeNumber(match.goals.away);
-                const aG = isHome ? safeNumber(match.goals.away) : safeNumber(match.goals.home);
-
-                weightedHome += hG * weight;
-                weightedAway += aG * weight;
-                totalWeight += weight;
+            uniqueTeams.forEach(team => {
+                const opt = `<option value="${team}">${team}</option>`;
+                homeSel.insertAdjacentHTML('beforeend', opt);
+                awaySel.insertAdjacentHTML('beforeend', opt);
             });
 
-            if (totalWeight > 0) {
-                const h2hHomeAvg = weightedHome / totalWeight;
-                const h2hAwayAvg = weightedAway / totalWeight;
-                // Injeção de 5% de peso estrutural histórico direto nos parâmetros estáveis de xG
-                lambda = (lambda * 0.95) + (h2hHomeAvg * 0.05);
-                mu = (mu * 0.95) + (h2hAwayAvg * 0.05);
-            }
+            if (awaySel.options.length > 1) awaySel.selectedIndex = 1;
+
+            loading.classList.add('hidden');
+            matchPanel.classList.remove('hidden');
+            button.disabled = false;
+
+        } catch (error) {
+            alert('Falha na extração de dados: ' + error.message);
+            loading.classList.add('hidden');
+            button.disabled = false;
         }
-
-        // Bloqueio preventivo contra subfluxo numérico (underflow)
-        lambda = Math.max(CONFIG.minXgLimit, lambda);
-        mu = Math.max(CONFIG.minXgLimit, mu);
-
-        // Atualização reativa de elementos estruturais da interface
-        document.getElementById('homeNameRes').innerText = inputs.homeName;
-        document.getElementById('awayNameRes').innerText = inputs.awayName;
-        document.getElementById('homeXg').innerText = lambda.toFixed(2);
-        document.getElementById('awayXg').innerText = mu.toFixed(2);
-        document.getElementById('homeBar').style.width = `${Math.min(lambda * 25, 100)}%`;
-        document.getElementById('awayBar').style.width = `${Math.min(mu * 25, 100)}%`;
-
-        // Geração e Processamento de Limites da Matriz Bidimensional
-        const matrixLimit = 12; // Matriz oculta expandida para estabilidade matemática
-        const visualLimit = 5;  // Renderização truncada em 5x5 para otimização visual de tela
-        let matrix = [];
-
-        let probHome = 0, probDraw = 0, probAway = 0, probUnder25 = 0, probBTTS = 0;
-
-        // Construção da malha bivariada combinada
-        for (let x = 0; x <= matrixLimit; x++) {
-            matrix[x] = [];
-            for (let y = 0; y <= matrixLimit; y++) {
-                const pX = poisson(x, lambda);
-                const pY = poisson(y, mu);
-                const adj = dixonColes(x, y, lambda, mu);
-                matrix[x][y] = pX * pY * adj;
-            }
-        }
-
-        // Integração de Volume e Normalização Unitária Estrita
-        let totalMatrixVolume = 0;
-        for (let x = 0; x <= matrixLimit; x++) {
-            for (let y = 0; y <= matrixLimit; y++) {
-                totalMatrixVolume += matrix[x][y];
-            }
-        }
-        
-        // Agregação probabilística refinada por partição de cenários
-        for (let x = 0; x <= matrixLimit; x++) {
-            for (let y = 0; y <= matrixLimit; y++) {
-                matrix[x][y] /= totalMatrixVolume;
-                const p = matrix[x][y];
-
-                if (x > y) probHome += p;
-                else if (x === y) probDraw += p;
-                else probAway += p;
-
-                if ((x + y) < 3) probUnder25 += p;
-                if (x > 0 && y > 0) probBTTS += p;
-            }
-        }
-
-        // Vetores de Normalização Final
-        [probHome, probDraw, probAway] = normalize([probHome, probDraw, probAway]);
-        let probOver25 = 1 - probUnder25;
-        const normalizedGoals = normalize([probUnder25, probOver25]);
-        probUnder25 = normalizedGoals[0];
-        probOver25 = normalizedGoals[1];
-
-        // Renderização Visual da Matriz
-        renderMatrix(matrix, visualLimit);
-
-        // Estruturação de Métricas por Linhas de Mercado Comercial
-        const mainMarkets = [
-            { name: `Vitória - ${inputs.homeName}`, probability: probHome, odd: inputs.odds.home },
-            { name: 'Empate (X)', probability: probDraw, odd: inputs.odds.draw },
-            { name: `Vitória - ${inputs.awayName}`, probability: probAway, odd: inputs.odds.away }
-        ];
-
-        const goalMarkets = [
-            { name: 'Mais de 2.5 Golos (Over)', probability: probOver25, odd: inputs.odds.over25 },
-            { name: 'Ambas Marcam: Sim (BTTS)', probability: probBTTS, odd: inputs.odds.btts }
-        ];
-
-        // Output de Componentes Visuais na Tela
-        document.getElementById('marketCards').innerHTML = mainMarkets.map(renderMarketCard).join('');
-        document.getElementById('goalCards').innerHTML = goalMarkets.map(renderMarketCard).join('');
-
-        // Painel Informativo Técnico Integrado
-        document.getElementById('statsBox').innerHTML = `
-            <div class="flex justify-between"><span>Média Casa da Liga:</span><span class="text-white font-bold">${leagueHomeAvg.toFixed(2)}</span></div>
-            <div class="flex justify-between"><span>Média Fora da Liga:</span><span class="text-white font-bold">${leagueAwayAvg.toFixed(2)}</span></div>
-            <div class="flex justify-between"><span>Amostras H2H Reais:</span><span class="text-white font-bold">${h2h.length} conj.</span></div>
-            <div class="flex justify-between"><span>Fator Encolhimento:</span><span class="text-white font-bold">18% (Bayes)</span></div>
-            <div class="flex justify-between"><span>Barramento Base:</span><span class="${fixturesFromCache ? 'text-emerald-400' : 'text-amber-400'} font-bold">${fixturesFromCache ? 'Memória Cache' : 'API Live HTTP'}</span></div>
-        `;
-
-        buildReport([...mainMarkets, ...goalMarkets]);
     }
 
-    // Renderizador Estrutural da Matriz Digital
-    function renderMatrix(matrix, limit) {
+    // Fatorial estável para Poisson
+    function getFactorial(n) {
+        if (n <= 1) return 1;
+        let res = 1;
+        for (let i = 2; i <= n; i++) res *= i;
+        return res;
+    }
+
+    function poissonProb(k, lambda) {
+        return (Math.pow(lambda, k) * Math.exp(-lambda)) / getFactorial(k);
+    }
+
+    // Executa a modelagem baseada exclusivamente nos registros do CSV carregado
+    function calculateModel() {
+        const homeTeam = document.getElementById('homeTeam').value;
+        const awayTeam = document.getElementById('awayTeam').value;
+
+        if (homeTeam === awayTeam) return alert('Selecione equipas diferentes para o confronto.');
+
+        // Calcular médias específicas das duas equipes operadas usando a base histórica do CSV
+        let homeScoredTotal = 0, homeConcededTotal = 0, homeGames = 0;
+        let awayScoredTotal = 0, awayConcededTotal = 0, awayGames = 0;
+
+        csvMatches.forEach(m => {
+            if (!isNaN(m.FTHG) && !isNaN(m.FTAG)) {
+                if (m.HomeTeam === homeTeam) {
+                    homeScoredTotal += m.FTHG;
+                    homeConcededTotal += m.FTAG;
+                    homeGames++;
+                }
+                if (m.AwayTeam === awayTeam) {
+                    awayScoredTotal += m.FTAG;
+                    awayConcededTotal += m.FTHG;
+                    awayGames++;
+                }
+            }
+        });
+
+        // Médias brutas por partida
+        const hScoredAvg = homeGames > 0 ? (homeScoredTotal / homeGames) : leagueAverages.homeAvg;
+        const hConcededAvg = homeGames > 0 ? (homeConcededTotal / homeGames) : leagueAverages.awayAvg;
+        const aScoredAvg = awayGames > 0 ? (awayScoredTotal / awayGames) : leagueAverages.awayAvg;
+        const aConcededAvg = awayGames > 0 ? (awayConcededTotal / awayGames) : leagueAverages.homeAvg;
+
+        // Força de Ataque e Defesa Relativas
+        const attackHome = hScoredAvg / leagueAverages.homeAvg;
+        const defenseHome = hConcededAvg / leagueAverages.awayAvg;
+        const attackAway = aScoredAvg / leagueAverages.awayAvg;
+        const defenseAway = aConcededAvg / leagueAverages.homeAvg;
+
+        // Parâmetros Lambda e Mu Finais para a distribuição bivariada
+        let lambda = attackHome * defenseAway * leagueAverages.homeAvg;
+        let mu = attackAway * defenseHome * leagueAverages.awayAvg;
+
+        // Segurança contra underflow
+        lambda = Math.max(0.20, lambda);
+        mu = Math.max(0.20, mu);
+
+        // Atualização gráfica das métricas de xG
+        document.getElementById('homeLabel').innerText = homeTeam;
+        document.getElementById('awayLabel').innerText = awayTeam;
+        document.getElementById('homeXG').innerText = lambda.toFixed(2);
+        document.getElementById('awayXG').innerText = mu.toFixed(2);
+        document.getElementById('homeBar').style.width = `${Math.min(lambda * 25, 100)}%`;
+        document.getElementById('awayBar').style.width = `${Math.min(mu * 25, 100)}%`;
+        document.getElementById('leagueStats').innerHTML = `
+            <div>Média Geral Casa da Liga: <strong>${leagueAverages.homeAvg.toFixed(2)}</strong></div>
+            <div>Média Geral Fora da Liga: <strong>${leagueAverages.awayAvg.toFixed(2)}</strong></div>
+            <div>Jogos computados no cálculo: <strong>${csvMatches.length} partidas</strong></div>
+        `;
+
+        // Matriz de probabilidades
+        const limit = 5;
+        let matrix = [];
+        let pHome = 0, pDraw = 0, pAway = 0, pUnder = 0, pBTTS = 0;
+
+        for (let x = 0; x <= 10; x++) {
+            matrix[x] = [];
+            for (let y = 0; y <= 10; y++) {
+                const p = poissonProb(x, lambda) * poissonProb(y, mu);
+                matrix[x][y] = p;
+
+                if (x > y) pHome += p;
+                else if (x === y) pDraw += p;
+                else pAway += p;
+
+                if ((x + y) < 2.5) pUnder += p;
+                if (x > 0 && y > 0) pBTTS += p;
+            }
+        }
+
+        // Renderiza matriz truncada de visualização na tela
         const head = document.getElementById('matrixHead');
         const body = document.getElementById('matrixBody');
-
-        head.innerHTML = '<th class="p-2.5 text-slate-500 font-mono-data text-xs border-b border-slate-900">C \\ F</th>';
-        for (let i = 0; i <= limit; i++) {
-            head.insertAdjacentHTML('beforeend', `<th class="p-2.5 text-slate-400 font-mono-data text-xs border-b border-slate-900">${i}</th>`);
-        }
+        head.innerHTML = '<th class="p-2 text-slate-500 font-mono-data text-xs border-b border-slate-800">C \\ F</th>';
+        for (let i = 0; i <= limit; i++) head.insertAdjacentHTML('beforeend', `<th class="p-2 text-slate-400 font-mono-data text-xs border-b border-slate-800">${i}</th>`);
 
         body.innerHTML = '';
         for (let x = 0; x <= limit; x++) {
-            let rowHtml = `<tr><th class="bg-slate-950/80 text-blue-400 p-2.5 font-mono-data text-xs text-center border-r border-slate-900">${x}</th>`;
-            for (let y = 0; i <= limit, y <= limit; y++) {
-                const pct = matrix[x][y] * 100;
-                let cellClass = 'bg-slate-950/30 text-slate-400';
-                
-                if (x > y) cellClass = 'bg-blue-950/15 text-blue-400/90';
-                else if (x < y) cellClass = 'bg-purple-950/15 text-purple-400/90';
-                else cellClass = 'bg-slate-900/80 text-slate-200 font-bold';
-
-                rowHtml += `<td class="${cellClass} font-mono-data text-xs p-2 text-center transition-all">${pct.toFixed(1)}%</td>`;
+            let rowHtml = `<tr><th class="bg-slate-950/40 text-blue-400 p-2 font-mono-data text-xs border-r border-slate-800">${x}</th>`;
+            for (let y = 0; y <= limit; y++) {
+                const val = (matrix[x][y] * 100).toFixed(1);
+                let c = x === y ? 'bg-slate-900/60 font-bold' : (x > y ? 'text-blue-400/80' : 'text-purple-400/80');
+                rowHtml += `<td class="${c} font-mono-data text-xs p-2">${val}%</td>`;
             }
             rowHtml += '</tr>';
             body.insertAdjacentHTML('beforeend', rowHtml);
         }
-    }
 
-    // Construtor Estrutural de Blocos de Mercado Individual (Cards)
-    function renderMarketCard(market) {
-        const ev = calculateEV(market.probability, market.odd);
-        const fairOdd = market.probability > 0 ? 1 / market.probability : Infinity;
-        const hasEdge = ev > CONFIG.valueBetThreshold;
-        
-        const rawKelly = calculateKelly(market.probability, market.odd);
-        // Fração de segurança aplicada: Quarter-Kelly (25% do coeficiente nominal) limitado ao teto estrito da banca
-        const allocatedStake = Math.min(rawKelly * 0.25 * 100, CONFIG.maxKellyAllocation * 100);
+        // Resgata as odds que o usuário inseriu na tela para cruzar os dados
+        const oddsInput = {
+            home: parseFloat(document.getElementById('oddHome').value) || 2.0,
+            draw: parseFloat(document.getElementById('oddDraw').value) || 3.3,
+            away: parseFloat(document.getElementById('oddAway').value) || 3.5,
+            over25: parseFloat(document.getElementById('oddOver').value) || 1.95,
+            btts: parseFloat(document.getElementById('oddBTTS').value) || 1.8
+        };
 
-        return `
-            <div class="p-4 rounded-2xl flex flex-col justify-between glass-card ${hasEdge ? 'value-bet-active' : 'no-bet-active'}">
-                <div class="space-y-3">
-                    <h3 class="font-bold text-white text-xs truncate tracking-wide uppercase border-b border-slate-800 pb-2">${market.name}</h3>
-                    <div class="space-y-1.5 text-xs font-mono-data text-slate-400">
-                        <div class="flex justify-between"><span>Probabilidade:</span><span class="text-white font-bold">${(market.probability * 100).toFixed(1)}%</span></div>
-                        <div class="flex justify-between"><span>Odd Justa:</span><span class="text-blue-400 font-medium">${fairOdd.toFixed(2)}</span></div>
-                        <div class="flex justify-between"><span>Odd Mercado:</span><span class="text-emerald-400 font-bold">${market.odd.toFixed(2)}</span></div>
+        const markets = [
+            { id: 'Casa', name: `Vitória - ${homeTeam}`, prob: pHome, odd: oddsInput.home },
+            { id: 'Empate', name: `Empate (X)`, prob: pDraw, odd: oddsInput.draw },
+            { id: 'Fora', name: `Vitória - ${awayTeam}`, prob: pAway, odd: oddsInput.away },
+            { id: 'Over', name: `Mais de 2.5 Golos`, prob: (1 - pUnder), odd: oddsInput.over25 },
+            { id: 'BTTS', name: `Ambas Marcam (Sim)`, prob: pBTTS, odd: oddsInput.btts }
+        ];
+
+        // Processa os blocos de cards de valor esperados
+        const mainContainer = document.getElementById('marketCards');
+        const goalsContainer = document.getElementById('goalCards');
+        mainContainer.innerHTML = '';
+        goalsContainer.innerHTML = '';
+
+        let bestMarket = null;
+        let maxEV = -Infinity;
+
+        markets.forEach((m, idx) => {
+            const ev = (m.prob * m.odd) - 1;
+            const fairOdd = 1 / m.prob;
+            const isValue = ev > 0.02; // Edge superior a +2%
+
+            // Cálculo simplificado de Kelly Fracionário (Quarter-Kelly)
+            let stake = 0;
+            if (m.odd > 1) {
+                const b = m.odd - 1;
+                const k = ((b * m.prob) - (1 - m.prob)) / b;
+                if (k > 0) stake = Math.min(k * 0.25 * 100, 5.0); // Limitador de teto estrito de 5% da banca
+            }
+
+            if (ev > maxEV) {
+                maxEV = ev;
+                bestMarket = { ...m, ev, fairOdd, stake };
+            }
+
+            const html = `
+                <div class="p-4 rounded-2xl flex flex-col justify-between glass-card ${isValue ? 'value-bet-active' : 'no-bet-active'}">
+                    <div class="space-y-2">
+                        <h3 class="font-bold text-white text-xs truncate border-b border-slate-800 pb-1.5 uppercase">${m.name}</h3>
+                        <div class="space-y-1 font-mono-data text-[11px] text-slate-400">
+                            <div class="flex justify-between"><span>Modelado:</span><span class="text-white">${(m.prob * 100).toFixed(1)}%</span></div>
+                            <div class="flex justify-between"><span>Odd Justa:</span><span class="text-blue-400">${fairOdd.toFixed(2)}</span></div>
+                            <div class="flex justify-between"><span>Mercado:</span><span class="text-emerald-400">${m.odd.toFixed(2)}</span></div>
+                        </div>
                     </div>
-                </div>
-                
-                <div class="mt-4 pt-3 border-t border-slate-800/60 flex justify-between items-center">
-                    <span class="font-extrabold font-mono-data text-sm ${ev > 0 ? 'text-emerald-400' : 'text-red-400/60'}">
-                        EV ${ev > 0 ? '+' : ''}${(ev * 100).toFixed(1)}%
-                    </span>
-                    ${hasEdge 
-                        ? `<span class="text-[9px] bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 px-2 py-1 rounded font-mono-data font-bold uppercase tracking-wider">Stake: ${allocatedStake.toFixed(2)}%</span>`
-                        : `<span class="text-[9px] text-slate-600 font-mono-data tracking-wider">NO EDGE</span>`
-                    }
-                </div>
-            </div>
-        `;
-    }
-
-    // Processamento do Relatório Final Executivo
-    function buildReport(markets) {
-        const reportContainer = document.getElementById('report');
-        
-        const sortedValueMarkets = markets
-            .map(m => ({ ...m, ev: calculateEV(m.probability, m.odd) }))
-            .filter(m => m.ev > CONFIG.valueBetThreshold)
-            .sort((a, b) => b.ev - a.ev);
-
-        if (sortedValueMarkets.length === 0) {
-            reportContainer.innerHTML = `
-                <div class="p-4 rounded-2xl bg-red-950/15 border border-red-500/20 text-slate-300 space-y-2">
-                    <p class="text-red-400 font-extrabold uppercase tracking-wider text-xs flex items-center gap-2">
-                        <span>⚠ Mercado Eficiente Detetado</span>
-                    </p>
-                    <p class="text-xs text-slate-400 leading-relaxed">
-                        As linhas oferecidas pelas casas de apostas encontram-se perfeitamente balanceadas ou subdimensionadas em relação às probabilidades implícitas do modelo quantitativo. Nenhuma entrada apresenta margem estatística real de lucro a longo prazo (Edge mínimo de +2%). Recomendação estrita: <strong>Abster-se de operar (No Bet)</strong>.
-                    </p>
+                    <div class="mt-3 pt-2 border-t border-slate-800/60 flex justify-between items-center">
+                        <span class="font-bold text-xs ${ev > 0 ? 'text-emerald-400' : 'text-red-400/60'}">EV: ${(ev * 100).toFixed(1)}%</span>
+                        ${isValue ? `<span class="text-[9px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-1.5 py-0.5 rounded">Stake: ${stake.toFixed(1)}%</span>` : '<span class="text-[9px] text-slate-600">Sem Margem</span>'}
+                    </div>
                 </div>
             `;
-            return;
-        }
 
-        const primaryTarget = sortedValueMarkets[0];
-        const rawKelly = calculateKelly(primaryTarget.probability, primaryTarget.odd);
-        const finalStake = Math.min(rawKelly * 0.25 * 100, CONFIG.maxKellyAllocation * 100);
+            if (idx < 3) mainContainer.insertAdjacentHTML('beforeend', html);
+            else goalsContainer.insertAdjacentHTML('beforeend', html);
+        });
 
-        reportContainer.innerHTML = `
-            <div class="p-5 rounded-2xl bg-emerald-950/10 border border-emerald-500/20 space-y-4">
-                <div class="space-y-1">
-                    <p class="text-emerald-400 font-black uppercase tracking-widest text-[10px]">Ordem de Alocação Principal</p>
-                    <div class="bg-slate-950/80 border border-slate-900 rounded-xl p-4 text-center space-y-1">
-                        <p class="text-sm font-extrabold text-white tracking-wide uppercase">${primaryTarget.name}</p>
-                        <p class="text-xl font-mono-data font-black text-emerald-400">@ Cotização ${primaryTarget.odd.toFixed(2)}</p>
+        // Painel Diretriz Operacional
+        const report = document.getElementById('reportContainer');
+        if (maxEV > 0.02 && bestMarket) {
+            report.innerHTML = `
+                <div class="p-4 rounded-2xl bg-emerald-950/10 border border-emerald-500/20 space-y-3">
+                    <p class="text-emerald-400 font-bold text-xs uppercase tracking-wider">Oportunidade Principal Ativa</p>
+                    <div class="bg-slate-950/80 border border-slate-900 rounded-xl p-3 text-center">
+                        <p class="text-xs text-slate-400 font-bold uppercase">${bestMarket.name}</p>
+                        <p class="text-xl font-mono-data font-black text-emerald-400 mt-1">@ ${bestMarket.odd.toFixed(2)}</p>
+                    </div>
+                    <div class="text-xs font-mono-data space-y-1 text-slate-300 bg-slate-950/40 p-3 rounded-xl border border-slate-900/60">
+                        <div class="flex justify-between"><span>Vantagem Calculada:</span><span class="text-emerald-400 font-bold">+ ${(bestMarket.ev * 100).toFixed(1)}% EV</span></div>
+                        <div class="flex justify-between"><span>Preço Limite Mínimo:</span><span class="text-blue-400 font-bold">${bestMarket.fairOdd.toFixed(2)}</span></div>
+                        <div class="flex justify-between"><span>Alocação Máxima:</span><span class="text-white font-bold">${bestMarket.stake.toFixed(1)}% da Banca</span></div>
                     </div>
                 </div>
-
-                <div class="grid grid-cols-2 gap-2 text-xs font-mono-data bg-slate-950/40 p-3 rounded-xl border border-slate-900/60">
-                    <div class="text-slate-400">Vantagem Matemática:</div>
-                    <div class="text-emerald-400 font-bold text-right">+${(primaryTarget.ev * 100).toFixed(2)}% EV</div>
-                    <div class="text-slate-400">Preço Limite (Odd Justa):</div>
-                    <div class="text-blue-400 font-bold text-right">${(1 / primaryTarget.probability).toFixed(2)}</div>
-                    <div class="text-slate-400">Gestão Quarter-Kelly:</div>
-                    <div class="text-white font-bold text-right">${finalStake.toFixed(2)}% da Banca</div>
+            `;
+        } else {
+            report.innerHTML = `
+                <div class="p-4 rounded-2xl bg-red-950/10 border border-red-500/20 text-slate-400 text-xs leading-relaxed">
+                    <p class="text-red-400 font-bold uppercase tracking-wider mb-1">Linhas Eficientes (No Bet)</p>
+                    O modelo processou a amostragem do CSV histórico e detectou que os preços da casa cobrem perfeitamente as chances estatísticas ou possuem margem de lucro abusiva. Nenhuma entrada elegível com edge superior a +2%. Permaneça neutro.
                 </div>
+            `;
+        }
 
-                <div class="text-[10px] text-slate-500 leading-relaxed border-t border-slate-900 pt-3">
-                    Nota de validação: Entrada calculada dinamicamente utilizando estimadores robustos de variância pontual com amortecimento de picos por amostragem bayesiana convergente.
-                </div>
-            </div>
-        `;
+        document.getElementById('dashboard').classList.remove('hidden');
+        document.getElementById('dashboard').scrollIntoView({ behavior: 'smooth' });
     }
 </script>
-
 </body>
 </html>
