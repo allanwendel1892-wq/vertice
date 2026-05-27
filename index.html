@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang=\"pt-BR\">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -11,6 +11,7 @@
         .glass-panel { background: rgba(10, 17, 32, 0.75); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.05); }
         .score-grid td { width: 48px; height: 48px; text-align: center; border: 1px solid #131f37; font-size: 0.75rem; font-family: monospace; }
         .value-bet { background-color: rgba(16, 185, 129, 0.12); border: 1px solid #10b981; }
+        .bad-bet { background-color: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); }
     </style>
 </head>
 <body class="p-4 md:p-8 min-h-screen">
@@ -19,264 +20,414 @@
         <header class="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-slate-800 pb-6 gap-4">
             <div>
                 <h1 class="text-2xl font-black tracking-tight text-white flex items-center gap-2">
-                    PRO ANALYTICS <span class="text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded font-mono">V3.0 ENGINE</span>
+                    PRO ANALYTICS <span class="text-xs bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded font-mono">V3.0 (Standalone)</span>
                 </h1>
-                <p class="text-xs text-slate-400 mt-1">Análise preditiva probabilística via Dixon-Coles & Amostragem Bayesiana.</p>
+                <p class="text-xs text-slate-400 mt-1">Análise preditiva probabilística com matemática corrigida (Dixon-Coles & Bayes).</p>
             </div>
         </header>
 
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 glass-panel p-4 rounded-xl">
-            <div>
-                <label class="block text-[10px] uppercase font-black tracking-wider text-slate-400 mb-1">ID da Liga (API-Sports)</label>
-                <input type="number" id="leagueId" value="71" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs font-mono text-white focus:outline-none focus:border-emerald-500">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 glass-panel p-5 rounded-xl border border-slate-800">
+            <div class="md:col-span-4 mb-2 border-b border-slate-800/50 pb-3">
+                <label class="block text-[10px] uppercase font-black tracking-wider text-slate-400 mb-1">Chave da API-Sports</label>
+                <input type="password" id="apiKey" placeholder="Cole sua chave aqui..." class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs font-mono text-white focus:outline-none focus:border-blue-500">
             </div>
-            <div>
-                <label class="block text-[10px] uppercase font-black tracking-wider text-slate-400 mb-1">Temporada (Ano)</label>
-                <input type="number" id="season" value="2026" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs font-mono text-white focus:outline-none focus:border-emerald-500">
-            </div>
-            <div class="md:col-span-2 flex items-end">
-                <button onclick="loadTeams()" id="btnLoad" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs uppercase tracking-wider p-3 rounded-lg transition-all duration-200">
-                    Sincronizar Times da Liga
-                </button>
-            </div>
-        </div>
-
-        <div id="panelMatch" class="hidden grid grid-cols-1 md:grid-cols-3 gap-4 glass-panel p-4 rounded-xl items-end">
-            <div>
-                <label class="block text-[10px] uppercase font-black tracking-wider text-slate-400 mb-1">Mandante (Home)</label>
-                <select id="homeTeam" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-emerald-500"></select>
-            </div>
-            <div>
-                <label class="block text-[10px] uppercase font-black tracking-wider text-slate-400 mb-1">Visitante (Away)</label>
-                <select id="awayTeam" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-emerald-500"></select>
-            </div>
-            <button onclick="runAnalysis()" id="btnAnalyze" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs uppercase tracking-wider p-3 rounded-lg transition-all duration-200">
-                Calcular Matriz Probabilística
-            </button>
-        </div>
-
-        <div id="resultsDashboard" class="hidden grid grid-cols-1 md:grid-cols-3 gap-6">
             
-            <div class="space-y-4">
-                <div class="glass-panel p-4 rounded-xl space-y-3">
-                    <h3 class="text-xs font-black tracking-wider uppercase text-slate-400 border-b border-slate-800 pb-2">Gols Esperados Projetados (xG)</h3>
-                    <div class="grid grid-cols-2 gap-2 text-center">
-                        <div class="bg-slate-950 p-3 rounded-lg border border-slate-900">
-                            <p class="text-[10px] uppercase font-bold text-slate-500">Mandante</p>
-                            <p id="xgHome" class="text-xl font-mono font-black text-white mt-1">0.00</p>
-                        </div>
-                        <div class="bg-slate-950 p-3 rounded-lg border border-slate-900">
-                            <p class="text-[10px] uppercase font-bold text-slate-500">Visitante</p>
-                            <p id="xgAway" class="text-xl font-mono font-black text-white mt-1">0.00</p>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="glass-panel p-4 rounded-xl space-y-2">
-                    <h3 class="text-xs font-black tracking-wider uppercase text-slate-400 border-b border-slate-800 pb-2">Probabilidades de Mercado (1X2)</h3>
-                    <div class="space-y-2 font-mono text-xs mt-2" id="probContainer1X2"></div>
-                </div>
-
-                <div class="glass-panel p-4 rounded-xl space-y-2">
-                    <h3 class="text-xs font-black tracking-wider uppercase text-slate-400 border-b border-slate-800 pb-2">Mercados Alternativos</h3>
-                    <div class="space-y-2 font-mono text-xs mt-2" id="probContainerGoals"></div>
-                </div>
+            <div class="md:col-span-2">
+                <label class="block text-[10px] uppercase font-black tracking-wider text-slate-400 mb-1">ID da Liga</label>
+                <input type="number" id="leagueId" value="71" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs font-mono text-white focus:outline-none focus:border-blue-500">
             </div>
-
-            <div class="glass-panel p-4 rounded-xl flex flex-col items-center justify-center overflow-x-auto">
-                <h3 class="text-xs font-black tracking-wider uppercase text-slate-400 border-b border-slate-800 pb-2 w-full text-left mb-4">Matriz Probabilística de Placares Extensiva</h3>
-                <table class="score-grid border-collapse text-slate-300">
-                    <thead>
-                        <tr id="matrixHeader"></tr>
-                    </thead>
-                    <tbody id="matrixBody"></tbody>
-                </table>
+            <div>
+                <label class="block text-[10px] uppercase font-black tracking-wider text-slate-400 mb-1">Temporada</label>
+                <input type="number" id="season" value="2026" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs font-mono text-white focus:outline-none focus:border-blue-500">
             </div>
-
-            <div class="glass-panel p-4 rounded-xl space-y-4">
-                <h3 class="text-xs font-black tracking-wider uppercase text-slate-400 border-b border-slate-800 pb-2">Linhas de Odds Reais da Casa</h3>
-                <div class="grid grid-cols-3 gap-2">
-                    <div>
-                        <label class="block text-[9px] uppercase font-bold text-slate-500 mb-1">Odd 1</label>
-                        <input type="number" step="0.01" id="oddHome" value="2.10" class="w-full bg-slate-950 border border-slate-850 p-2 rounded text-xs font-mono text-center text-white">
-                    </div>
-                    <div>
-                        <label class="block text-[9px] uppercase font-bold text-slate-500 mb-1">Odd X</label>
-                        <input type="number" step="0.01" id="oddDraw" value="3.40" class="w-full bg-slate-950 border border-slate-850 p-2 rounded text-xs font-mono text-center text-white">
-                    </div>
-                    <div>
-                        <label class="block text-[9px] uppercase font-bold text-slate-500 mb-1">Odd 2</label>
-                        <input type="number" step="0.01" id="oddAway" value="3.60" class="w-full bg-slate-950 border border-slate-850 p-2 rounded text-xs font-mono text-center text-white">
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-2">
-                    <div>
-                        <label class="block text-[9px] uppercase font-bold text-slate-500 mb-1">Odd Over 2.5</label>
-                        <input type="number" step="0.01" id="oddOver" value="1.95" class="w-full bg-slate-950 border border-slate-850 p-2 rounded text-xs font-mono text-center text-white">
-                    </div>
-                    <div>
-                        <label class="block text-[9px] uppercase font-bold text-slate-500 mb-1">Odd BTTS Sim</label>
-                        <input type="number" step="0.01" id="oddBtts" value="1.80" class="w-full bg-slate-950 border border-slate-850 p-2 rounded text-xs font-mono text-center text-white">
-                    </div>
-                </div>
-                <button onclick="calculateValueBets()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs uppercase tracking-wider p-2.5 rounded-lg transition-all">
-                    Processar Filtro de Valor (EV)
+            <div class="flex items-end">
+                <button onclick="loadTeams()" id="btnLoad" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs uppercase tracking-wider p-3 rounded-lg transition-all duration-200">
+                    1. Carregar Times
                 </button>
-                <div id="reportContainer" class="mt-2"></div>
+            </div>
+        </div>
+
+        <div id="panelMatch" class="hidden space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 glass-panel p-5 rounded-xl border border-slate-800">
+                <div>
+                    <label class="block text-[10px] uppercase font-black tracking-wider text-slate-400 mb-1">Mandante (Casa)</label>
+                    <select id="homeTeam" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-emerald-500"></select>
+                </div>
+                <div>
+                    <label class="block text-[10px] uppercase font-black tracking-wider text-slate-400 mb-1">Visitante (Fora)</label>
+                    <select id="awayTeam" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-xs text-white focus:outline-none focus:border-emerald-500"></select>
+                </div>
+            </div>
+
+            <div class="glass-panel p-5 rounded-xl border border-slate-800 space-y-4">
+                <h3 class="text-[10px] uppercase font-black tracking-wider text-slate-400">Preencha as Odds de Linha da Casa de Apostas</h3>
+                <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+                    <div>
+                        <label class="block text-[9px] uppercase font-bold text-slate-500 mb-1">Casa (1)</label>
+                        <input type="number" step="0.01" id="oddHome" value="2.10" class="w-full bg-slate-950 border border-slate-850 p-2 rounded text-xs font-mono text-center text-emerald-400 font-bold">
+                    </div>
+                    <div>
+                        <label class="block text-[9px] uppercase font-bold text-slate-500 mb-1">Empate (X)</label>
+                        <input type="number" step="0.01" id="oddDraw" value="3.40" class="w-full bg-slate-950 border border-slate-850 p-2 rounded text-xs font-mono text-center text-emerald-400 font-bold">
+                    </div>
+                    <div>
+                        <label class="block text-[9px] uppercase font-bold text-slate-500 mb-1">Fora (2)</label>
+                        <input type="number" step="0.01" id="oddAway" value="3.60" class="w-full bg-slate-950 border border-slate-850 p-2 rounded text-xs font-mono text-center text-emerald-400 font-bold">
+                    </div>
+                    <div>
+                        <label class="block text-[9px] uppercase font-bold text-slate-500 mb-1">Over 2.5</label>
+                        <input type="number" step="0.01" id="oddOver" value="1.95" class="w-full bg-slate-950 border border-slate-850 p-2 rounded text-xs font-mono text-center text-emerald-400 font-bold">
+                    </div>
+                    <div>
+                        <label class="block text-[9px] uppercase font-bold text-slate-500 mb-1">BTTS Sim</label>
+                        <input type="number" step="0.01" id="oddBtts" value="1.80" class="w-full bg-slate-950 border border-slate-850 p-2 rounded text-xs font-mono text-center text-emerald-400 font-bold">
+                    </div>
+                </div>
+                <button onclick="runAnalysis()" id="btnAnalyze" class="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black text-xs uppercase tracking-widest p-3 rounded-lg shadow-lg shadow-emerald-900/20 transition-all mt-4">
+                    2. Executar Análise Quantitativa
+                </button>
+            </div>
+        </div>
+
+        <div id="loadingState" class="hidden text-center py-8">
+            <div class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-emerald-500 mx-auto mb-3"></div>
+            <p class="text-emerald-400 font-mono text-[10px] uppercase tracking-widest" id="loadingText">Extraindo dados...</p>
+        </div>
+
+        <div id="resultsDashboard" class="hidden space-y-6">
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="glass-panel p-5 rounded-xl space-y-4">
+                    <h3 class="text-xs font-black tracking-wider uppercase text-slate-400 border-b border-slate-800 pb-2">Projeção xG (Poisson Base)</h3>
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-end">
+                            <span class="font-bold text-blue-400 text-sm truncate" id="resHomeName">Casa</span>
+                            <span class="text-2xl font-black text-white font-mono" id="xgHome">0.00</span>
+                        </div>
+                        <div class="flex justify-between items-end">
+                            <span class="font-bold text-purple-400 text-sm truncate" id="resAwayName">Fora</span>
+                            <span class="text-2xl font-black text-white font-mono" id="xgAway">0.00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass-panel p-5 rounded-xl md:col-span-2 space-y-4">
+                    <h3 class="text-xs font-black tracking-wider uppercase text-slate-400 border-b border-slate-800 pb-2">Análise de EV e Mercados</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3" id="evCards"></div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="evCardsGoals"></div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="glass-panel p-5 rounded-xl overflow-x-auto">
+                    <h3 class="text-xs font-black tracking-wider uppercase text-slate-400 border-b border-slate-800 pb-2 mb-4">Matriz Bivariada de Placares (%)</h3>
+                    <table class="w-full score-grid bg-slate-950 rounded-lg overflow-hidden">
+                        <thead>
+                            <tr id="matrixHeader" class="bg-slate-900 text-slate-400 text-[10px]"></tr>
+                        </thead>
+                        <tbody id="matrixBody"></tbody>
+                    </table>
+                </div>
+
+                <div class="glass-panel p-5 rounded-xl flex flex-col justify-between">
+                    <div>
+                        <h3 class="text-xs font-black tracking-wider uppercase text-slate-400 border-b border-slate-800 pb-2 mb-4">Relatório Operacional (Kelly)</h3>
+                        <div id="reportContainer"></div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
-        // Substitua pelo endpoint real fornecido pelo Supabase após realizar o deploy da function
-        const SUPABASE_FUNCTION_URL = "https://SEU_PROJECT_ID.supabase.co/functions/v1/predict-match";
-        let lastCalculationData = null;
+        // Restaura API Key salva para agilizar testes
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedKey = localStorage.getItem('quant_api_key_v3');
+            if(savedKey) document.getElementById('apiKey').value = savedKey;
+        });
 
-        async function callBackend(payload) {
-            const response = await fetch(SUPABASE_FUNCTION_URL, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
+        // Wrapper Unificado da API-Sports
+        async function fetchAPI(endpoint) {
+            const key = document.getElementById('apiKey').value.trim();
+            if(!key) throw new Error("Chave da API é obrigatória.");
+            localStorage.setItem('quant_api_key_v3', key);
+
+            const res = await fetch(`https://v3.football.api-sports.io/${endpoint}`, {
+                method: "GET",
+                headers: { "x-apisports-key": key }
             });
-            if (!response.ok) {
-                const errData = await response.json();
-                throw new Error(errData.error || "Falha crítica na comunicação com o backend.");
-            }
-            return await response.json();
+            if(!res.ok) throw new Error(`Status HTTP Erro: ${res.status}`);
+            const data = await res.json();
+            if (data.errors && Object.keys(data.errors).length > 0) throw new Error(JSON.stringify(data.errors));
+            return data;
         }
 
+        // Funções Matemáticas Corrigidas
+        const factorial = n => { if (n === 0 || n === 1) return 1; let r = 1; for (let i = 2; i <= n; i++) r *= i; return r; };
+        const poisson = (k, lambda) => (Math.pow(lambda, k) * Math.exp(-lambda)) / factorial(k);
+        
+        // Ajuste Dixon-Coles Legítimo (rho = -0.08)
+        const dixonColes = (x, y, lambda, mu, rho = -0.08) => {
+            if (x === 0 && y === 0) return 1 - (lambda * mu * rho);
+            if (x === 1 && y === 0) return 1 + (mu * rho);
+            if (x === 0 && y === 1) return 1 + (lambda * rho);
+            if (x === 1 && y === 1) return 1 - rho;
+            return 1;
+        };
+
+        // UI: Carregar Times
         async function loadTeams() {
             const btn = document.getElementById("btnLoad");
             const lId = document.getElementById("leagueId").value;
             const season = document.getElementById("season").value;
-            btn.disabled = true; btn.innerText = "Sincronizando Banco de Dados...";
             
+            btn.disabled = true; btn.innerText = "Buscando...";
             try {
-                const teams = await callBackend({ action: "get_teams", leagueId: lId, season: season });
+                const res = await fetchAPI(`teams?league=${lId}&season=${season}`);
+                if (!res.response || res.response.length === 0) throw new Error("Nenhum time encontrado. Verifique a temporada.");
+                
+                const teams = res.response.map(item => ({ id: item.team.id, name: item.team.name }))
+                                          .sort((a,b) => a.name.localeCompare(b.name));
+                
                 const homeSel = document.getElementById("homeTeam");
                 const awaySel = document.getElementById("awayTeam");
                 homeSel.innerHTML = ""; awaySel.innerHTML = "";
                 
-                teams.sort((a,b) => a.team.name.localeCompare(b.team.name)).forEach(item => {
-                    const opt = `<option value="${item.team.id}">${item.team.name}</option>`;
+                teams.forEach(t => {
+                    const opt = `<option value="${t.id}">${t.name}</option>`;
                     homeSel.insertAdjacentHTML("beforeend", opt);
                     awaySel.insertAdjacentHTML("beforeend", opt);
                 });
+                if(awaySel.options.length > 1) awaySel.selectedIndex = 1;
+                
                 document.getElementById("panelMatch").classList.remove("hidden");
+                btn.innerText = "✔ Times Carregados";
+                btn.classList.replace('bg-blue-600', 'bg-slate-700');
             } catch (err) {
-                alert(err.message);
+                alert(`Erro: ${err.message}`);
+                btn.innerText = "1. Carregar Times";
             } finally {
-                btn.disabled = false; btn.innerText = "Sincronizar Times da Liga";
+                btn.disabled = false;
             }
         }
 
+        // Motor Analítico
         async function runAnalysis() {
             const btn = document.getElementById("btnAnalyze");
-            const payload = {
-                action: "predict",
-                leagueId: document.getElementById("leagueId").value,
-                season: document.getElementById("season").value,
-                homeId: document.getElementById("homeTeam").value,
-                awayId: document.getElementById("awayTeam").value
-            };
-            if(payload.homeId === payload.awayId) return alert("Erro: Conflito Operacional. O Mandante não pode ser idêntico ao Visitante.");
+            const loading = document.getElementById("loadingState");
+            const dash = document.getElementById("resultsDashboard");
+            const log = document.getElementById("loadingText");
             
-            btn.disabled = true; btn.innerText = "Rodando Algoritmos Quânticos...";
-            try {
-                const data = await callBackend(payload);
-                lastCalculationData = data;
-                document.getElementById("resultsDashboard").classList.remove("hidden");
-                
-                document.getElementById("xgHome").innerText = data.lambda.toFixed(2);
-                document.getElementById("xgAway").innerText = data.mu.toFixed(2);
-                
-                renderMarkets(data.probabilities);
-                renderMatrix(data.matrix);
-                document.getElementById("reportContainer").innerHTML = ""; 
-            } catch(err) {
-                alert(err.message);
-            } finally {
-                btn.disabled = false; btn.innerText = "Calcular Matriz Probabilística";
-            }
-        }
-
-        function renderMarkets(probs) {
-            const container1X2 = document.getElementById("probContainer1X2");
-            container1X2.innerHTML = `
-                <div class="flex justify-between"><span>Mandante (1):</span><span class="font-bold text-white">${(probs.home * 100).toFixed(1)}%</span></div>
-                <div class="flex justify-between"><span>Empate (X):</span><span class="font-bold text-white">${(probs.draw * 100).toFixed(1)}%</span></div>
-                <div class="flex justify-between"><span>Visitante (2):</span><span class="font-bold text-white">${(probs.away * 100).toFixed(1)}%</span></div>
-            `;
-            const containerGoals = document.getElementById("probContainerGoals");
-            containerGoals.innerHTML = `
-                <div class="flex justify-between"><span>Over 2.5 Gols:</span><span class="font-bold text-emerald-400">${(probs.over25 * 100).toFixed(1)}%</span></div>
-                <div class="flex justify-between"><span>Ambas Marcam (BTTS):</span><span class="font-bold text-cyan-400">${(probs.btts * 100).toFixed(1)}%</span></div>
-            `;
-        }
-
-        function renderMatrix(matrix) {
-            const header = document.getElementById("matrixHeader");
-            const body = document.getElementById("matrixBody");
-            header.innerHTML = "<th>V \\ M</th>";
-            for(let i=0; i<6; i++) header.insertAdjacentHTML("beforeend", `<th class="p-1 font-mono text-[10px] text-slate-500">${i}</th>`);
+            const lId = document.getElementById("leagueId").value;
+            const season = document.getElementById("season").value;
+            const homeId = document.getElementById("homeTeam").value;
+            const awayId = document.getElementById("awayTeam").value;
             
-            body.innerHTML = "";
-            for(let y=0; y<6; y++) {
-                let rowHtml = `<tr><td class="font-mono text-[10px] text-slate-500 font-bold bg-slate-950/40">${y}</td>`;
-                for(let x=0; x<6; x++) {
-                    const prob = (matrix[x][y] * 100).toFixed(1);
-                    rowHtml += `<td class="p-1 text-[10px] tracking-tighter" style="background: rgba(16, 185, 129, ${matrix[x][y] * 3.5})">${prob}%</td>`;
+            const inputs = {
+                homeName: document.getElementById('homeTeam').options[document.getElementById('homeTeam').selectedIndex].text,
+                awayName: document.getElementById('awayTeam').options[document.getElementById('awayTeam').selectedIndex].text,
+                odds: {
+                    home: parseFloat(document.getElementById('oddHome').value),
+                    draw: parseFloat(document.getElementById('oddDraw').value),
+                    away: parseFloat(document.getElementById('oddAway').value),
+                    over25: parseFloat(document.getElementById('oddOver').value),
+                    btts: parseFloat(document.getElementById('oddBtts').value)
                 }
-                rowHtml += "</tr>";
-                body.insertAdjacentHTML("beforeend", rowHtml);
+            };
+
+            if (homeId === awayId) return alert('Mandante e visitante devem ser diferentes.');
+
+            btn.disabled = true; dash.classList.add("hidden"); loading.classList.remove("hidden");
+
+            try {
+                log.innerText = "Baixando métricas do Mandante...";
+                const hRes = await fetchAPI(`teams/statistics?league=${lId}&season=${season}&team=${homeId}`);
+                
+                log.innerText = "Baixando métricas do Visitante...";
+                const aRes = await fetchAPI(`teams/statistics?league=${lId}&season=${season}&team=${awayId}`);
+                
+                log.innerText = "Buscando histórico de confrontos diretos...";
+                const h2hRes = await fetchAPI(`fixtures/headtohead?h2h=${homeId}-${awayId}&last=8`);
+
+                processQuantitativeEngine(inputs, hRes.response, aRes.response, h2hRes.response);
+                
+                loading.classList.add("hidden");
+                dash.classList.remove("hidden");
+                dash.scrollIntoView({ behavior: 'smooth' });
+            } catch (err) {
+                alert(`Falha: ${err.message}`);
+                loading.classList.add("hidden");
+            } finally {
+                btn.disabled = false;
             }
         }
 
-        function calculateValueBets() {
-            if(!lastCalculationData) return;
-            const odds = {
-                home: parseFloat(document.getElementById("oddHome").value),
-                draw: parseFloat(document.getElementById("oddDraw").value),
-                away: parseFloat(document.getElementById("oddAway").value),
-                over25: parseFloat(document.getElementById("oddOver").value),
-                btts: parseFloat(document.getElementById("oddBtts").value)
-            };
-            const probs = lastCalculationData.probabilities;
+        // Lógica Matemática e Estatística
+        function processQuantitativeEngine(inputs, homeStats, awayStats, h2hData) {
+            
+            // 1. Extração segura de médias (Optional Chaining)
+            const hScoredHome = parseFloat(homeStats?.goals?.for?.average?.home) || 1.5;
+            const hConcededHome = parseFloat(homeStats?.goals?.against?.average?.home) || 1.1;
+            const aScoredAway = parseFloat(awayStats?.goals?.for?.average?.away) || 1.1;
+            const aConcededAway = parseFloat(awayStats?.goals?.against?.average?.away) || 1.4;
+
+            // 2. Cálculo dinâmico da média da liga baseado na amostragem
+            const leagueHomeAvg = (hScoredHome + aConcededAway) / 2;
+            const leagueAwayAvg = (aScoredAway + hConcededHome) / 2;
+
+            // 3. Forças Relativas
+            const homeAttack = hScoredHome / leagueHomeAvg;
+            const awayDefense = aConcededAway / leagueHomeAvg;
+            const awayAttack = aScoredAway / leagueAwayAvg;
+            const homeDefense = hConcededHome / leagueAwayAvg;
+
+            // 4. Base xG (Sazonal)
+            let lambda = homeAttack * awayDefense * leagueHomeAvg;
+            let mu = awayAttack * homeDefense * leagueAwayAvg;
+
+            // 5. Ajuste H2H (Recência)
+            if (h2hData && h2hData.length > 0) {
+                let h2hHomeG = 0, h2hAwayG = 0;
+                h2hData.forEach(match => {
+                    if (match.goals.home !== null && match.goals.away !== null) {
+                        if (String(match.teams.home.name).toLowerCase() === String(inputs.homeName).toLowerCase()) {
+                            h2hHomeG += match.goals.home; h2hAwayG += match.goals.away;
+                        } else {
+                            h2hHomeG += match.goals.away; h2hAwayG += match.goals.home;
+                        }
+                    }
+                });
+                const h2hHomeAvg = h2hHomeG / h2hData.length;
+                const h2hAwayAvg = h2hAwayG / h2hData.length;
+                
+                // Ponderação: 75% Temporada, 25% Histórico Direto
+                lambda = (lambda * 0.75) + (h2hHomeAvg * 0.25);
+                mu = (mu * 0.75) + (h2hAwayAvg * 0.25);
+            }
+
+            // Piso matemático mínimo para evitar distorção
+            if(lambda < 0.2) lambda = 0.2;
+            if(mu < 0.2) mu = 0.2;
+
+            // Interface xG
+            document.getElementById('resHomeName').innerText = inputs.homeName;
+            document.getElementById('resAwayName').innerText = inputs.awayName;
+            document.getElementById('xgHome').innerText = lambda.toFixed(2);
+            document.getElementById('xgAway').innerText = mu.toFixed(2);
+
+            // 6. Matriz Bivariada
+            let probHome = 0, probDraw = 0, probAway = 0, probUnder25 = 0, probBtts = 0;
+            const visualLimit = 5;
+            const mathLimit = 10; // Resolve o problema da cauda cortada (gols de 6 a 10)
+            
+            let matrix = Array(visualLimit + 1).fill(0).map(() => Array(visualLimit + 1).fill(0));
+
+            for (let x = 0; x <= mathLimit; x++) {
+                for (let y = 0; y <= mathLimit; y++) {
+                    const pX = poisson(x, lambda);
+                    const pY = poisson(y, mu);
+                    const alpha = dixonColes(x, y, lambda, mu);
+                    const finalProb = pX * pY * alpha;
+
+                    if (x <= visualLimit && y <= visualLimit) matrix[x][y] = finalProb;
+
+                    if (x > y) probHome += finalProb;
+                    else if (y > x) probAway += finalProb;
+                    else probDraw += finalProb;
+
+                    if (x + y < 3) probUnder25 += finalProb;
+                    if (x > 0 && y > 0) probBtts += finalProb;
+                }
+            }
+
+            // Complemento Exato (Over 2.5)
+            const probOver25 = 1 - probUnder25;
+
+            // Renderizar Matriz Visual
+            const mHeader = document.getElementById('matrixHeader');
+            const mBody = document.getElementById('matrixBody');
+            mHeader.innerHTML = '<th class="p-2 text-slate-500 font-bold">C \\ F</th>';
+            for(let i=0; i<=visualLimit; i++) mHeader.insertAdjacentHTML('beforeend', `<th>${i}</th>`);
+            
+            mBody.innerHTML = '';
+            for(let x=0; x<=visualLimit; x++) {
+                let row = `<tr><th class="bg-slate-900/80 text-blue-400 font-mono text-[11px] p-2">${x}</th>`;
+                for(let y=0; y<=visualLimit; y++) {
+                    const pPercent = (matrix[x][y] * 100).toFixed(1);
+                    let cStyle = 'bg-slate-950 text-slate-400';
+                    if(x > y) cStyle = 'bg-blue-950/20 text-blue-400';
+                    else if (x < y) cStyle = 'bg-purple-950/20 text-purple-400';
+                    else cStyle = 'bg-slate-900/60 text-slate-200 font-bold';
+                    row += `<td class="${cStyle}">${pPercent}%</td>`;
+                }
+                row += '</tr>';
+                mBody.insertAdjacentHTML('beforeend', row);
+            }
+
+            // 7. EV e Kelly
+            const calcEV = (prob, odd) => (prob * odd) - 1;
             const markets = [
-                { name: "Mandante (1)", odd: odds.home, prob: probs.home },
-                { name: "Empate (X)", odd: odds.draw, prob: probs.draw },
-                { name: "Visitante (2)", odd: odds.away, prob: probs.away },
-                { name: "Over 2.5 Gols", odd: odds.over25, prob: probs.over25 },
-                { name: "Ambas Marcam (BTTS)", odd: odds.btts, prob: probs.btts }
+                { name: `Vitória Casa`, prob: probHome, odd: inputs.odds.home },
+                { name: `Empate`, prob: probDraw, odd: inputs.odds.draw },
+                { name: `Vitória Fora`, prob: probAway, odd: inputs.odds.away }
+            ];
+            const goalsMarkets = [
+                { name: `Over 2.5`, prob: probOver25, odd: inputs.odds.over25 },
+                { name: `BTTS Sim`, prob: probBtts, odd: inputs.odds.btts }
             ];
 
-            let bestBet = null, maxEv = 0;
-            markets.forEach(m => {
-                const ev = (m.prob * m.odd) - 1;
-                if(ev > maxEv) { maxEv = ev; bestBet = m; }
-            });
+            const renderCard = (m) => {
+                const ev = calcEV(m.prob, m.odd);
+                const isValue = ev > 0.015;
+                const rawKelly = (m.odd * m.prob - (1 - m.prob)) / (m.odd - 1);
+                // Quarter-Kelly (25%) com teto de 5% da banca para proteção matemática
+                const safeKelly = isValue ? Math.min((Math.max(0, rawKelly) * 0.25) * 100, 5.0).toFixed(2) : 0;
 
-            const report = document.getElementById("reportContainer");
-            if(bestBet && maxEv > 0.02) { // Gatilho conservador de EV > +2%
-                // Mitigação de Risco: Kelly Fracionado Seguro de 1/4 (Quarter-Kelly) com teto rígido de 5% da banca
-                const rawKelly = (bestBet.odd * bestBet.prob - (1 - bestBet.prob)) / (bestBet.odd - 1);
-                const safeKelly = Math.min((rawKelly * 0.25) * 100, 5.0).toFixed(2);
+                return `
+                <div class="p-3 rounded-xl flex flex-col justify-between ${isValue ? 'value-bet' : 'bad-bet'}">
+                    <div>
+                        <p class="text-[11px] font-bold text-white truncate mb-1">${m.name}</p>
+                        <div class="text-[10px] text-slate-400 space-y-0.5 font-mono">
+                            <p>Probabilidade: <span class="text-white">${(m.prob*100).toFixed(1)}%</span></p>
+                            <p>Odd Justa: <span class="text-blue-300">${(1/m.prob).toFixed(2)}</span></p>
+                            <p>Sua Odd: <span class="text-emerald-400 font-bold">${m.odd.toFixed(2)}</span></p>
+                        </div>
+                    </div>
+                    <div class="mt-2 pt-2 border-t border-slate-800 flex justify-between items-center">
+                        <span class="text-sm font-black ${isValue ? 'text-emerald-400' : 'text-red-400/70'}">EV: ${ev > 0 ? '+' : ''}${(ev*100).toFixed(1)}%</span>
+                        ${isValue ? `<span class="text-[9px] bg-emerald-500/20 text-emerald-300 font-mono px-1.5 py-0.5 rounded">Stake: ${safeKelly}%</span>` : `<span class="text-[9px] text-slate-500">NO BET</span>`}
+                    </div>
+                </div>`;
+            };
 
+            document.getElementById('evCards').innerHTML = markets.map(renderCard).join('');
+            document.getElementById('evCardsGoals').innerHTML = goalsMarkets.map(renderCard).join('');
+
+            // 8. Relatório Final
+            const allBets = [...markets, ...goalsMarkets];
+            const valueBets = allBets.filter(m => calcEV(m.prob, m.odd) > 0.015).sort((a,b) => calcEV(b.prob, b.odd) - calcEV(a.prob, a.odd));
+            const report = document.getElementById('reportContainer');
+
+            if(valueBets.length > 0) {
+                const best = valueBets[0];
+                const rawK = (best.odd * best.prob - (1 - best.prob)) / (best.odd - 1);
+                const sK = Math.min((Math.max(0, rawK) * 0.25) * 100, 5.0).toFixed(2);
+                
                 report.innerHTML = `
-                    <div class="p-4 bg-emerald-950/20 border-l-4 border-emerald-500 rounded-xl text-xs space-y-2">
-                        <p class="font-black text-emerald-400 uppercase tracking-wider">ENTRADA DETECTADA DE ALTO VALOR</p>
-                        <p class="text-white font-bold">${bestBet.name} @ ${bestBet.odd.toFixed(2)}</p>
-                        <ul class="list-disc ml-4 space-y-1 text-slate-400 text-[11px]">
-                            <li>Valor Esperado Puro (EV): <span class="text-emerald-400 font-bold">+${(maxEv * 100).toFixed(1)}%</span></li>
-                            <li>Preço Justo Estatístico: <span class="text-white">${(1/bestBet.prob).toFixed(2)}</span></li>
-                            <li>Gestão de Banca (Quarter-Kelly): Alocar estritamente <span class="text-emerald-300 font-bold">${safeKelly}%</span>.</li>
+                    <div class="p-4 bg-emerald-950/30 border-l-4 border-emerald-500 rounded-xl text-xs space-y-2">
+                        <p class="font-black text-emerald-400 uppercase tracking-wider text-[11px]">SINAL DE VALOR IDENTIFICADO</p>
+                        <p class="text-white font-bold bg-slate-900 p-2 rounded text-center">🎯 ${best.name} @ ${best.odd.toFixed(2)}</p>
+                        <ul class="list-disc ml-4 mt-2 space-y-1 text-slate-400 text-[10px]">
+                            <li>Vantagem Matemática Pura (EV): <span class="text-emerald-400 font-bold">+${(calcEV(best.prob, best.odd)*100).toFixed(1)}%</span></li>
+                            <li>Preço Justo Calculado: <span class="text-white">${(1/best.prob).toFixed(2)}</span></li>
+                            <li>Gestão de Risco (Quarter-Kelly): Sugerido <span class="text-emerald-300 font-bold">${sK}%</span> da banca.</li>
                         </ul>
                     </div>`;
             } else {
                 report.innerHTML = `
-                    <div class="p-4 bg-slate-900/40 border-l-4 border-amber-500 rounded-xl text-xs space-y-1">
-                        <p class="font-black text-amber-500 uppercase tracking-wider text-[11px]">SINAL DE NEUTRALIDADE (NO BET)</p>
-                        <p class="text-slate-400 text-[11px]">O mercado encontra-se eficiente ou a margem da casa (Juice) anulou as arestas de valor. Aguardar Live.</p>
+                    <div class="p-4 bg-red-950/20 border-l-4 border-red-500/50 rounded-xl text-xs space-y-2">
+                        <p class="font-black text-red-400 uppercase tracking-wider text-[11px]">MERCADO EFICIENTE (NO BET)</p>
+                        <p class="text-slate-400 text-[11px]">As cotações inseridas não oferecem Valor Esperado (EV) positivo perante a matemática do modelo. A margem da casa anulou as arestas de lucro.</p>
                     </div>`;
             }
         }
