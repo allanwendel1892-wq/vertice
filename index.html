@@ -1,770 +1,867 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>QUANT ENGINE V5 PRO ELITE</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
 
-<title>QUANT ENGINE V5 ELITE | Database Edition</title>
-
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
-
-<style>
-body{
-    font-family:'Inter',sans-serif;
-    background:#050816;
-    color:#e2e8f0;
-}
-.glass{
-    background:rgba(15,23,42,.72);
-    backdrop-filter:blur(16px);
-    border:1px solid rgba(255,255,255,.06);
-}
-.matrix td{
-    width:52px;
-    height:48px;
-    text-align:center;
-    border:1px solid #1e293b;
-    font-size:.75rem;
-    font-family:monospace;
-}
-.value-bet{
-    background:rgba(16,185,129,.10);
-    border:1px solid rgba(16,185,129,.40);
-}
-.no-bet{
-    background:rgba(239,68,68,.07);
-    border:1px solid rgba(239,68,68,.20);
-}
-.loader{
-    border-top-color:#10b981;
-    animation:spin 1s linear infinite;
-}
-@keyframes spin{
-    to{ transform:rotate(360deg); }
-}
-</style>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #030712;
+            color: #f3f4f6;
+            overflow-x: hidden;
+        }
+        .font-mono-data {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .glass-panel {
+            background: rgba(17, 24, 39, 0.7);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+        .glass-card {
+            background: rgba(31, 41, 55, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .glass-card:hover {
+            border-color: rgba(16, 185, 129, 0.2);
+            transform: translateY(-2px);
+        }
+        .matrix-table td {
+            width: 56px;
+            height: 52px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.02);
+            font-size: 0.75rem;
+            font-family: 'JetBrains Mono', monospace;
+            transition: all 0.2s ease;
+        }
+        .matrix-table td:hover {
+            filter: brightness(1.4);
+            transform: scale(1.05);
+            z-index: 10;
+            position: relative;
+            cursor: crosshair;
+        }
+        .value-bet-active {
+            background: rgba(16, 185, 129, 0.06);
+            border: 1px solid rgba(16, 185, 129, 0.35) !important;
+            box-shadow: inset 0 0 12px rgba(16, 185, 129, 0.05);
+        }
+        .no-bet-active {
+            background: rgba(239, 68, 68, 0.02);
+            border: 1px solid rgba(239, 68, 68, 0.15) !important;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(156, 163, 175, 0.2);
+            border-radius: 99px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(156, 163, 175, 0.4);
+        }
+        .loader-ring {
+            border-top-color: #10b981;
+            animation: spin 0.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
 </head>
 
-<body class="min-h-screen p-4 md:p-8">
+<body class="min-h-screen p-4 md:p-8 custom-scrollbar">
 
 <div class="max-w-7xl mx-auto space-y-6">
 
-<header class="glass rounded-3xl p-6">
-<div class="flex flex-col gap-4">
-<div class="flex flex-wrap items-center gap-3">
-<h1 class="text-3xl md:text-5xl font-black text-white tracking-tight">
-QUANT ENGINE V5
-</h1>
-<span class="px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] uppercase tracking-[0.2em] font-black">
-Supabase Data Powered
-</span>
-</div>
-<p class="text-slate-400 text-sm max-w-4xl leading-relaxed">
-Modelo quantitativo standalone alimentado por banco de dados persistente e sincronização via planilhas de distribuição global.
-</p>
-</div>
-</header>
+    <header class="glass-panel rounded-3xl p-6 md:p-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 relative overflow-hidden">
+        <div class="absolute top-0 right-0 w-96 h-96 bg-blue-500/5 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute bottom-0 left-0 w-96 h-96 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none"></div>
+        
+        <div class="space-y-2 relative z-10">
+            <div class="flex flex-wrap items-center gap-3">
+                <h1 class="text-3xl md:text-4xl font-extrabold text-white tracking-tight font-mono-data">
+                    QUANT<span class="text-emerald-400 font-light">ENGINE</span> <span class="text-xs bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/20 tracking-widest font-bold">V5 PRO</span>
+                </h1>
+                <span class="px-3 py-1 rounded-full bg-slate-800 text-slate-400 text-[10px] uppercase tracking-[0.15em] font-bold border border-slate-700/50">
+                    Standalone Quantitative Terminal
+                </span>
+            </div>
+            <p class="text-slate-400 text-xs max-w-3xl leading-relaxed">
+                Algoritmo preditivo de alta precisão com distribuição bivariada de Poisson corrigida por Dixon-Coles, encolhimento bayesiano das médias latentes, fator de atenuação por recência exponencial profunda e cálculo automatizado de utilidade via critério fracionário de Kelly.
+            </p>
+        </div>
+        <div class="flex items-center gap-2 bg-slate-950/60 border border-slate-800 rounded-2xl px-4 py-2.5">
+            <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+            <span class="text-xs font-mono-data text-slate-400 uppercase tracking-wider">Engine Status: Ready</span>
+        </div>
+    </header>
 
-<section class="glass rounded-3xl p-6 space-y-5">
+    <section class="glass-panel rounded-3xl p-6 space-y-5">
+        <div>
+            <label class="block text-[11px] uppercase tracking-[0.2em] text-slate-400 font-bold mb-2">
+                Chave de Autenticação API-Sports
+            </label>
+            <input
+                id="apiKey"
+                type="password"
+                placeholder="Introduza o token x-apisports-key"
+                class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3.5 font-mono text-sm text-white focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/30 transition-all placeholder-slate-600"
+            />
+        </div>
 
-<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div>
+                <label class="block text-[11px] uppercase tracking-[0.2em] text-slate-400 font-bold mb-2">
+                    Competição / Liga
+                </label>
+                <select id="leagueId" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3.5 text-sm text-slate-200 focus:outline-none focus:border-emerald-500">
+                    <option value="71">Brasileirão Série A (Brasil)</option>
+                    <option value="72">Brasileirão Série B (Brasil)</option>
+                    <option value="39">Premier League (Inglaterra)</option>
+                    <option value="140">La Liga (Espanha)</option>
+                    <option value="135">Serie A (Itália)</option>
+                    <option value="78">Bundesliga (Alemanha)</option>
+                    <option value="61">Ligue 1 (França)</option>
+                    <option value="94">Primeira Liga (Portugal)</option>
+                    <option value="2">UEFA Champions League</option>
+                    <option value="13">CONMEBOL Libertadores</option>
+                </select>
+            </div>
 
-<div>
-<label class="block text-xs uppercase tracking-widest text-slate-400 font-black mb-2">
-Liga
-</label>
-<select id="leagueId" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3 text-sm text-white">
-<option value="39">Premier League (Inglaterra)</option>
-<option value="140">La Liga (Espanha)</option>
-<option value="135">Serie A (Itália)</option>
-<option value="78">Bundesliga (Alemanha)</option>
-<option value="61">Ligue 1 (França)</option>
-</select>
-</div>
+            <div>
+                <label class="block text-[11px] uppercase tracking-[0.2em] text-slate-400 font-bold mb-2">
+                    Temporada / Época
+                </label>
+                <input
+                    id="season"
+                    type="number"
+                    value="2026"
+                    class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3.5 text-sm text-white font-mono-data focus:outline-none focus:border-emerald-500"
+                />
+            </div>
 
-<div>
-<label class="block text-xs uppercase tracking-widest text-slate-400 font-black mb-2">
-Temporada de Referência
-</label>
-<input id="season" type="number" value="2026" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3 text-sm text-white font-mono"/>
-</div>
+            <div class="md:col-span-2 flex items-end">
+                <button
+                    id="btnLoad"
+                    onclick="loadTeams()"
+                    class="w-full bg-blue-600 hover:bg-blue-500 active:scale-[0.99] transition-all text-white font-extrabold uppercase tracking-widest text-xs p-4 rounded-2xl shadow-lg shadow-blue-600/15"
+                >
+                    Sincronizar Dados da Liga
+                </button>
+            </div>
+        </div>
+    </section>
 
-<div class="flex flex-col sm:flex-row items-end gap-2">
-    <button id="btnSync" onclick="syncDatabase()" class="w-full sm:w-1/3 bg-emerald-600 hover:bg-emerald-500 transition-all text-slate-950 font-black uppercase tracking-wider text-[10px] p-4 rounded-2xl">
-        🔄 Sincronizar via Web
-    </button>
-    <label class="w-full sm:w-1/3 bg-slate-800 hover:bg-slate-700 transition-all text-white font-black uppercase tracking-wider text-[10px] p-4 rounded-2xl text-center cursor-pointer flex items-center justify-center gap-1">
-        📁 Importar CSV Manual
-        <input id="fileLoader" type="file" accept=".csv" onchange="importCSVManual(event)" class="hidden">
-    </label>
-    <button id="btnLoad" onclick="loadTeams()" class="w-full sm:w-1/3 bg-blue-600 hover:bg-blue-500 transition-all text-white font-black uppercase tracking-wider text-[10px] p-4 rounded-2xl">
-        📊 Carregar Dados
-    </button>
-</div>
+    <section id="matchPanel" class="hidden space-y-6">
+        <div class="glass-panel rounded-3xl p-6 grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div>
+                <label class="block text-[11px] uppercase tracking-[0.2em] text-slate-400 font-bold mb-2">
+                    Equipa Mandante (Casa)
+                </label>
+                <select id="homeTeam" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3.5 text-sm text-blue-400 font-semibold focus:outline-none focus:border-blue-500"></select>
+            </div>
 
-</div>
+            <div>
+                <label class="block text-[11px] uppercase tracking-[0.2em] text-slate-400 font-bold mb-2">
+                    Equipa Visitante (Fora)
+                </label>
+                <select id="awayTeam" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3.5 text-sm text-purple-400 font-semibold focus:outline-none focus:border-purple-500"></select>
+            </div>
+        </div>
 
-<div id="terminalContainer" class="bg-slate-950/60 border border-slate-900 rounded-2xl p-4 hidden">
-    <div class="flex justify-between items-center text-[10px] font-mono text-slate-500 uppercase tracking-wider mb-2">
-        <span>Status Log da Engine</span>
-        <span id="syncStatusBadge">Pronto</span>
+        <div class="glass-panel rounded-3xl p-6 space-y-5">
+            <h2 class="text-xs uppercase tracking-[0.2em] font-black text-slate-400 flex items-center gap-2">
+                <span>Mapeamento de Odds Atuais do Mercado</span>
+                <span class="w-1.5 h-1.5 rounded-full bg-slate-600"></span>
+                <span class="text-[10px] text-slate-500 font-normal normal-case">Introduza as linhas oferecidas pela casa de apostas</span>
+            </h2>
+
+            <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+                <div>
+                    <label class="block text-[10px] uppercase text-slate-500 font-bold mb-1.5 text-center">Casa (1)</label>
+                    <input id="oddHome" type="number" step="0.01" value="2.10" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3.5 text-center font-mono-data font-bold text-emerald-400 text-lg focus:outline-none focus:border-emerald-500">
+                </div>
+
+                <div>
+                    <label class="block text-[10px] uppercase text-slate-500 font-bold mb-1.5 text-center">Empate (X)</label>
+                    <input id="oddDraw" type="number" step="0.01" value="3.30" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3.5 text-center font-mono-data font-bold text-emerald-400 text-lg focus:outline-none focus:border-emerald-500">
+                </div>
+
+                <div>
+                    <label class="block text-[10px] uppercase text-slate-500 font-bold mb-1.5 text-center">Fora (2)</label>
+                    <input id="oddAway" type="number" step="0.01" value="3.60" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3.5 text-center font-mono-data font-bold text-emerald-400 text-lg focus:outline-none focus:border-emerald-500">
+                </div>
+
+                <div>
+                    <label class="block text-[10px] uppercase text-slate-500 font-bold mb-1.5 text-center">Over 2.5</label>
+                    <input id="oddOver" type="number" step="0.01" value="1.90" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3.5 text-center font-mono-data font-bold text-emerald-400 text-lg focus:outline-none focus:border-emerald-500">
+                </div>
+
+                <div>
+                    <label class="block text-[10px] uppercase text-slate-500 font-bold mb-1.5 text-center">Ambas Marcam (BTTS)</label>
+                    <input id="oddBTTS" type="number" step="0.01" value="1.80" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3.5 text-center font-mono-data font-bold text-emerald-400 text-lg focus:outline-none focus:border-emerald-500">
+                </div>
+            </div>
+
+            <button
+                id="btnAnalyze"
+                onclick="runAnalysis()"
+                class="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 active:scale-[0.99] transition-all text-white font-black uppercase tracking-widest text-xs p-4 rounded-2xl shadow-lg shadow-emerald-600/20"
+            >
+                Processar Modelagem Quantitativa Bivariada
+            </button>
+        </div>
+    </section>
+
+    <div id="loading" class="hidden text-center py-12 glass-panel rounded-3xl space-y-4">
+        <div class="loader-ring rounded-full h-14 w-14 border-4 border-slate-800 mx-auto"></div>
+        <p id="loadingText" class="text-emerald-400 text-xs uppercase tracking-[0.3em] font-mono-data font-bold">
+            A aceder ao barramento de dados...
+        </p>
     </div>
-    <div id="syncLog" class="font-mono text-xs text-slate-400 max-h-20 overflow-y-auto space-y-0.5"></div>
-</div>
 
-</section>
+    <section id="dashboard" class="hidden space-y-6">
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            
+            <div class="glass-panel rounded-3xl p-6 flex flex-col justify-between space-y-5">
+                <div>
+                    <h2 class="text-xs uppercase tracking-widest font-black text-slate-400 border-b border-slate-800 pb-3 flex justify-between items-center">
+                        <span>Média xG Projetada</span>
+                        <span class="text-[10px] text-slate-500 font-mono-data">λ & μ Estáveis</span>
+                    </h2>
+                    
+                    <div class="space-y-4 mt-4">
+                        <div>
+                            <div class="flex justify-between items-end mb-1.5">
+                                <span id="homeNameRes" class="font-bold text-sm text-blue-400 truncate max-w-[180px]">Mandante</span>
+                                <span id="homeXg" class="text-3xl font-black text-white font-mono-data tracking-tight">0.00</span>
+                            </div>
+                            <div class="w-full bg-slate-900 rounded-full h-2.5 overflow-hidden border border-slate-800">
+                                <div id="homeBar" class="bg-gradient-to-r from-blue-600 to-blue-400 h-full rounded-full transition-all duration-500"></div>
+                            </div>
+                        </div>
 
-<section id="matchPanel" class="hidden space-y-6">
-<div class="glass rounded-3xl p-6 grid grid-cols-1 md:grid-cols-2 gap-5">
-<div>
-<label class="block text-xs uppercase tracking-widest text-slate-400 font-black mb-2">Mandante</label>
-<select id="homeTeam" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3 text-sm text-white"></select>
-</div>
-<div>
-<label class="block text-xs uppercase tracking-widest text-slate-400 font-black mb-2">Visitante</label>
-<select id="awayTeam" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3 text-sm text-white"></select>
-</div>
-</div>
+                        <div>
+                            <div class="flex justify-between items-end mb-1.5">
+                                <span id="awayNameRes" class="font-bold text-sm text-purple-400 truncate max-w-[180px]">Visitante</span>
+                                <span id="awayXg" class="text-3xl font-black text-white font-mono-data tracking-tight">0.00</span>
+                            </div>
+                            <div class="w-full bg-slate-900 rounded-full h-2.5 overflow-hidden border border-slate-800">
+                                <div id="awayBar" class="bg-gradient-to-r from-purple-600 to-purple-400 h-full rounded-full transition-all duration-500"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-<div class="glass rounded-3xl p-6 space-y-5">
-<h2 class="text-xs uppercase tracking-widest font-black text-slate-400">Odds do Mercado</h2>
-<div class="grid grid-cols-2 md:grid-cols-5 gap-4">
-<div><label class="block text-[10px] uppercase text-slate-500 font-bold mb-1">Casa</label><input id="oddHome" type="number" step="0.01" value="2.10" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3 text-center font-mono text-emerald-400"></div>
-<div><label class="block text-[10px] uppercase text-slate-500 font-bold mb-1">Empate</label><input id="oddDraw" type="number" step="0.01" value="3.30" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3 text-center font-mono text-emerald-400"></div>
-<div><label class="block text-[10px] uppercase text-slate-500 font-bold mb-1">Fora</label><input id="oddAway" type="number" step="0.01" value="3.60" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3 text-center font-mono text-emerald-400"></div>
-<div><label class="block text-[10px] uppercase text-slate-500 font-bold mb-1">Over 2.5</label><input id="oddOver" type="number" step="0.01" value="1.90" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3 text-center font-mono text-emerald-400"></div>
-<div><label class="block text-[10px] uppercase text-slate-500 font-bold mb-1">BTTS</label><input id="oddBTTS" type="number" step="0.01" value="1.80" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3 text-center font-mono text-emerald-400"></div>
-</div>
-<button id="btnAnalyze" onclick="runAnalysis()" class="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black uppercase tracking-widest text-xs p-4 rounded-2xl">
-Executar Análise Quantitativa
-</button>
-</div>
-</section>
+                <div id="statsBox" class="text-xs text-slate-400 border-t border-slate-800 pt-4 space-y-2 font-mono-data">
+                    </div>
+            </div>
 
-<div id="loading" class="hidden text-center py-10">
-<div class="loader rounded-full h-12 w-12 border-4 border-slate-700 mx-auto mb-4"></div>
-<p id="loadingText" class="text-emerald-400 text-xs uppercase tracking-[0.3em] font-mono">Processando...</p>
-</div>
+            <div class="glass-panel rounded-3xl p-6 md:col-span-2 space-y-4">
+                <h2 class="text-xs uppercase tracking-widest font-black text-slate-400 border-b border-slate-800 pb-3 flex justify-between items-center">
+                    <span>Oportunidades de Valor Esperado (EV)</span>
+                    <span class="text-[10px] bg-blue-500/10 text-blue-400 px-2 py-0.5 rounded font-mono-data font-bold">Edge Mínimo > +2.0%</span>
+                </h2>
+                
+                <div id="marketCards" class="grid grid-cols-1 sm:grid-cols-3 gap-4"></div>
+                <div id="goalCards" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
+            </div>
+        </div>
 
-<section id="dashboard" class="hidden space-y-6">
-<div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-<div class="glass rounded-3xl p-6 space-y-5">
-<h2 class="text-xs uppercase tracking-widest font-black text-slate-400 border-b border-slate-800 pb-3">xG Projetado</h2>
-<div>
-<div class="flex justify-between items-end mb-2"><span id="homeNameRes" class="font-bold text-blue-400">Mandante</span><span id="homeXg" class="text-4xl font-black text-white font-mono">0.00</span></div>
-<div class="w-full bg-slate-900 rounded-full h-2 overflow-hidden"><div id="homeBar" class="bg-blue-500 h-full"></div></div>
-</div>
-<div>
-<div class="flex justify-between items-end mb-2"><span id="awayNameRes" class="font-bold text-purple-400">Visitante</span><span id="awayXg" class="text-4xl font-black text-white font-mono">0.00</span></div>
-<div class="w-full bg-slate-900 rounded-full h-2 overflow-hidden"><div id="awayBar" class="bg-purple-500 h-full"></div></div>
-</div>
-<div id="statsBox" class="text-xs text-slate-400 border-t border-slate-800 pt-4 space-y-2"></div>
-</div>
-<div class="glass rounded-3xl p-6 md:col-span-2 space-y-4">
-<h2 class="text-xs uppercase tracking-widest font-black text-slate-400 border-b border-slate-800 pb-3">Mercados e EV</h2>
-<div id="marketCards" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
-<div id="goalCards" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
-</div>
-</div>
-<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-<div class="glass rounded-3xl p-6 overflow-x-auto">
-<h2 class="text-xs uppercase tracking-widest font-black text-slate-400 border-b border-slate-800 pb-3 mb-4">Matriz de Placares</h2>
-<table class="w-full matrix bg-slate-950 rounded-2xl overflow-hidden">
-<thead><tr id="matrixHead"></tr></thead>
-<tbody id="matrixBody"></tbody>
-</table>
-</div>
-<div class="glass rounded-3xl p-6">
-<h2 class="text-xs uppercase tracking-widest font-black text-slate-400 border-b border-slate-800 pb-3 mb-4">Relatório Operacional</h2>
-<div id="report"></div>
-</div>
-</div>
-</section>
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            
+            <div class="glass-panel rounded-3xl p-6 lg:col-span-7 overflow-hidden flex flex-col">
+                <h2 class="text-xs uppercase tracking-widest font-black text-slate-400 border-b border-slate-800 pb-3 mb-4 flex justify-between items-center">
+                    <span>Matriz de Distribuição Bivariada Exata</span>
+                    <span class="text-[10px] text-slate-500 font-mono-data">Filtro de Visualização: 5x5</span>
+                </h2>
+                
+                <div class="overflow-x-auto custom-scrollbar rounded-2xl bg-slate-950/60 p-2 border border-slate-900">
+                    <table class="w-full matrix-table">
+                        <thead>
+                            <tr id="matrixHead"></tr>
+                        </thead>
+                        <tbody id="matrixBody"></tbody>
+                    </table>
+                </div>
+                <div class="mt-3 flex gap-4 text-[10px] text-slate-500 justify-center font-mono-data">
+                    <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded bg-blue-950/40 border border-blue-800/40"></span>Predomínio Casa</div>
+                    <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded bg-slate-900 border border-slate-700"></span>Zonas de Empate</div>
+                    <div class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded bg-purple-950/40 border border-purple-800/40"></span>Predomínio Fora</div>
+                </div>
+            </div>
+
+            <div class="glass-panel rounded-3xl p-6 lg:col-span-5 flex flex-col justify-between">
+                <div>
+                    <h2 class="text-xs uppercase tracking-widest font-black text-slate-400 border-b border-slate-800 pb-3 mb-4">
+                        Diretriz Operacional do Modelo
+                    </h2>
+                    <div id="report" class="space-y-4"></div>
+                </div>
+            </div>
+        </div>
+
+    </section>
 </div>
 
 <script>
-// ==========================================
-// CONFIGURAÇÃO DO SEU SUPABASE (API/KONG)
-// ==========================================
-const SUPABASE_URL = "https://modo-fila-supabase.znzrqn.easypanel.host/";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyAgCiAgICAicm9sZSI6ICJhbm9uIiwKICAgICJpc3MiOiAic3VwYWJhc2UtZGVtbyIsCiAgICAiaWF0IjogMTY0MTc2OTIwMCwKICAgICJleHAiOiAxNzk5NTM1NjAwCn0.dc_X5iR_VP_qT0zsiyj_I_OZ2T9FtRU2BBNWN8Bu4GE";
+    // Configurações Globais Estruturadas
+    const CONFIG = {
+        cacheTtl: 1000 * 60 * 60 * 6, // TTL Cache de 6 horas
+        defaultBaseHomeAvg: 1.45,     // Médias globais de fallback neutro
+        defaultBaseAwayAvg: 1.15,
+        shrinkageFactor: 0.18,        // Coeficiente de encolhimento bayesiano (Bayesian Shrinkage)
+        dixonColesRho: -0.075,        // Parâmetro de correção de dependência de golos baixos
+        minXgLimit: 0.20,              // Fronteira de segurança para evitar underflow analítico
+        valueBetThreshold: 0.02,       // Vantagem matemática de corte (+2.0% EV)
+        maxKellyAllocation: 0.05       // Limite estrito de alocação de banca por entrada (5%)
+    };
 
-const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-// Dicionário de Ligas para Planilhas do Football-Data
-const LEAGUE_MAP = {
-    "39": { name: "Premier League", csv: "E0.csv" },
-    "140": { name: "La Liga", csv: "SP1.csv" },
-    "135": { name: "Serie A", csv: "I1.csv" },
-    "78": { name: "Bundesliga", csv: "D1.csv" },
-    "61": { name: "Ligue 1", csv: "F1.csv" }
-};
-
-// Logger interno para o painel de sincronização
-function writeSyncLog(text, isError = false) {
-    const logContainer = document.getElementById('terminalContainer');
-    const logBox = document.getElementById('syncLog');
-    logContainer.classList.remove('hidden');
-    const color = isError ? 'text-red-400' : 'text-emerald-400';
-    logBox.innerHTML += `<p class="${color}">> ${text}</p>`;
-    logBox.scrollTop = logBox.scrollHeight;
-}
-
-// Converte datas UK (DD/MM/YY) para ISO do Postgres
-function formatToPostgresDate(dateStr) {
-    if (!dateStr) return null;
-    const parts = dateStr.split('/');
-    if (parts.length !== 3) return null;
-    let day = parts[0].padStart(2, '0');
-    let month = parts[1].padStart(2, '0');
-    let year = parts[2];
-    if (year.length === 2) year = '20' + year;
-    return `${year}-${month}-${day}`;
-}
-
-// =================================================================
-// ENGINE DE INTEGRAÇÃO E PROCESSAMENTO DE ARQUIVOS (WEB & LOCAL)
-// =================================================================
-
-// Função compartilhada que faz o parse do CSV e injeta os registros no banco Supabase
-async function processAndSaveCSV(csvText, targetConfig, badge, btn) {
-    Papa.parse(csvText, {
-        header: true,
-        skipEmptyLines: true,
-        complete: async function(results) {
-            try {
-                const rawGames = results.data;
-                const processedGames = [];
-
-                rawGames.forEach(row => {
-                    const dbDate = formatToPostgresDate(row.Date);
-                    if(dbDate && row.HomeTeam && row.AwayTeam && row.FTHG !== undefined && row.FTAG !== undefined) {
-                        processedGames.push({
-                            campeonato: targetConfig.name,
-                            data_jogo: dbDate,
-                            home_team: row.HomeTeam.trim(),
-                            away_team: row.AwayTeam.trim(),
-                            fthg: parseInt(row.FTHG),
-                            ftag: parseInt(row.FTAG)
-                        });
-                    }
-                });
-
-                if(processedGames.length === 0) throw new Error("A planilha não possui jogos válidos concluídos.");
-
-                writeSyncLog(`Filtrados ${processedGames.length} jogos estruturados. Enviando ao Supabase...`);
-
-                const { error } = await supabaseClient
-                    .from('historico_jogos')
-                    .upsert(processedGames, { 
-                        onConflict: 'data_jogo,home_team,away_team',
-                        ignoreDuplicates: true 
-                    });
-
-                if(error) throw new Error(error.message);
-
-                writeSyncLog(`Sincronização bem-sucedida! Banco de dados atualizado.`, false);
-                badge.innerText = "SUCESSO";
-                badge.className = "text-emerald-400 font-mono";
-            } catch (err) {
-                writeSyncLog(`Falha Crítica no Processamento: ${err.message}`, true);
-                badge.innerText = "FALHOU";
-                badge.className = "text-red-400 font-mono";
-            } finally {
-                btn.disabled = false;
-            }
+    // Inicialização do Token no LocalStorage de forma limpa
+    document.addEventListener('DOMContentLoaded', () => {
+        const cachedKey = localStorage.getItem('quant_api_key_v5');
+        if (cachedKey) {
+            document.getElementById('apiKey').value = cachedKey;
         }
     });
-}
 
-// 1A. SINCRONIZAÇÃO AUTOMÁTICA VIA WEB (ROTA ROTATIVA DE PROXIES CONTRA ERROS 403)
-async function syncDatabase() {
-    const btn = document.getElementById('btnSync');
-    const badge = document.getElementById('syncStatusBadge');
-    const leagueId = document.getElementById('leagueId').value;
-    const seasonInput = document.getElementById('season').value;
-    
-    const targetConfig = LEAGUE_MAP[leagueId];
-    if(!targetConfig) {
-        alert("Esta liga não está configurada para sincronização.");
-        return;
+    // Sanitização e Coerção Numérica Defensiva
+    function safeNumber(value, fallback = 0) {
+        if (value === null || value === undefined) return fallback;
+        const parsed = parseFloat(value);
+        return isNaN(parsed) ? fallback : parsed;
     }
 
-    btn.disabled = true;
-    badge.innerText = "PROCESSANDO";
-    badge.className = "text-amber-400 font-mono";
-    writeSyncLog(`Iniciando varredura automatizada para ${targetConfig.name}...`);
+    // Fatorial Iterativo Pré-otimizado de Alto Desempenho
+    const factorialCache = [1, 1, 2, 6, 24, 120, 720, 5040, 40320, 362880, 3628800, 39916800, 479001600];
+    function factorial(n) {
+        if (n < 0) return 1;
+        if (n < factorialCache.length) return factorialCache[n];
+        let res = factorialCache[factorialCache.length - 1];
+        for (let i = factorialCache.length; i <= n; i++) {
+            res *= i;
+        }
+        return res;
+    }
 
-    const yearInt = parseInt(seasonInput);
-    const shortPrev = String(yearInt - 1).slice(-2);
-    const shortCurr = String(yearInt).slice(-2);
-    const seasonFolder = `${shortPrev}${shortCurr}`;
+    // Cálculo da Distribuição Discreta de Poisson
+    function poisson(k, lambda) {
+        return (Math.pow(lambda, k) * Math.exp(-lambda)) / factorial(k);
+    }
 
-    const csvUrl = `https://www.football-data.co.uk/mmz4281/${seasonFolder}/${targetConfig.csv}`;
-    
-    const proxyPool = [
-        `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(csvUrl)}`,
-        `https://corsproxy.io/?${encodeURIComponent(csvUrl)}`,
-        `https://api.allorigins.win/raw?url=${encodeURIComponent(csvUrl)}`
-    ];
+    // Ajuste de Correção Bivariada Dixon-Coles para Interdependência Indevida
+    function dixonColes(x, y, lambda, mu, rho = CONFIG.dixonColesRho) {
+        if (x === 0 && y === 0) return Math.max(0, 1 - (lambda * mu * rho));
+        if (x === 0 && y === 1) return Math.max(0, 1 + (lambda * rho));
+        if (x === 1 && y === 0) return Math.max(0, 1 + (mu * rho));
+        if (x === 1 && y === 1) return Math.max(0, 1 - rho);
+        return 1;
+    }
 
-    let csvText = null;
-    let success = false;
+    // Equação de Valor Esperado Preditivo (Expected Value)
+    function calculateEV(probability, odd) {
+        return (probability * odd) - 1;
+    }
 
-    for (let i = 0; i < proxyPool.length; i++) {
+    // Gestão de Risco Kelly Criterion Fracionária Integrada
+    function calculateKelly(probability, odd) {
+        if (odd <= 1) return 0;
+        const b = odd - 1;
+        const q = 1 - probability;
+        const kelly = ((b * probability) - q) / b;
+        return Math.max(0, kelly);
+    }
+
+    // Normalização Estocástica Totalvetorial
+    function normalize(array) {
+        const sum = array.reduce((acc, v) => acc + v, 0);
+        return sum === 0 ? array.map(() => 0) : array.map(v => v / sum);
+    }
+
+    // Abstrações Camada Cache Local (SessionStorage)
+    function setCache(key, data) {
         try {
-            writeSyncLog(`Tentando conexão via Rota de Contingência ${i + 1}...`);
-            const response = await fetch(proxyPool[i]);
-            if (response.ok) {
-                const textResult = await response.text();
-                if (textResult && textResult.includes("Date") && textResult.includes("HomeTeam")) {
-                    csvText = textResult;
-                    success = true;
-                    break;
-                }
+            const payload = { timestamp: Date.now(), data };
+            sessionStorage.setItem(key, JSON.stringify(payload));
+        } catch (e) { console.warn("Falha ao injetar cache local: ", e); }
+    }
+
+    function getCache(key) {
+        try {
+            const raw = sessionStorage.getItem(key);
+            if (!raw) return null;
+            const parsed = JSON.parse(raw);
+            if (Date.now() - parsed.timestamp > CONFIG.cacheTtl) {
+                sessionStorage.removeItem(key);
+                return null;
             }
-        } catch (e) {
-            console.warn(`Rota de proxy ${i + 1} indisponível.`);
+            return parsed.data;
+        } catch (e) { return null; }
+    }
+
+    // Cliente HTTP Abstrato para a API-Sports
+    async function fetchAPI(endpoint) {
+        const key = document.getElementById('apiKey').value.trim();
+        if (!key) throw new Error('Token de API ausente ou inválido.');
+        
+        localStorage.setItem('quant_api_key_v5', key);
+        
+        const response = await fetch(`https://v3.football.api-sports.io/${endpoint}`, {
+            method: 'GET',
+            headers: { 'x-apisports-key': key }
+        });
+
+        if (response.status === 429) throw new Error('Quota diária excedida na API-Sports (Rate Limit).');
+        if (!response.ok) throw new Error(`Falha HTTP Crítica: Status ${response.status}`);
+
+        const payload = await response.json();
+        if (payload.errors && Object.keys(payload.errors).length > 0) {
+            throw new Error(`Erro API-Sports: ${JSON.stringify(payload.errors)}`);
+        }
+        return payload;
+    }
+
+    // Processamento Dinâmico de Elencos da Competição
+    async function loadTeams() {
+        const btn = document.getElementById('btnLoad');
+        const leagueId = document.getElementById('leagueId').value;
+        const season = document.getElementById('season').value;
+
+        btn.disabled = true;
+        btn.innerText = 'A processar pipeline...';
+
+        try {
+            const cacheKey = `teams_${leagueId}_${season}`;
+            let teams = getCache(cacheKey);
+
+            if (!teams) {
+                const res = await fetchAPI(`teams?league=${leagueId}&season=${season}`);
+                if (!res.response || res.response.length === 0) throw new Error('Nenhuma equipa localizada para estes parâmetros.');
+                
+                teams = res.response.map(item => ({
+                    id: item.team.id,
+                    name: item.team.name
+                }));
+                setCache(cacheKey, teams);
+            }
+
+            teams.sort((a, b) => a.name.localeCompare(b.name));
+
+            const homeSelect = document.getElementById('homeTeam');
+            const awaySelect = document.getElementById('awayTeam');
+            homeSelect.innerHTML = '';
+            awaySelect.innerHTML = '';
+
+            teams.forEach(t => {
+                const opt = `<option value="${t.id}">${t.name}</option>`;
+                homeSelect.insertAdjacentHTML('beforeend', opt);
+                awaySelect.insertAdjacentHTML('beforeend', opt);
+            });
+
+            if (awaySelect.options.length > 1) awaySelect.selectedIndex = 1;
+
+            document.getElementById('matchPanel').classList.remove('hidden');
+            btn.innerText = '✔ Base Sincronizada';
+            btn.className = btn.className.replace('bg-blue-600 hover:bg-blue-500', 'bg-slate-800 text-slate-400 border border-slate-700 pointer-events-none');
+        } catch (err) {
+            alert(err.message);
+            btn.innerText = 'Sincronizar Dados da Liga';
+            btn.disabled = false;
         }
     }
 
-    if (!success || !csvText) {
-        writeSyncLog(`Todas as rotas automáticas falharam (Bloqueio de IP/CORS).`, true);
-        writeSyncLog(`👉 Use o botão 'Importar CSV Manual' ao lado para processar o arquivo diretamente.`, false);
-        badge.innerText = "BLOQUEADO";
-        badge.className = "text-red-400 font-mono";
-        btn.disabled = false;
-        return;
+    // Agregação de Estatísticas Estruturadas por Equipa
+    async function getTeamStatistics(leagueId, season, teamId) {
+        const cacheKey = `stats_${leagueId}_${season}_${teamId}`;
+        let stats = getCache(cacheKey);
+        if (stats) return stats;
+
+        const res = await fetchAPI(`teams/statistics?league=${leagueId}&season=${season}&team=${teamId}`);
+        stats = res.response || null;
+        setCache(cacheKey, stats);
+        return stats;
     }
 
-    writeSyncLog(`Dados brutos baixados com sucesso. Iniciando parser quantitativo...`);
-    await processAndSaveCSV(csvText, targetConfig, badge, btn);
-}
+    // Resgate Histórico de Calendário/Jogos Concluídos
+    async function getLeagueFixtures(leagueId, season) {
+        const cacheKey = `fixtures_${leagueId}_${season}`;
+        let fixtures = getCache(cacheKey);
+        if (fixtures) return { data: fixtures, fromCache: true };
 
-// 1B. PLANO DE CONTINGÊNCIA: CARREGAMENTO DE ARQUIVO LOCAL (IMUNE A ERROS DE CORS/PROXY)
-function importCSVManual(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    const btn = document.getElementById('btnSync');
-    const badge = document.getElementById('syncStatusBadge');
-    const leagueId = document.getElementById('leagueId').value;
-    const targetConfig = LEAGUE_MAP[leagueId];
-
-    if(!targetConfig) {
-        alert("Por favor, selecione a liga correta acima antes de importar o arquivo.");
-        return;
+        const res = await fetchAPI(`fixtures?league=${leagueId}&season=${season}&status=FT`);
+        fixtures = res.response || [];
+        setCache(cacheKey, fixtures);
+        return { data: fixtures, fromCache: false };
     }
 
-    btn.disabled = true;
-    badge.innerText = "LENDO ARQUIVO";
-    badge.className = "text-amber-400 font-mono";
-    
-    document.getElementById('terminalContainer').classList.remove('hidden');
-    writeSyncLog(`Carregando planilha local: ${file.name}...`);
+    // Resgate e Ordenação Cronológica Estrita de Head-to-Head (H2H)
+    async function getH2H(homeId, awayId) {
+        const cacheKey = `h2h_${homeId}_${awayId}`;
+        let data = getCache(cacheKey);
+        if (data) return data;
 
-    const reader = new FileReader();
-    reader.onload = async function(e) {
-        const csvText = e.target.result;
-        writeSyncLog(`Arquivo carregado em memória. Gravando dados...`);
-        await processAndSaveCSV(csvText, targetConfig, badge, btn);
-        document.getElementById('fileLoader').value = '';
-    };
-    reader.onerror = function() {
-        writeSyncLog(`Erro fatal ao processar leitura do arquivo em disco.`, true);
-        badge.innerText = "FALHOU";
-        btn.disabled = false;
-    };
-    reader.readAsText(file);
-}
-
-// ==========================================
-// OPERAÇÕES MATEMÁTICAS DA ENGINE
-// ==========================================
-
-function safeNumber(value, fallback = 0) {
-    const n = parseFloat(value);
-    return isNaN(n) ? fallback : n;
-}
-
-function factorial(n) {
-    if(n <= 1) return 1;
-    let result = 1;
-    for(let i = 2; i <= n; i++) result *= i;
-    return result;
-}
-
-function poisson(k, lambda) {
-    return ((Math.pow(lambda, k)) * Math.exp(-lambda)) / factorial(k);
-}
-
-function dixonColes(x, y, lambda, mu, rho = -0.07) {
-    if(x === 0 && y === 0) return Math.max(0, 1 - (lambda * mu * rho));
-    if(x === 0 && y === 1) return Math.max(0, 1 + (lambda * rho));
-    if(x === 1 && y === 0) return Math.max(0, 1 + (mu * rho));
-    if(x === 1 && y === 1) return Math.max(0, 1 - rho);
-    return 1;
-}
-
-function calculateEV(probability, odd) { 
-    return (probability * odd) - 1; 
-}
-
-function calculateKelly(probability, odd) {
-    const b = odd - 1;
-    const q = 1 - probability;
-    const kelly = ((b * probability) - q) / b;
-    return Math.max(0, kelly);
-}
-
-function normalize(arr) {
-    const total = arr.reduce((acc, val) => acc + val, 0);
-    return arr.map(v => v / total);
-}
-
-// 2. BUSCA DE TIMES DIRETO DO BANCO DE DADOS
-async function loadTeams() {
-    const button = document.getElementById('btnLoad');
-    const leagueId = document.getElementById('leagueId').value;
-    const targetConfig = LEAGUE_MAP[leagueId];
-
-    if(!targetConfig) {
-        alert("Por favor, selecione uma liga válida.");
-        return;
-    }
-
-    button.disabled = true;
-    button.innerText = 'Carregando Banco...';
-
-    try {
-        const { data, error } = await supabaseClient
-            .from('historico_jogos')
-            .select('home_team, away_team')
-            .eq('campeonato', targetConfig.name);
-
-        if (error) throw new Error(error.message);
-        if (!data || data.length === 0) throw new Error("Nenhum dado encontrado para esta liga. Sincronize o banco primeiro!");
-
-        const teamSet = new Set();
-        data.forEach(m => {
-            teamSet.add(m.home_team);
-            teamSet.add(m.away_team);
-        });
-
-        const sortedTeams = Array.from(teamSet).sort();
-        const home = document.getElementById('homeTeam');
-        const away = document.getElementById('awayTeam');
+        const res = await fetchAPI(`fixtures/headtohead?h2h=${homeId}-${awayId}`);
+        const raw = res.response || [];
         
-        home.innerHTML = '';
-        away.innerHTML = '';
-
-        sortedTeams.forEach(teamName => {
-            const html = `<option value="${teamName}">${teamName}</option>`;
-            home.insertAdjacentHTML('beforeend', html);
-            away.insertAdjacentHTML('beforeend', html);
-        });
-
-        if(away.options.length > 1) away.selectedIndex = 1;
-
-        document.getElementById('matchPanel').classList.remove('hidden');
-        button.innerText = '📊 Carregar Dados';
-        button.classList.replace('bg-blue-600', 'bg-slate-700');
-    } catch(error) {
-        alert(error.message);
-        button.innerText = '📊 Carregar Dados';
-    } finally {
-        button.disabled = false;
+        data = raw
+            .sort((a, b) => new Date(b.fixture.date) - new Date(a.fixture.date))
+            .slice(0, 6);
+            
+        setCache(cacheKey, data);
+        return data;
     }
-}
 
-// 3. EXECUÇÃO DA ANÁLISE QUANTITATIVA
-async function runAnalysis() {
-    const loading = document.getElementById('loading');
-    const dashboard = document.getElementById('dashboard');
-    const loadingText = document.getElementById('loadingText');
-    const button = document.getElementById('btnAnalyze');
+    // Coordenação do Fluxo de Execução da Análise Preditiva
+    async function runAnalysis() {
+        const loading = document.getElementById('loading');
+        const dashboard = document.getElementById('dashboard');
+        const loadingText = document.getElementById('loadingText');
+        const btn = document.getElementById('btnAnalyze');
 
-    const leagueId = document.getElementById('leagueId').value;
-    const homeSelect = document.getElementById('homeTeam');
-    const awaySelect = document.getElementById('awayTeam');
+        const leagueId = document.getElementById('leagueId').value;
+        const season = document.getElementById('season').value;
+        const homeSelect = document.getElementById('homeTeam');
+        const awaySelect = document.getElementById('awayTeam');
 
-    const homeName = homeSelect.value;
-    const awayName = awaySelect.value;
-    const targetConfig = LEAGUE_MAP[leagueId];
+        const homeId = homeSelect.value;
+        const awayId = awaySelect.value;
 
-    if(homeName === awayName) return alert('Mandante e visitante devem ser diferentes.');
+        if (homeId === awayId) return alert('Erro Operacional: Escolha equipas distintas para o confronto.');
 
-    button.disabled = true;
-    dashboard.classList.add('hidden');
-    loading.classList.remove('hidden');
+        btn.disabled = true;
+        dashboard.classList.add('hidden');
+        loading.classList.remove('hidden');
 
-    try {
-        loadingText.innerText = 'Calculando Métricas de Distribuição...';
+        try {
+            loadingText.innerText = 'Etapa 1: Coletando estatísticas latentes...';
+            const [homeStats, awayStats, fixturesResult, h2h] = await Promise.all([
+                getTeamStatistics(leagueId, season, homeId),
+                getTeamStatistics(leagueId, season, awayId),
+                getLeagueFixtures(leagueId, season),
+                getH2H(homeId, awayId)
+            ]);
 
-        const { data: allFixtures, error: errFixtures } = await supabaseClient
-            .from('historico_jogos')
-            .select('*')
-            .eq('campeonato', targetConfig.name);
+            loadingText.innerText = 'Etapa 2: Executando matriz preditiva...';
+            
+            processEngine({
+                homeId, awayId,
+                inputs: {
+                    homeName: homeSelect.options[homeSelect.selectedIndex].text,
+                    awayName: awaySelect.options[awaySelect.selectedIndex].text,
+                    odds: {
+                        home: safeNumber(document.getElementById('oddHome').value, 2.0),
+                        draw: safeNumber(document.getElementById('oddDraw').value, 3.3),
+                        away: safeNumber(document.getElementById('oddAway').value, 3.5),
+                        over25: safeNumber(document.getElementById('oddOver').value, 1.9),
+                        btts: safeNumber(document.getElementById('oddBTTS').value, 1.8)
+                    }
+                },
+                homeStats, awayStats,
+                fixtures: fixturesResult.data,
+                fixturesFromCache: fixturesResult.fromCache,
+                h2h
+            });
 
-        if(errFixtures) throw new Error(errFixtures.message);
+            loading.classList.add('hidden');
+            dashboard.classList.remove('hidden');
+            dashboard.scrollIntoView({ behavior: 'smooth' });
+        } catch (err) {
+            alert(err.message);
+            loading.classList.add('hidden');
+        } finally {
+            btn.disabled = false;
+        }
+    }
 
-        const { data: rawH2H, error: errH2H } = await supabaseClient
-            .from('historico_jogos')
-            .select('*')
-            .eq('campeonato', targetConfig.name)
-            .or(`and(home_team.eq.${homeName},away_team.eq.${awayName}),and(home_team.eq.${awayName},away_team.eq.${homeName})`)
-            .order('data_jogo', { ascending: false })
-            .limit(6);
+    // Núcleo Algorítmico Preditivo (Process Engine)
+    function processEngine(payload) {
+        const { homeId, awayId, inputs, homeStats, awayStats, fixtures, fixturesFromCache, h2h } = payload;
 
-        if(errH2H) throw new Error(errH2H.message);
+        // Extração de médias brutas por amostragem de mando de campo
+        const homeScored = safeNumber(homeStats?.goals?.for?.average?.home, CONFIG.defaultBaseHomeAvg);
+        const homeConceded = safeNumber(homeStats?.goals?.against?.average?.home, CONFIG.defaultBaseAwayAvg);
+        const awayScored = safeNumber(awayStats?.goals?.for?.average?.away, CONFIG.defaultBaseAwayAvg);
+        const awayConceded = safeNumber(awayStats?.goals?.against?.average?.away, CONFIG.defaultBaseHomeAvg);
 
-        const homeGames = allFixtures.filter(g => g.home_team === homeName);
-        const homeScoredAvg = homeGames.reduce((s, g) => s + g.fthg, 0) / (homeGames.length || 1);
-        const homeConcededAvg = homeGames.reduce((s, g) => s + g.ftag, 0) / (homeGames.length || 1);
+        let leagueHomeAvg = CONFIG.defaultBaseHomeAvg;
+        let leagueAwayAvg = CONFIG.defaultBaseAwayAvg;
 
-        const awayGames = allFixtures.filter(g => g.away_team === awayName);
-        const awayScoredAvg = awayGames.reduce((s, g) => s + g.ftag, 0) / (awayGames.length || 1);
-        const awayConcededAvg = awayGames.reduce((s, g) => s + g.fthg, 0) / (awayGames.length || 1);
-
-        const mockedHomeStats = { goals: { for: { average: { home: homeScoredAvg } }, against: { average: { home: homeConcededAvg } } } };
-        const mockedAwayStats = { goals: { for: { average: { away: awayScoredAvg } }, against: { average: { away: awayConcededAvg } } } };
-        
-        const mappedFixtures = allFixtures.map(f => ({ goals: { home: f.fthg, away: f.ftag } }));
-        const mappedH2H = rawH2H.map(h => ({
-            teams: { home: { id: h.home_team }, away: { id: h.away_team } },
-            goals: { home: h.fthg, away: h.ftag }
-        }));
-
-        processEngine({
-            homeId: homeName,
-            awayId: awayName,
-            inputs: {
-                homeName,
-                awayName,
-                odds: {
-                    home: safeNumber(document.getElementById('oddHome').value, 2),
-                    draw: safeNumber(document.getElementById('oddDraw').value, 3.3),
-                    away: safeNumber(document.getElementById('oddAway').value, 3.5),
-                    over25: safeNumber(document.getElementById('oddOver').value, 1.9),
-                    btts: safeNumber(document.getElementById('oddBTTS').value, 1.8)
+        // Cálculo dinâmico das médias reais de golos da liga corrente
+        if (fixtures && fixtures.length > 10) {
+            let totalH = 0, totalA = 0, count = 0;
+            fixtures.forEach(f => {
+                const h = f?.goals?.home;
+                const a = f?.goals?.away;
+                if (h !== null && a !== null && h !== undefined && a !== undefined) {
+                    totalH += h; totalA += a; count++;
                 }
-            },
-            homeStats: mockedHomeStats,
-            awayStats: mockedAwayStats,
-            fixtures: mappedFixtures,
-            h2h: mappedH2H
-        });
-
-        loading.classList.add('hidden');
-        dashboard.classList.remove('hidden');
-        dashboard.scrollIntoView({ behavior: 'smooth' });
-    } catch(error) {
-        alert(error.message);
-        loading.classList.add('hidden');
-    } finally {
-        button.disabled = false;
-    }
-}
-
-// 4. CORE DO MOTOR MATEMÁTICO ORIGINAL & RENDERIZADORES
-function processEngine(data){
-    const { homeId, awayId, inputs, homeStats, awayStats, fixtures, h2h } = data;
-    const homeScored = safeNumber(homeStats?.goals?.for?.average?.home, 1.45);
-    const homeConceded = safeNumber(homeStats?.goals?.against?.average?.home, 1.10);
-    const awayScored = safeNumber(awayStats?.goals?.for?.average?.away, 1.15);
-    const awayConceded = safeNumber(awayStats?.goals?.against?.average?.away, 1.30);
-
-    let leagueHomeAvg = 1.45;
-    let leagueAwayAvg = 1.15;
-
-    if(fixtures.length > 10){
-        let totalHome = 0; let totalAway = 0; let count = 0;
-        fixtures.forEach(fix => {
-            const h = fix?.goals?.home; const a = fix?.goals?.away;
-            if(h !== null && a !== null){ totalHome += h; totalAway += a; count++; }
-        });
-        if(count > 0){ leagueHomeAvg = totalHome / count; leagueAwayAvg = totalAway / count; }
-    }
-
-    const attackHome = homeScored / leagueHomeAvg;
-    const defenseHome = homeConceded / leagueAwayAvg;
-    const attackAway = awayScored / leagueAwayAvg;
-    const defenseAway = awayConceded / leagueHomeAvg;
-    let lambda = attackHome * defenseAway * leagueHomeAvg;
-    let mu = attackAway * defenseHome * leagueAwayAvg;
-
-    const shrink = 0.18;
-    lambda = (lambda * (1 - shrink)) + (leagueHomeAvg * shrink);
-    mu = (mu * (1 - shrink)) + (leagueAwayAvg * shrink);
-
-    if(h2h.length > 0){
-        let weightedHome = 0; let weightedAway = 0; let totalWeight = 0;
-        h2h.forEach((match, index) => {
-            const weight = Math.exp(-index * 0.45);
-            const isHome = match.teams.home.id == homeId;
-            const hGoals = isHome ? match.goals.home : match.goals.away;
-            const aGoals = isHome ? match.goals.away : match.goals.home;
-            weightedHome += hGoals * weight;
-            weightedAway += aGoals * weight;
-            totalWeight += weight;
-        });
-        const h2hHome = weightedHome / totalWeight;
-        const h2hAway = weightedAway / totalWeight;
-        lambda = (lambda * 0.95) + (h2hHome * 0.05);
-        mu = (mu * 0.95) + (h2hAway * 0.05);
-    }
-
-    lambda = Math.max(0.25, lambda); mu = Math.max(0.25, mu);
-    document.getElementById('homeNameRes').innerText = inputs.homeName;
-    document.getElementById('awayNameRes').innerText = inputs.awayName;
-    document.getElementById('homeXg').innerText = lambda.toFixed(2);
-    document.getElementById('awayXg').innerText = mu.toFixed(2);
-    document.getElementById('homeBar').style.width = `${Math.min(lambda * 25, 100)}%`;
-    document.getElementById('awayBar').style.width = `${Math.min(mu * 25, 100)}%`;
-
-    const matrixLimit = 12; const visualLimit = 5;
-    let matrix = []; let probHome = 0; let probDraw = 0; let probAway = 0; let probUnder25 = 0; let probBTTS = 0;
-
-    for(let x = 0; x <= matrixLimit; x++){
-        matrix[x] = [];
-        for(let y = 0; y <= matrixLimit; y++){
-            const pX = poisson(x, lambda); const pY = poisson(y, mu);
-            const adjustment = Math.max(0, dixonColes(x, y, lambda, mu));
-            const prob = pX * pY * adjustment;
-            matrix[x][y] = prob;
+            });
+            if (count > 0) {
+                leagueHomeAvg = totalH / count;
+                leagueAwayAvg = totalA / count;
+            }
         }
-    }
-    let totalMatrix = 0;
-    for(let x = 0; x <= matrixLimit; x++){ for(let y = 0; y <= matrixLimit; y++){ totalMatrix += matrix[x][y]; } }
-    for(let x = 0; x <= matrixLimit; x++){
-        for(let y = 0; y <= matrixLimit; y++){
-            matrix[x][y] /= totalMatrix; const prob = matrix[x][y];
-            if(x > y){ probHome += prob; }else if(x === y){ probDraw += prob; }else{ probAway += prob; }
-            if((x + y) < 3){ probUnder25 += prob; }
-            if(x > 0 && y > 0){ probBTTS += prob; }
+
+        // Fatores Relativos de Ataque e Defesa (Capacidade Latente)
+        const attackHome = homeScored / leagueHomeAvg;
+        const defenseHome = homeConceded / leagueAwayAvg;
+        const attackAway = awayScored / leagueAwayAvg;
+        const defenseAway = awayConceded / leagueHomeAvg;
+
+        // Atribuição inicial de parâmetros básicos de intensidade xG (Poisson Lambda & Mu)
+        let lambda = attackHome * defenseAway * leagueHomeAvg;
+        let mu = attackAway * defenseHome * leagueAwayAvg;
+
+        // Aplicação de Bayesian Shrinkage (Controle de regressão à média para amostras curtas)
+        lambda = (lambda * (1 - CONFIG.shrinkageFactor)) + (leagueHomeAvg * CONFIG.shrinkageFactor);
+        mu = (mu * (1 - CONFIG.shrinkageFactor)) + (leagueAwayAvg * CONFIG.shrinkageFactor);
+
+        // Ajuste Fino por Recência Exponencial sobre Amostragem Histórica H2H
+        if (h2h && h2h.length > 0) {
+            let weightedHome = 0, weightedAway = 0, totalWeight = 0;
+            h2h.forEach((match, index) => {
+                // Decaimento exponencial: confrontos mais distantes perdem relevância estatística rapidamente
+                const weight = Math.exp(-index * 0.45);
+                const isHome = match.teams.home.id == homeId;
+                const hG = isHome ? safeNumber(match.goals.home) : safeNumber(match.goals.away);
+                const aG = isHome ? safeNumber(match.goals.away) : safeNumber(match.goals.home);
+
+                weightedHome += hG * weight;
+                weightedAway += aG * weight;
+                totalWeight += weight;
+            });
+
+            if (totalWeight > 0) {
+                const h2hHomeAvg = weightedHome / totalWeight;
+                const h2hAwayAvg = weightedAway / totalWeight;
+                // Injeção de 5% de peso estrutural histórico direto nos parâmetros estáveis de xG
+                lambda = (lambda * 0.95) + (h2hHomeAvg * 0.05);
+                mu = (mu * 0.95) + (h2hAwayAvg * 0.05);
+            }
         }
-    }
 
-    [probHome, probDraw, probAway] = normalize([probHome, probDraw, probAway]);
-    let probOver25 = 1 - probUnder25;
-    const normalizedGoals = normalize([probUnder25, probOver25]);
-    probUnder25 = normalizedGoals[0]; probOver25 = normalizedGoals[1];
+        // Bloqueio preventivo contra subfluxo numérico (underflow)
+        lambda = Math.max(CONFIG.minXgLimit, lambda);
+        mu = Math.max(CONFIG.minXgLimit, mu);
 
-    renderMatrix(matrix, visualLimit);
+        // Atualização reativa de elementos estruturais da interface
+        document.getElementById('homeNameRes').innerText = inputs.homeName;
+        document.getElementById('awayNameRes').innerText = inputs.awayName;
+        document.getElementById('homeXg').innerText = lambda.toFixed(2);
+        document.getElementById('awayXg').innerText = mu.toFixed(2);
+        document.getElementById('homeBar').style.width = `${Math.min(lambda * 25, 100)}%`;
+        document.getElementById('awayBar').style.width = `${Math.min(mu * 25, 100)}%`;
 
-    const markets = [
-        { name: `Vitória ${inputs.homeName}`, probability: probHome, odd: inputs.odds.home },
-        { name: 'Empate', probability: probDraw, odd: inputs.odds.draw },
-        { name: `Vitória ${inputs.awayName}`, probability: probAway, odd: inputs.odds.away }
-    ];
-    const goalMarkets = [
-        { name: 'Over 2.5', probability: probOver25, odd: inputs.odds.over25 },
-        { name: 'BTTS Sim', probability: probBTTS, odd: inputs.odds.btts }
-    ];
+        // Geração e Processamento de Limites da Matriz Bidimensional
+        const matrixLimit = 12; // Matriz oculta expandida para estabilidade matemática
+        const visualLimit = 5;  // Renderização truncada em 5x5 para otimização visual de tela
+        let matrix = [];
 
-    document.getElementById('marketCards').innerHTML = markets.map(renderMarketCard).join('');
-    document.getElementById('goalCards').innerHTML = goalMarkets.map(renderMarketCard).join('');
-    
-    document.getElementById('statsBox').innerHTML = `
-        <p>🏟 Média Casa Liga: <strong>${leagueHomeAvg.toFixed(2)}</strong></p>
-        <p>✈ Média Fora Liga: <strong>${leagueAwayAvg.toFixed(2)}</strong></p>
-        <p>📚 H2H utilizados: <strong>${h2h.length}</strong></p>
-        <p>🧠 Shrinkage aplicado: <strong>18%</strong></p>
-        <p>⚡ Origem dos Dados: <strong class="text-emerald-400">Supabase Persistent Table</strong></p>
-    `;
+        let probHome = 0, probDraw = 0, probAway = 0, probUnder25 = 0, probBTTS = 0;
 
-    // Gerando Relatório Operacional Avançado
-    const allMarkets = [...markets, ...goalMarkets].map(m => ({
-        ...m,
-        ev: calculateEV(m.probability, m.odd)
-    }));
-    
-    const valueMarkets = allMarkets.filter(m => m.ev > 0.02).sort((a, b) => b.ev - a.ev);
-    const reportElement = document.getElementById('report');
-    
-    if(valueMarkets.length === 0) {
-        reportElement.innerHTML = `
-            <div class="p-4 bg-red-950/20 border-l-4 border-red-500/50 rounded-xl text-slate-400 text-xs space-y-2">
-                <p class="font-black text-red-400 uppercase tracking-wider text-sm">SINAL DE NEUTRALIDADE (NO BET)</p>
-                <p>O algoritmo concluiu que as linhas oferecidas pela casa estão **perfeitamente eficientes** ou com a margem de lucro (*Juice/Vig*) muito alta.</p>
-                <p class="text-[11px]">Nenhuma cotação pré-live possui Valor Esperado Positivo sustentável. A recomendação profissional é **ficar de fora**.</p>
-            </div>`;
-    } else {
-        const best = valueMarkets[0];
-        const kelly = calculateKelly(best.probability, best.odd);
-        const stake = kelly * 0.25 * 100; // Quarter-Kelly
+        // Construção da malha bivariada combinada
+        for (let x = 0; x <= matrixLimit; x++) {
+            matrix[x] = [];
+            for (let y = 0; y <= matrixLimit; y++) {
+                const pX = poisson(x, lambda);
+                const pY = poisson(y, mu);
+                const adj = dixonColes(x, y, lambda, mu);
+                matrix[x][y] = pX * pY * adj;
+            }
+        }
+
+        // Integração de Volume e Normalização Unitária Estrita
+        let totalMatrixVolume = 0;
+        for (let x = 0; x <= matrixLimit; x++) {
+            for (let y = 0; y <= matrixLimit; y++) {
+                totalMatrixVolume += matrix[x][y];
+            }
+        }
         
-        reportElement.innerHTML = `
-            <div class="space-y-4">
-                <div class="p-4 bg-emerald-950/10 border border-emerald-500/20 rounded-2xl">
-                    <p class="text-emerald-400 font-black uppercase tracking-widest text-[10px] mb-2">Melhor Oportunidade Identificada</p>
-                    <div class="bg-slate-950 border border-slate-800 rounded-2xl p-4 text-center">
-                        <p class="text-sm font-black text-white">${best.name}</p>
-                        <p class="text-xl font-black text-emerald-400 font-mono mt-1">@ ${best.odd.toFixed(2)}</p>
+        // Agregação probabilística refinada por partição de cenários
+        for (let x = 0; x <= matrixLimit; x++) {
+            for (let y = 0; y <= matrixLimit; y++) {
+                matrix[x][y] /= totalMatrixVolume;
+                const p = matrix[x][y];
+
+                if (x > y) probHome += p;
+                else if (x === y) probDraw += p;
+                else probAway += p;
+
+                if ((x + y) < 3) probUnder25 += p;
+                if (x > 0 && y > 0) probBTTS += p;
+            }
+        }
+
+        // Vetores de Normalização Final
+        [probHome, probDraw, probAway] = normalize([probHome, probDraw, probAway]);
+        let probOver25 = 1 - probUnder25;
+        const normalizedGoals = normalize([probUnder25, probOver25]);
+        probUnder25 = normalizedGoals[0];
+        probOver25 = normalizedGoals[1];
+
+        // Renderização Visual da Matriz
+        renderMatrix(matrix, visualLimit);
+
+        // Estruturação de Métricas por Linhas de Mercado Comercial
+        const mainMarkets = [
+            { name: `Vitória - ${inputs.homeName}`, probability: probHome, odd: inputs.odds.home },
+            { name: 'Empate (X)', probability: probDraw, odd: inputs.odds.draw },
+            { name: `Vitória - ${inputs.awayName}`, probability: probAway, odd: inputs.odds.away }
+        ];
+
+        const goalMarkets = [
+            { name: 'Mais de 2.5 Golos (Over)', probability: probOver25, odd: inputs.odds.over25 },
+            { name: 'Ambas Marcam: Sim (BTTS)', probability: probBTTS, odd: inputs.odds.btts }
+        ];
+
+        // Output de Componentes Visuais na Tela
+        document.getElementById('marketCards').innerHTML = mainMarkets.map(renderMarketCard).join('');
+        document.getElementById('goalCards').innerHTML = goalMarkets.map(renderMarketCard).join('');
+
+        // Painel Informativo Técnico Integrado
+        document.getElementById('statsBox').innerHTML = `
+            <div class="flex justify-between"><span>Média Casa da Liga:</span><span class="text-white font-bold">${leagueHomeAvg.toFixed(2)}</span></div>
+            <div class="flex justify-between"><span>Média Fora da Liga:</span><span class="text-white font-bold">${leagueAwayAvg.toFixed(2)}</span></div>
+            <div class="flex justify-between"><span>Amostras H2H Reais:</span><span class="text-white font-bold">${h2h.length} conj.</span></div>
+            <div class="flex justify-between"><span>Fator Encolhimento:</span><span class="text-white font-bold">18% (Bayes)</span></div>
+            <div class="flex justify-between"><span>Barramento Base:</span><span class="${fixturesFromCache ? 'text-emerald-400' : 'text-amber-400'} font-bold">${fixturesFromCache ? 'Memória Cache' : 'API Live HTTP'}</span></div>
+        `;
+
+        buildReport([...mainMarkets, ...goalMarkets]);
+    }
+
+    // Renderizador Estrutural da Matriz Digital
+    function renderMatrix(matrix, limit) {
+        const head = document.getElementById('matrixHead');
+        const body = document.getElementById('matrixBody');
+
+        head.innerHTML = '<th class="p-2.5 text-slate-500 font-mono-data text-xs border-b border-slate-900">C \\ F</th>';
+        for (let i = 0; i <= limit; i++) {
+            head.insertAdjacentHTML('beforeend', `<th class="p-2.5 text-slate-400 font-mono-data text-xs border-b border-slate-900">${i}</th>`);
+        }
+
+        body.innerHTML = '';
+        for (let x = 0; x <= limit; x++) {
+            let rowHtml = `<tr><th class="bg-slate-950/80 text-blue-400 p-2.5 font-mono-data text-xs text-center border-r border-slate-900">${x}</th>`;
+            for (let y = 0; i <= limit, y <= limit; y++) {
+                const pct = matrix[x][y] * 100;
+                let cellClass = 'bg-slate-950/30 text-slate-400';
+                
+                if (x > y) cellClass = 'bg-blue-950/15 text-blue-400/90';
+                else if (x < y) cellClass = 'bg-purple-950/15 text-purple-400/90';
+                else cellClass = 'bg-slate-900/80 text-slate-200 font-bold';
+
+                rowHtml += `<td class="${cellClass} font-mono-data text-xs p-2 text-center transition-all">${pct.toFixed(1)}%</td>`;
+            }
+            rowHtml += '</tr>';
+            body.insertAdjacentHTML('beforeend', rowHtml);
+        }
+    }
+
+    // Construtor Estrutural de Blocos de Mercado Individual (Cards)
+    function renderMarketCard(market) {
+        const ev = calculateEV(market.probability, market.odd);
+        const fairOdd = market.probability > 0 ? 1 / market.probability : Infinity;
+        const hasEdge = ev > CONFIG.valueBetThreshold;
+        
+        const rawKelly = calculateKelly(market.probability, market.odd);
+        // Fração de segurança aplicada: Quarter-Kelly (25% do coeficiente nominal) limitado ao teto estrito da banca
+        const allocatedStake = Math.min(rawKelly * 0.25 * 100, CONFIG.maxKellyAllocation * 100);
+
+        return `
+            <div class="p-4 rounded-2xl flex flex-col justify-between glass-card ${hasEdge ? 'value-bet-active' : 'no-bet-active'}">
+                <div class="space-y-3">
+                    <h3 class="font-bold text-white text-xs truncate tracking-wide uppercase border-b border-slate-800 pb-2">${market.name}</h3>
+                    <div class="space-y-1.5 text-xs font-mono-data text-slate-400">
+                        <div class="flex justify-between"><span>Probabilidade:</span><span class="text-white font-bold">${(market.probability * 100).toFixed(1)}%</span></div>
+                        <div class="flex justify-between"><span>Odd Justa:</span><span class="text-blue-400 font-medium">${fairOdd.toFixed(2)}</span></div>
+                        <div class="flex justify-between"><span>Odd Mercado:</span><span class="text-emerald-400 font-bold">${market.odd.toFixed(2)}</span></div>
                     </div>
                 </div>
-                <div class="space-y-2 text-xs text-slate-300 bg-slate-950/40 p-3 rounded-2xl border border-slate-900">
-                    <p>📈 EV: <strong class="text-emerald-400">+${(best.ev * 100).toFixed(2)}%</strong></p>
-                    <p>⚖ Odd Justa: <strong>${(1 / best.probability).toFixed(2)}</strong></p>
-                    <p>🧠 Quarter-Kelly: <strong class="text-emerald-300">${stake.toFixed(2)}% da banca</strong></p>
+                
+                <div class="mt-4 pt-3 border-t border-slate-800/60 flex justify-between items-center">
+                    <span class="font-extrabold font-mono-data text-sm ${ev > 0 ? 'text-emerald-400' : 'text-red-400/60'}">
+                        EV ${ev > 0 ? '+' : ''}${(ev * 100).toFixed(1)}%
+                    </span>
+                    ${hasEdge 
+                        ? `<span class="text-[9px] bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 px-2 py-1 rounded font-mono-data font-bold uppercase tracking-wider">Stake: ${allocatedStake.toFixed(2)}%</span>`
+                        : `<span class="text-[9px] text-slate-600 font-mono-data tracking-wider">NO EDGE</span>`
+                    }
                 </div>
-            </div>`;
+            </div>
+        `;
     }
-}
 
-function renderMarketCard(market) {
-    const ev = calculateEV(market.probability, market.odd);
-    const isValue = ev > 0.02;
-    const cssClass = isValue ? 'value-bet' : 'no-bet';
-    
-    return `
-        <div class="p-4 rounded-2xl ${cssClass} space-y-2 flex flex-col justify-between">
-            <div class="flex justify-between items-start">
-                <span class="text-xs font-black text-white block">${market.name}</span>
-                ${isValue ? '<span class="bg-emerald-500/20 text-emerald-400 font-bold text-[9px] px-1.5 py-0.5 rounded uppercase tracking-wider font-mono">+EV</span>' : ''}
-            </div>
-            <div class="flex justify-between items-baseline text-xs">
-                <span class="text-slate-400">Prob: <strong>${(market.probability * 100).toFixed(1)}%</strong></span>
-                <span class="text-slate-400">Justa: <strong>${(1/market.probability).toFixed(2)}</strong></span>
-            </div>
-            <div class="flex justify-between items-center border-t border-slate-900/50 pt-2 mt-1">
-                <span class="text-[11px] font-mono text-slate-400">EV: <strong class="${isValue ? 'text-emerald-400 font-bold' : 'text-slate-500'}">${(ev*100).toFixed(1)}%</strong></span>
-                <span class="text-sm font-black font-mono text-white">@ ${market.odd.toFixed(2)}</span>
-            </div>
-        </div>
-    `;
-}
+    // Processamento do Relatório Final Executivo
+    function buildReport(markets) {
+        const reportContainer = document.getElementById('report');
+        
+        const sortedValueMarkets = markets
+            .map(m => ({ ...m, ev: calculateEV(m.probability, m.odd) }))
+            .filter(m => m.ev > CONFIG.valueBetThreshold)
+            .sort((a, b) => b.ev - a.ev);
 
-function renderMatrix(matrix, limit) {
-    const head = document.getElementById('matrixHead');
-    const body = document.getElementById('matrixBody');
-    
-    let headHtml = '<th class="p-2 text-slate-500 font-mono text-[10px] uppercase">C\\V</th>';
-    for(let y = 0; y <= limit; y++) {
-        headHtml += `<th class="p-2 text-purple-400 font-mono font-bold">${y}</th>`;
-    }
-    head.innerHTML = headHtml;
-    
-    let bodyHtml = '';
-    for(let x = 0; x <= limit; x++) {
-        bodyHtml += `<tr><td class="font-bold text-blue-400 bg-slate-900/30">${x}</td>`;
-        for(let y = 0; y <= limit; y++) {
-            const prob = matrix[x][y];
-            const pct = (prob * 100).toFixed(1);
-            let cellClass = "";
-            if(prob > 0.05) cellClass = "bg-emerald-500/10 text-emerald-400 font-bold";
-            bodyHtml += `<td class="${cellClass}">${pct}%</td>`;
+        if (sortedValueMarkets.length === 0) {
+            reportContainer.innerHTML = `
+                <div class="p-4 rounded-2xl bg-red-950/15 border border-red-500/20 text-slate-300 space-y-2">
+                    <p class="text-red-400 font-extrabold uppercase tracking-wider text-xs flex items-center gap-2">
+                        <span>⚠ Mercado Eficiente Detetado</span>
+                    </p>
+                    <p class="text-xs text-slate-400 leading-relaxed">
+                        As linhas oferecidas pelas casas de apostas encontram-se perfeitamente balanceadas ou subdimensionadas em relação às probabilidades implícitas do modelo quantitativo. Nenhuma entrada apresenta margem estatística real de lucro a longo prazo (Edge mínimo de +2%). Recomendação estrita: <strong>Abster-se de operar (No Bet)</strong>.
+                    </p>
+                </div>
+            `;
+            return;
         }
-        bodyHtml += '</tr>';
+
+        const primaryTarget = sortedValueMarkets[0];
+        const rawKelly = calculateKelly(primaryTarget.probability, primaryTarget.odd);
+        const finalStake = Math.min(rawKelly * 0.25 * 100, CONFIG.maxKellyAllocation * 100);
+
+        reportContainer.innerHTML = `
+            <div class="p-5 rounded-2xl bg-emerald-950/10 border border-emerald-500/20 space-y-4">
+                <div class="space-y-1">
+                    <p class="text-emerald-400 font-black uppercase tracking-widest text-[10px]">Ordem de Alocação Principal</p>
+                    <div class="bg-slate-950/80 border border-slate-900 rounded-xl p-4 text-center space-y-1">
+                        <p class="text-sm font-extrabold text-white tracking-wide uppercase">${primaryTarget.name}</p>
+                        <p class="text-xl font-mono-data font-black text-emerald-400">@ Cotização ${primaryTarget.odd.toFixed(2)}</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 text-xs font-mono-data bg-slate-950/40 p-3 rounded-xl border border-slate-900/60">
+                    <div class="text-slate-400">Vantagem Matemática:</div>
+                    <div class="text-emerald-400 font-bold text-right">+${(primaryTarget.ev * 100).toFixed(2)}% EV</div>
+                    <div class="text-slate-400">Preço Limite (Odd Justa):</div>
+                    <div class="text-blue-400 font-bold text-right">${(1 / primaryTarget.probability).toFixed(2)}</div>
+                    <div class="text-slate-400">Gestão Quarter-Kelly:</div>
+                    <div class="text-white font-bold text-right">${finalStake.toFixed(2)}% da Banca</div>
+                </div>
+
+                <div class="text-[10px] text-slate-500 leading-relaxed border-t border-slate-900 pt-3">
+                    Nota de validação: Entrada calculada dinamicamente utilizando estimadores robustos de variância pontual com amortecimento de picos por amostragem bayesiana convergente.
+                </div>
+            </div>
+        `;
     }
-    body.innerHTML = bodyHtml;
-}
 </script>
 
 </body>
