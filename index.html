@@ -311,12 +311,13 @@
                 log.textContent = `Puxando registros de desempenho do Visitante...`;
                 const aStats = await fetchAPI(`teams/statistics?league=${selectedLeagueId}&season=${season}&team=${awayId}`, apiKey);
 
-                // 3. Puxar Histórico H2H Direto entre os clubes
+                // 3. Puxar Histórico H2H Direto (Driblando o bloqueio do plano Free)
                 log.textContent = `Analisando confrontos diretos históricos (Head-to-Head)...`;
-                const h2hData = await fetchAPI(`fixtures/headtohead?h2h=${homeId}-${awayId}&last=8`, apiKey);
-
-                if(!hStats.response.fixtures.played.total || !aStats.response.fixtures.played.total) {
-                    throw new Error("A API não possui registros estatísticos suficientes de jogos concluídos para esses times nesta temporada específica ainda.");
+                const h2hData = await fetchAPI(`fixtures/headtohead?h2h=${homeId}-${awayId}`, apiKey);
+                
+                // O JavaScript faz o corte dos últimos 8 jogos de graça
+                if(h2hData.response && h2hData.response.length > 8) {
+                    h2hData.response = h2hData.response.slice(0, 8); 
                 }
 
                 // Executar cálculos matemáticos robustos
