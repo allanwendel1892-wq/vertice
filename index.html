@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>QUANT ENGINE V5 – AUTOMATIZADO</title>
+    <title>QUANT ENGINE V5 – AUTOMATIZADO PRO</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -30,10 +30,10 @@
     <header class="glass-panel rounded-3xl p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
             <h1 class="text-3xl font-extrabold text-white font-mono-data">
-                QUANT<span class="text-emerald-400 font-light">ENGINE</span> <span class="text-xs bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/20 font-bold">V5 CSV AUTOMATED</span>
+                QUANT<span class="text-emerald-400 font-light">ENGINE</span> <span class="text-xs bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/20 font-bold">V5 ELITE AUTO</span>
             </h1>
             <p class="text-slate-400 text-xs mt-1">
-                Análise quantitativa baseada no processamento matricial de dados históricos extraídos em tempo real. Sem chaves de API.
+                Motor Standalone. Integra Dixon-Coles, Shrinkage Bayesiano, Recência H2H Exponencial e Quarter-Kelly. Zero APIs.
             </p>
         </div>
     </header>
@@ -108,7 +108,7 @@
             </div>
 
             <button onclick="calculateModel()" class="w-full bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-black uppercase tracking-widest text-xs p-4 rounded-2xl shadow-lg transition-all">
-                Executar Análise de Distribuição Poisson
+                Processar Motor Quantitativo de Alta Performance
             </button>
         </div>
     </section>
@@ -151,7 +151,10 @@
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
             <div class="glass-panel rounded-3xl p-6 lg:col-span-7 overflow-x-auto">
-                <h2 class="text-xs uppercase tracking-widest font-black text-slate-400 mb-4">Matriz Probabilística de Placar Exato (5x5)</h2>
+                <h2 class="text-xs uppercase tracking-widest font-black text-slate-400 mb-4 flex justify-between">
+                    <span>Matriz Probabilística Bidimensional</span>
+                    <span class="text-[10px] bg-slate-900 px-2 py-1 rounded text-emerald-400 border border-slate-800">Dixon-Coles ON</span>
+                </h2>
                 <table class="w-full matrix-table">
                     <thead><tr id="matrixHead"></tr></thead>
                     <tbody id="matrixBody"></tbody>
@@ -168,11 +171,20 @@
 </div>
 
 <script>
+    // CONFIGURAÇÕES GLOBAIS DA MATEMÁTICA ESTATÍSTICA
+    const CONFIG = {
+        shrinkage: 0.18,          // Peso da regressão Bayesiana para a média da liga
+        dixonColesRho: -0.075,    // Coeficiente de correção p/ placares truncados (0-0, 1-0, etc)
+        h2hDecay: 0.45,           // Taxa de esquecimento exponencial para jogos antigos no H2H
+        matrixLimit: 12,          // Tamanho da matriz invisível para calcular soma perfeita
+        visualLimit: 5            // Tamanho da matriz impressa na tela
+    };
+
     let csvMatches = [];
     let uniqueTeams = [];
     let leagueAverages = { homeAvg: 1.40, awayAvg: 1.15 };
 
-    // Parser manual ultra-leve para ignorar quebras de linhas complexas do Excel/CSV do site
+    // Parser manual
     function parseCSVText(text) {
         const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
         if (lines.length === 0) return [];
@@ -198,7 +210,6 @@
         return parsed;
     }
 
-    // Busca o arquivo diretamente usando o proxy da Vercel criado no passo 1
     async function fetchAndParseCSV() {
         const button = document.getElementById('btnLoadCSV');
         const loading = document.getElementById('loading');
@@ -223,7 +234,6 @@
 
             if (csvMatches.length === 0) throw new Error('O arquivo CSV foi lido, mas nenhum dado válido de partida foi processado.');
 
-            // Extrai times únicos
             const teamSet = new Set();
             let totalHomeGoals = 0, totalAwayGoals = 0, validMatches = 0;
 
@@ -241,7 +251,6 @@
             leagueAverages.homeAvg = totalHomeGoals / validMatches;
             leagueAverages.awayAvg = totalAwayGoals / validMatches;
 
-            // Injeta nos selects
             const homeSel = document.getElementById('homeTeam');
             const awaySel = document.getElementById('awayTeam');
             homeSel.innerHTML = '';
@@ -266,7 +275,7 @@
         }
     }
 
-    // Fatorial estável para Poisson
+    // MATEMÁTICA ESTATÍSTICA DE ELITE
     function getFactorial(n) {
         if (n <= 1) return 1;
         let res = 1;
@@ -278,53 +287,87 @@
         return (Math.pow(lambda, k) * Math.exp(-lambda)) / getFactorial(k);
     }
 
-    // Executa a modelagem baseada exclusivamente nos registros do CSV carregado
+    function dixonColes(x, y, lambda, mu, rho = CONFIG.dixonColesRho) {
+        if (x === 0 && y === 0) return Math.max(0, 1 - (lambda * mu * rho));
+        if (x === 0 && y === 1) return Math.max(0, 1 + (lambda * rho));
+        if (x === 1 && y === 0) return Math.max(0, 1 + (mu * rho));
+        if (x === 1 && y === 1) return Math.max(0, 1 - rho);
+        return 1;
+    }
+
+    // Executa a modelagem com TODAS as correções avançadas
     function calculateModel() {
         const homeTeam = document.getElementById('homeTeam').value;
         const awayTeam = document.getElementById('awayTeam').value;
 
         if (homeTeam === awayTeam) return alert('Selecione equipas diferentes para o confronto.');
 
-        // Calcular médias específicas das duas equipes operadas usando a base histórica do CSV
         let homeScoredTotal = 0, homeConcededTotal = 0, homeGames = 0;
         let awayScoredTotal = 0, awayConcededTotal = 0, awayGames = 0;
+        let h2hMatches = [];
 
+        // Varredura Única no CSV
         csvMatches.forEach(m => {
-            if (!isNaN(m.FTHG) && !isNaN(m.FTAG)) {
-                if (m.HomeTeam === homeTeam) {
-                    homeScoredTotal += m.FTHG;
-                    homeConcededTotal += m.FTAG;
-                    homeGames++;
-                }
-                if (m.AwayTeam === awayTeam) {
-                    awayScoredTotal += m.FTAG;
-                    awayConcededTotal += m.FTHG;
-                    awayGames++;
-                }
+            if (isNaN(m.FTHG) || isNaN(m.FTAG)) return;
+            
+            // Agregações Gerais
+            if (m.HomeTeam === homeTeam) { homeScoredTotal += m.FTHG; homeConcededTotal += m.FTAG; homeGames++; }
+            if (m.AwayTeam === awayTeam) { awayScoredTotal += m.FTAG; awayConcededTotal += m.FTHG; awayGames++; }
+            
+            // Filtro H2H (Confrontos Diretos)
+            if ((m.HomeTeam === homeTeam && m.AwayTeam === awayTeam) || (m.HomeTeam === awayTeam && m.AwayTeam === homeTeam)) {
+                h2hMatches.push(m);
             }
         });
 
-        // Médias brutas por partida
+        // 1. Médias Brutas e Forças Relativas
         const hScoredAvg = homeGames > 0 ? (homeScoredTotal / homeGames) : leagueAverages.homeAvg;
         const hConcededAvg = homeGames > 0 ? (homeConcededTotal / homeGames) : leagueAverages.awayAvg;
         const aScoredAvg = awayGames > 0 ? (awayScoredTotal / awayGames) : leagueAverages.awayAvg;
         const aConcededAvg = awayGames > 0 ? (awayConcededTotal / awayGames) : leagueAverages.homeAvg;
 
-        // Força de Ataque e Defesa Relativas
         const attackHome = hScoredAvg / leagueAverages.homeAvg;
         const defenseHome = hConcededAvg / leagueAverages.awayAvg;
         const attackAway = aScoredAvg / leagueAverages.awayAvg;
         const defenseAway = aConcededAvg / leagueAverages.homeAvg;
 
-        // Parâmetros Lambda e Mu Finais para a distribuição bivariada
+        // 2. Cálculo Base (Poisson Puro)
         let lambda = attackHome * defenseAway * leagueAverages.homeAvg;
         let mu = attackAway * defenseHome * leagueAverages.awayAvg;
+
+        // 3. Aplicação do Bayesian Shrinkage (Encolhimento à média da liga)
+        lambda = (lambda * (1 - CONFIG.shrinkage)) + (leagueAverages.homeAvg * CONFIG.shrinkage);
+        mu = (mu * (1 - CONFIG.shrinkage)) + (leagueAverages.awayAvg * CONFIG.shrinkage);
+
+        // 4. Aplicação da Recência Exponencial H2H
+        // Como o CSV é lido cronologicamente de cima para baixo, revertemos a matriz para ter os jogos mais recentes no índice 0
+        h2hMatches.reverse(); 
+        if (h2hMatches.length > 0) {
+            let weightedHome = 0, weightedAway = 0, totalWeight = 0;
+            h2hMatches.slice(0, 6).forEach((m, index) => { // Analisa os últimos 6 jogos
+                const weight = Math.exp(-index * CONFIG.h2hDecay);
+                const isHome = m.HomeTeam === homeTeam;
+                const hG = isHome ? m.FTHG : m.FTAG;
+                const aG = isHome ? m.FTAG : m.FTHG;
+                
+                weightedHome += hG * weight;
+                weightedAway += aG * weight;
+                totalWeight += weight;
+            });
+            
+            if (totalWeight > 0) {
+                const h2hHomeAvg = weightedHome / totalWeight;
+                const h2hAwayAvg = weightedAway / totalWeight;
+                lambda = (lambda * 0.95) + (h2hHomeAvg * 0.05); // Mescla 5% do H2H na projeção
+                mu = (mu * 0.95) + (h2hAwayAvg * 0.05);
+            }
+        }
 
         // Segurança contra underflow
         lambda = Math.max(0.20, lambda);
         mu = Math.max(0.20, mu);
 
-        // Atualização gráfica das métricas de xG
+        // Atualização UI de xG
         document.getElementById('homeLabel').innerText = homeTeam;
         document.getElementById('awayLabel').innerText = awayTeam;
         document.getElementById('homeXG').innerText = lambda.toFixed(2);
@@ -332,21 +375,31 @@
         document.getElementById('homeBar').style.width = `${Math.min(lambda * 25, 100)}%`;
         document.getElementById('awayBar').style.width = `${Math.min(mu * 25, 100)}%`;
         document.getElementById('leagueStats').innerHTML = `
-            <div>Média Geral Casa da Liga: <strong>${leagueAverages.homeAvg.toFixed(2)}</strong></div>
-            <div>Média Geral Fora da Liga: <strong>${leagueAverages.awayAvg.toFixed(2)}</strong></div>
-            <div>Jogos computados no cálculo: <strong>${csvMatches.length} partidas</strong></div>
+            <div class="flex justify-between"><span>Shrinkage Aplicado:</span><strong class="text-emerald-400">${(CONFIG.shrinkage * 100)}%</strong></div>
+            <div class="flex justify-between"><span>Confrontos H2H:</span><strong class="text-white">${h2hMatches.length} jogos validados</strong></div>
+            <div class="flex justify-between"><span>Média Geral Casa/Fora:</span><strong class="text-white">${leagueAverages.homeAvg.toFixed(2)} / ${leagueAverages.awayAvg.toFixed(2)}</strong></div>
+            <div class="flex justify-between"><span>Amostra Global Processada:</span><strong class="text-white">${csvMatches.length} partidas ativas</strong></div>
         `;
 
-        // Matriz de probabilidades
-        const limit = 5;
+        // 5. Matriz de Distribuição Bivariada Expandida (Com Correção Dixon-Coles)
         let matrix = [];
         let pHome = 0, pDraw = 0, pAway = 0, pUnder = 0, pBTTS = 0;
+        let totalMatrixVol = 0;
 
-        for (let x = 0; x <= 10; x++) {
+        for (let x = 0; x <= CONFIG.matrixLimit; x++) {
             matrix[x] = [];
-            for (let y = 0; y <= 10; y++) {
-                const p = poissonProb(x, lambda) * poissonProb(y, mu);
+            for (let y = 0; y <= CONFIG.matrixLimit; y++) {
+                const p = poissonProb(x, lambda) * poissonProb(y, mu) * dixonColes(x, y, lambda, mu);
                 matrix[x][y] = p;
+                totalMatrixVol += p;
+            }
+        }
+
+        // 6. Normalização Total (Fechamento 100%) e Agregação
+        for (let x = 0; x <= CONFIG.matrixLimit; x++) {
+            for (let y = 0; y <= CONFIG.matrixLimit; y++) {
+                matrix[x][y] /= totalMatrixVol; // Normaliza a célula
+                const p = matrix[x][y];
 
                 if (x > y) pHome += p;
                 else if (x === y) pDraw += p;
@@ -357,16 +410,24 @@
             }
         }
 
-        // Renderiza matriz truncada de visualização na tela
+        // Dupla garantia matemática na aglomeração vetorial das odds 1x2 e Goals
+        const sum1x2 = pHome + pDraw + pAway;
+        pHome /= sum1x2; pDraw /= sum1x2; pAway /= sum1x2;
+        
+        const sumGoals = pUnder + (1 - pUnder);
+        pUnder /= sumGoals;
+        let pOver = 1 - pUnder;
+
+        // 7. Renderiza Matriz 5x5 na interface
         const head = document.getElementById('matrixHead');
         const body = document.getElementById('matrixBody');
         head.innerHTML = '<th class="p-2 text-slate-500 font-mono-data text-xs border-b border-slate-800">C \\ F</th>';
-        for (let i = 0; i <= limit; i++) head.insertAdjacentHTML('beforeend', `<th class="p-2 text-slate-400 font-mono-data text-xs border-b border-slate-800">${i}</th>`);
+        for (let i = 0; i <= CONFIG.visualLimit; i++) head.insertAdjacentHTML('beforeend', `<th class="p-2 text-slate-400 font-mono-data text-xs border-b border-slate-800">${i}</th>`);
 
         body.innerHTML = '';
-        for (let x = 0; x <= limit; x++) {
+        for (let x = 0; x <= CONFIG.visualLimit; x++) {
             let rowHtml = `<tr><th class="bg-slate-950/40 text-blue-400 p-2 font-mono-data text-xs border-r border-slate-800">${x}</th>`;
-            for (let y = 0; y <= limit; y++) {
+            for (let y = 0; y <= CONFIG.visualLimit; y++) {
                 const val = (matrix[x][y] * 100).toFixed(1);
                 let c = x === y ? 'bg-slate-900/60 font-bold' : (x > y ? 'text-blue-400/80' : 'text-purple-400/80');
                 rowHtml += `<td class="${c} font-mono-data text-xs p-2">${val}%</td>`;
@@ -375,7 +436,7 @@
             body.insertAdjacentHTML('beforeend', rowHtml);
         }
 
-        // Resgata as odds que o usuário inseriu na tela para cruzar os dados
+        // Resgata as odds que o usuário inseriu na tela
         const oddsInput = {
             home: parseFloat(document.getElementById('oddHome').value) || 2.0,
             draw: parseFloat(document.getElementById('oddDraw').value) || 3.3,
@@ -388,11 +449,10 @@
             { id: 'Casa', name: `Vitória - ${homeTeam}`, prob: pHome, odd: oddsInput.home },
             { id: 'Empate', name: `Empate (X)`, prob: pDraw, odd: oddsInput.draw },
             { id: 'Fora', name: `Vitória - ${awayTeam}`, prob: pAway, odd: oddsInput.away },
-            { id: 'Over', name: `Mais de 2.5 Golos`, prob: (1 - pUnder), odd: oddsInput.over25 },
+            { id: 'Over', name: `Mais de 2.5 Golos`, prob: pOver, odd: oddsInput.over25 },
             { id: 'BTTS', name: `Ambas Marcam (Sim)`, prob: pBTTS, odd: oddsInput.btts }
         ];
 
-        // Processa os blocos de cards de valor esperados
         const mainContainer = document.getElementById('marketCards');
         const goalsContainer = document.getElementById('goalCards');
         mainContainer.innerHTML = '';
@@ -404,14 +464,15 @@
         markets.forEach((m, idx) => {
             const ev = (m.prob * m.odd) - 1;
             const fairOdd = 1 / m.prob;
-            const isValue = ev > 0.02; // Edge superior a +2%
+            const isValue = ev > 0.02; // Edge de +2%
 
-            // Cálculo simplificado de Kelly Fracionário (Quarter-Kelly)
+            // 8. Cálculo de Risco: Quarter-Kelly Exato
             let stake = 0;
             if (m.odd > 1) {
                 const b = m.odd - 1;
-                const k = ((b * m.prob) - (1 - m.prob)) / b;
-                if (k > 0) stake = Math.min(k * 0.25 * 100, 5.0); // Limitador de teto estrito de 5% da banca
+                const q = 1 - m.prob;
+                const k = ((b * m.prob) - q) / b;
+                if (k > 0) stake = Math.min(k * 0.25 * 100, 5.0); // Quarter-Kelly limitado ao teto estrito de 5% de banca
             }
 
             if (ev > maxEV) {
@@ -424,14 +485,14 @@
                     <div class="space-y-2">
                         <h3 class="font-bold text-white text-xs truncate border-b border-slate-800 pb-1.5 uppercase">${m.name}</h3>
                         <div class="space-y-1 font-mono-data text-[11px] text-slate-400">
-                            <div class="flex justify-between"><span>Modelado:</span><span class="text-white">${(m.prob * 100).toFixed(1)}%</span></div>
-                            <div class="flex justify-between"><span>Odd Justa:</span><span class="text-blue-400">${fairOdd.toFixed(2)}</span></div>
-                            <div class="flex justify-between"><span>Mercado:</span><span class="text-emerald-400">${m.odd.toFixed(2)}</span></div>
+                            <div class="flex justify-between"><span>Prob Modelada:</span><span class="text-white">${(m.prob * 100).toFixed(1)}%</span></div>
+                            <div class="flex justify-between"><span>Odd Justa Real:</span><span class="text-blue-400">${fairOdd.toFixed(2)}</span></div>
+                            <div class="flex justify-between"><span>Odd Comercial:</span><span class="text-emerald-400">${m.odd.toFixed(2)}</span></div>
                         </div>
                     </div>
                     <div class="mt-3 pt-2 border-t border-slate-800/60 flex justify-between items-center">
                         <span class="font-bold text-xs ${ev > 0 ? 'text-emerald-400' : 'text-red-400/60'}">EV: ${(ev * 100).toFixed(1)}%</span>
-                        ${isValue ? `<span class="text-[9px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-1.5 py-0.5 rounded">Stake: ${stake.toFixed(1)}%</span>` : '<span class="text-[9px] text-slate-600">Sem Margem</span>'}
+                        ${isValue ? `<span class="text-[9px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-1.5 py-0.5 rounded font-bold">Stake: ${stake.toFixed(2)}%</span>` : '<span class="text-[9px] text-slate-600">No Edge</span>'}
                     </div>
                 </div>
             `;
@@ -440,28 +501,27 @@
             else goalsContainer.insertAdjacentHTML('beforeend', html);
         });
 
-        // Painel Diretriz Operacional
+        // Painel Operacional Final
         const report = document.getElementById('reportContainer');
         if (maxEV > 0.02 && bestMarket) {
             report.innerHTML = `
                 <div class="p-4 rounded-2xl bg-emerald-950/10 border border-emerald-500/20 space-y-3">
-                    <p class="text-emerald-400 font-bold text-xs uppercase tracking-wider">Oportunidade Principal Ativa</p>
+                    <p class="text-emerald-400 font-bold text-xs uppercase tracking-wider">Sinal Matemático Identificado</p>
                     <div class="bg-slate-950/80 border border-slate-900 rounded-xl p-3 text-center">
                         <p class="text-xs text-slate-400 font-bold uppercase">${bestMarket.name}</p>
                         <p class="text-xl font-mono-data font-black text-emerald-400 mt-1">@ ${bestMarket.odd.toFixed(2)}</p>
                     </div>
                     <div class="text-xs font-mono-data space-y-1 text-slate-300 bg-slate-950/40 p-3 rounded-xl border border-slate-900/60">
-                        <div class="flex justify-between"><span>Vantagem Calculada:</span><span class="text-emerald-400 font-bold">+ ${(bestMarket.ev * 100).toFixed(1)}% EV</span></div>
-                        <div class="flex justify-between"><span>Preço Limite Mínimo:</span><span class="text-blue-400 font-bold">${bestMarket.fairOdd.toFixed(2)}</span></div>
-                        <div class="flex justify-between"><span>Alocação Máxima:</span><span class="text-white font-bold">${bestMarket.stake.toFixed(1)}% da Banca</span></div>
+                        <div class="flex justify-between"><span>Vantagem Positiva (+EV):</span><span class="text-emerald-400 font-bold">+ ${(bestMarket.ev * 100).toFixed(2)}% EV</span></div>
+                        <div class="flex justify-between"><span>Risco Quarter-Kelly:</span><span class="text-white font-bold">${bestMarket.stake.toFixed(2)}% da Banca</span></div>
                     </div>
                 </div>
             `;
         } else {
             report.innerHTML = `
                 <div class="p-4 rounded-2xl bg-red-950/10 border border-red-500/20 text-slate-400 text-xs leading-relaxed">
-                    <p class="text-red-400 font-bold uppercase tracking-wider mb-1">Linhas Eficientes (No Bet)</p>
-                    O modelo processou a amostragem do CSV histórico e detectou que os preços da casa cobrem perfeitamente as chances estatísticas ou possuem margem de lucro abusiva. Nenhuma entrada elegível com edge superior a +2%. Permaneça neutro.
+                    <p class="text-red-400 font-bold uppercase tracking-wider mb-1">Cenário Eficiente / Juiced</p>
+                    A modelagem computou todas as variáveis matemáticas e normalizou as métricas H2H e Dixon-Coles. As cotações que você informou foram precificadas de maneira eficiente pela casa, sem vantagem matemática real a seu favor. O sistema indica o cancelamento operacional desta entrada.
                 </div>
             `;
         }
