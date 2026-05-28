@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>QUANT ENGINE V5 – AUTOMATIZADO PRO</title>
+    <title>QUANT ENGINE V6 – AUTOMATIZADO PRO + BRASIL</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -30,13 +30,35 @@
     <header class="glass-panel rounded-3xl p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
             <h1 class="text-3xl font-extrabold text-white font-mono-data">
-                QUANT<span class="text-emerald-400 font-light">ENGINE</span> <span class="text-xs bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/20 font-bold">V5 ELITE AUTO</span>
+                QUANT<span class="text-emerald-400 font-light">ENGINE</span> <span class="text-xs bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/20 font-bold">V6 ELITE AUTO + BRASIL</span>
             </h1>
             <p class="text-slate-400 text-xs mt-1">
-                Motor Standalone. Integra Dixon-Coles, Shrinkage Bayesiano, Recência H2H Exponencial e Quarter-Kelly. Upload Híbrido (Local/API).
+                Motor Standalone. Integra Dixon-Coles, Shrinkage Bayesiano, H2H Exponencial. Sincronia Python e Github.
             </p>
         </div>
     </header>
+
+    <section class="glass-panel rounded-3xl p-6 mb-6 border border-emerald-500/20 bg-emerald-950/10">
+        <h2 class="text-xs uppercase tracking-widest font-black text-emerald-400 mb-4 flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+            Integração Python: Próximos Jogos & Odds Betano
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+            <div class="md:col-span-8">
+                <label class="block text-[11px] uppercase tracking-wider text-slate-400 font-bold mb-2">Confrontos Encontrados pelo Python</label>
+                <select id="betanoMatches" onchange="loadBetanoMatch()" class="w-full bg-slate-900 border border-emerald-500/30 rounded-2xl p-3.5 text-sm text-white focus:outline-none disabled:opacity-50" disabled>
+                    <option value="">Aguardando arquivo CSV do Python (proximos_jogos_betano.csv)...</option>
+                </select>
+            </div>
+            <div class="md:col-span-4 flex flex-col gap-2">
+                <input type="file" id="pythonCsvFile" accept=".csv" class="hidden" onchange="handlePythonFileUpload(event)">
+                <button id="btnUploadPython" onclick="document.getElementById('pythonCsvFile').click()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold uppercase tracking-wider text-xs p-4 rounded-2xl transition-all flex items-center justify-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                    Carregar CSV do Python
+                </button>
+            </div>
+        </div>
+    </section>
 
     <section class="glass-panel rounded-3xl p-6 grid grid-cols-1 xl:grid-cols-12 gap-6 items-end">
         <div class="xl:col-span-8 grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -49,8 +71,9 @@
                 </select>
             </div>
             <div>
-                <label class="block text-[11px] uppercase tracking-wider text-slate-400 font-bold mb-2">Liga / Competição</label>
+                <label class="block text-[11px] uppercase tracking-wider text-slate-400 font-bold mb-2">Liga / Competição (Treinamento)</label>
                 <select id="league" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3.5 text-sm text-white focus:outline-none">
+                    <option value="BR" class="text-emerald-400 font-bold">Brasileirão Série A (Github)</option>
                     <option value="E0">Premier League (Inglaterra)</option>
                     <option value="E1">Championship (Inglaterra)</option>
                     <option value="SP1">La Liga (Espanha)</option>
@@ -60,8 +83,9 @@
                 </select>
             </div>
             <div class="flex items-end">
-                <button id="btnLoadCSV" onclick="fetchAndParseCSV()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold uppercase tracking-wider text-xs p-4 rounded-2xl transition-all">
-                    Sincronizar API Europeia
+                <button id="btnLoadCSV" onclick="fetchAndParseCSV()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold uppercase tracking-wider text-xs p-4 rounded-2xl transition-all flex items-center justify-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                    Sincronizar Base
                 </button>
             </div>
         </div>
@@ -71,10 +95,10 @@
         </div>
 
         <div class="xl:col-span-3 w-full">
-            <label class="block text-[11px] uppercase tracking-wider text-slate-400 font-bold mb-2 text-center xl:text-left">Upload Manual</label>
+            <label class="block text-[11px] uppercase tracking-wider text-slate-400 font-bold mb-2 text-center xl:text-left">Upload Histórico Manual</label>
             <input type="file" id="localCsvFile" accept=".csv" class="hidden" onchange="handleFileUpload(event)">
             <button id="btnUploadCSV" onclick="document.getElementById('localCsvFile').click()" class="w-full bg-slate-800 hover:bg-slate-700 border border-slate-600 text-white font-bold uppercase tracking-wider text-xs p-4 rounded-2xl transition-all flex items-center justify-center gap-2">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
                 Carregar CSV Local
             </button>
         </div>
@@ -122,7 +146,7 @@
                 </div>
             </div>
 
-            <button onclick="calculateModel()" class="w-full bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-black uppercase tracking-widest text-xs p-4 rounded-2xl shadow-lg transition-all">
+            <button onclick="calculateModel()" class="w-full bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-black uppercase tracking-widest text-xs p-4 rounded-2xl shadow-lg transition-all hover:scale-[1.01]">
                 Processar Motor Quantitativo de Alta Performance
             </button>
         </div>
@@ -186,48 +210,45 @@
 </div>
 
 <script>
-    // CONFIGURAÇÕES GLOBAIS DA MATEMÁTICA ESTATÍSTICA
+    // CONFIGURAÇÕES GLOBAIS DA MATEMÁTICA ESTATÍSTICA (Mantido do Original)
     const CONFIG = {
-        shrinkage: 0.18,          // Peso da regressão Bayesiana para a média da liga
-        dixonColesRho: -0.075,    // Coeficiente de correção p/ placares truncados (0-0, 1-0, etc)
-        h2hDecay: 0.45,           // Taxa de esquecimento exponencial para jogos antigos no H2H
-        matrixLimit: 12,          // Tamanho da matriz invisível para calcular soma perfeita
-        visualLimit: 5            // Tamanho da matriz impressa na tela
+        shrinkage: 0.18,          
+        dixonColesRho: -0.075,    
+        h2hDecay: 0.45,           
+        matrixLimit: 12,          
+        visualLimit: 5            
     };
+
+    // Endereço público RAW de um repositório confiável contendo os Placares (Gols) da Série A
+    const GITHUB_BRASILEIRAO_CSV_URL = 'https://raw.githubusercontent.com/adaoduque/Brasileirao_Dataset/master/campeonato-brasileiro-full.csv';
 
     let csvMatches = [];
     let uniqueTeams = [];
     let leagueAverages = { homeAvg: 1.40, awayAvg: 1.15 };
+    let pythonMatches = [];
 
-    // Executa automaticamente a puxada direta do arquivo gerado pelo scraper assim que a UI carrega
+    // INICIALIZAÇÃO E SINCRONIA SILENCIOSA
     window.addEventListener('DOMContentLoaded', () => {
-        toggleUIState(true);
+        // Tenta puxar o arquivo gerado pelo python caso ele já esteja na mesma pasta do servidor
         fetch('./proximos_jogos_betano.csv')
             .then(response => {
-                if (!response.ok) {
-                    throw new Error('O arquivo "proximos_jogos_betano.csv" não foi encontrado na raiz. Use os botões acima para carregar dados.');
-                }
-                return response.text();
+                if (response.ok) return response.text();
+                throw new Error();
             })
-            .then(rawText => {
-                processRawCSV(rawText);
-            })
-            .catch(error => {
-                console.warn(error.message);
-                toggleUIState(false);
-            });
+            .then(rawText => processPythonCSV(rawText))
+            .catch(e => console.log('Base da Betano aguardando upload via botão ou script.'));
+            
+        // Puxa a base de dados imediatamente
+        fetchAndParseCSV();
     });
 
-    // Bloqueia e Desbloqueia UI durante o processamento
     function toggleUIState(isLoading) {
         const btnLoad = document.getElementById('btnLoadCSV');
-        const btnUpload = document.getElementById('btnUploadCSV');
         const matchPanel = document.getElementById('matchPanel');
         const dashboard = document.getElementById('dashboard');
         const loading = document.getElementById('loading');
 
         btnLoad.disabled = isLoading;
-        btnUpload.disabled = isLoading;
 
         if (isLoading) {
             matchPanel.classList.add('hidden');
@@ -238,15 +259,12 @@
         }
     }
 
-    // Parser manual de Texto para Objeto JS
     function parseCSVText(text) {
         const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
         if (lines.length === 0) return [];
         
-        // Remove as aspas e transforma todo o cabeçalho em minúsculo para padronizar
         const headers = lines[0].split(',').map(h => h.replace(/['"]+/g, '').trim().toLowerCase());
         
-        // Busca os índices de forma 100% insensível a maiúsculas/minúsculas
         let homeIdx = headers.indexOf('hometeam');
         if (homeIdx === -1) homeIdx = headers.indexOf('mandante');
         
@@ -255,21 +273,17 @@
         
         let fthgIdx = headers.indexOf('fthg');
         if (fthgIdx === -1) fthgIdx = headers.indexOf('mandante_placar'); 
-        if (fthgIdx === -1) fthgIdx = headers.indexOf('gols_mandante'); 
         
         let ftagIdx = headers.indexOf('ftag');
         if (ftagIdx === -1) ftagIdx = headers.indexOf('visitante_placar'); 
-        if (ftagIdx === -1) ftagIdx = headers.indexOf('gols_visitante');
 
         if (homeIdx === -1 || awayIdx === -1 || fthgIdx === -1 || ftagIdx === -1) {
-             throw new Error('As colunas necessárias (Home/Mandante, Away/Visitante, Gols) não foram identificadas no CSV.');
+             throw new Error('Colunas estruturais ausentes. Utilize base completa com placares.');
         }
 
         const parsed = [];
         for (let i = 1; i < lines.length; i++) {
-            // Divide as colunas e limpa as aspas dos dados de cada linha
             const cols = lines[i].split(',').map(c => c.replace(/['"]+/g, '').trim());
-            
             if (cols[homeIdx] && cols[awayIdx]) {
                 parsed.push({
                     HomeTeam: cols[homeIdx],
@@ -282,11 +296,9 @@
         return parsed;
     }
 
-    // NÚCLEO DE EXTRAÇÃO: Compartilhado entre API e Upload Local
     function processRawCSV(rawText) {
         csvMatches = parseCSVText(rawText);
-
-        if (csvMatches.length === 0) throw new Error('O arquivo CSV foi lido, mas nenhum dado válido de partida foi processado.');
+        if (csvMatches.length === 0) throw new Error('Nenhum dado válido de partida.');
 
         const teamSet = new Set();
         let totalHomeGoals = 0, totalAwayGoals = 0, validMatches = 0;
@@ -300,8 +312,6 @@
                 validMatches++;
             }
         });
-
-        if (validMatches === 0) throw new Error('O CSV contém colunas, mas nenhuma linha com resultados numéricos válidos foi encontrada.');
 
         uniqueTeams = Array.from(teamSet).sort();
         leagueAverages.homeAvg = totalHomeGoals / validMatches;
@@ -324,54 +334,130 @@
         document.getElementById('matchPanel').classList.remove('hidden');
     }
 
-    // MÉTODO 1: Requisição para API Externa
+    // A ROTINA HÍBRIDA (GITHUB PARA BRASIL / PROXY PARA EUROPA)
     async function fetchAndParseCSV() {
         toggleUIState(true);
         const season = document.getElementById('season').value;
         const league = document.getElementById('league').value;
-        const targetCsvUrl = `https://www.football-data.co.uk/mmz4281/${season}/${league}.csv`;
+        
+        let targetCsvUrl = "";
+        if (league === "BR") {
+            targetCsvUrl = GITHUB_BRASILEIRAO_CSV_URL;
+        } else {
+            targetCsvUrl = `/api/fetch-football?url=${encodeURIComponent(`https://www.football-data.co.uk/mmz4281/${season}/${league}.csv`)}`;
+        }
 
         try {
-            const response = await fetch(`/api/fetch-football?url=${encodeURIComponent(targetCsvUrl)}`);
-            if (!response.ok) throw new Error('Não foi possível obter os dados do servidor Proxy.');
+            const response = await fetch(targetCsvUrl);
+            if (!response.ok) throw new Error('Falha de conexão com a Base Hóspede.');
             
             const rawText = await response.text();
             processRawCSV(rawText);
-
         } catch (error) {
-            alert('Falha na extração de dados da API: ' + error.message);
+            alert('Falha na extração de dados: ' + error.message);
             toggleUIState(false);
         }
     }
 
-    // MÉTODO 2: Leitura de Arquivo Local
     function handleFileUpload(event) {
         const file = event.target.files[0];
         if (!file) return;
-
         toggleUIState(true);
-
         const reader = new FileReader();
         reader.onload = function(e) {
-            try {
-                const rawText = e.target.result;
-                processRawCSV(rawText);
-            } catch (error) {
-                alert('Falha ao processar CSV local: ' + error.message);
-                toggleUIState(false);
-            }
+            try { processRawCSV(e.target.result); } 
+            catch (error) { alert(error.message); toggleUIState(false); }
         };
-        
-        reader.onerror = function() {
-            alert('Erro de leitura do sistema operacional.');
-            toggleUIState(false);
-        };
-
         event.target.value = '';
         reader.readAsText(file);
     }
 
-    // MATEMÁTICA ESTATÍSTICA DE ELITE
+    // =========================================================
+    // ETAPA DE INTEGRAÇÃO (O MOTOR LENDO O PYTHON DA BETANO)
+    // =========================================================
+    function handlePythonFileUpload(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) { processPythonCSV(e.target.result); };
+        event.target.value = '';
+        reader.readAsText(file);
+    }
+
+    function processPythonCSV(rawText) {
+        const lines = rawText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+        if (lines.length <= 1) return;
+        
+        const headers = lines[0].split(',').map(h => h.replace(/['"]+/g, '').trim().toLowerCase());
+        
+        let t1Idx = headers.indexOf('team1_nome');
+        let t2Idx = headers.indexOf('team2_nome');
+        let odd1Idx = headers.indexOf('team1');
+        let oddXIdx = headers.indexOf('empate');
+        let odd2Idx = headers.indexOf('team2');
+
+        if (t1Idx === -1 || odd1Idx === -1) {
+             alert('Atenção: CSV Betano Inválido. Variáveis (team1, empate) não alinhadas.');
+             return;
+        }
+
+        pythonMatches = [];
+        const select = document.getElementById('betanoMatches');
+        select.innerHTML = '<option value="">-- Selecione o Jogo Identificado --</option>';
+
+        for (let i = 1; i < lines.length; i++) {
+            const cols = lines[i].split(',').map(c => c.replace(/['"]+/g, '').trim());
+            if (cols.length > odd2Idx) {
+                const match = {
+                    home: cols[t1Idx],
+                    away: cols[t2Idx],
+                    oddHome: parseFloat(cols[odd1Idx]),
+                    oddDraw: parseFloat(cols[oddXIdx]),
+                    oddAway: parseFloat(cols[odd2Idx])
+                };
+                pythonMatches.push(match);
+                select.insertAdjacentHTML('beforeend', `<option value="${pythonMatches.length - 1}">${match.home} x ${match.away}</option>`);
+            }
+        }
+        select.disabled = false;
+        select.classList.add('border-emerald-400');
+        setTimeout(() => select.classList.remove('border-emerald-400'), 2000);
+    }
+
+    function loadBetanoMatch() {
+        const select = document.getElementById('betanoMatches');
+        const idx = select.value;
+        if (idx === "") return;
+        
+        const match = pythonMatches[idx];
+        
+        // Povoa as Odds de Mercado automaticamente
+        if(!isNaN(match.oddHome)) document.getElementById('oddHome').value = match.oddHome;
+        if(!isNaN(match.oddDraw)) document.getElementById('oddDraw').value = match.oddDraw;
+        if(!isNaN(match.oddAway)) document.getElementById('oddAway').value = match.oddAway;
+        
+        // Liga o motor de busca aproximada (Fuzzy Logic) para selecionar os times
+        autoSelectTeam('homeTeam', match.home);
+        autoSelectTeam('awayTeam', match.away);
+    }
+    
+    function autoSelectTeam(selectId, teamName) {
+        const select = document.getElementById(selectId);
+        if(!select.options || select.options.length === 0) return;
+        const options = Array.from(select.options);
+        
+        let target = options.find(o => o.value.toLowerCase() === teamName.toLowerCase());
+        
+        if(!target) {
+            target = options.find(o => o.value.toLowerCase().includes(teamName.toLowerCase().substring(0, 5)) || 
+                                       teamName.toLowerCase().includes(o.value.toLowerCase().substring(0, 5)));
+        }
+        if(target) select.value = target.value;
+    }
+
+    // =========================================================
+    // NÚCLEO MATEMÁTICO (Mantido Intacto do Original)
+    // =========================================================
     function getFactorial(n) {
         if (n <= 1) return 1;
         let res = 1;
@@ -379,12 +465,10 @@
         return res;
     }
 
-    // Poisson Puro
     function poissonProb(k, lambda) {
         return (Math.pow(lambda, k) * Math.exp(-lambda)) / getFactorial(k);
     }
 
-    // Dixon Coles Corretor
     function dixonColes(x, y, lambda, mu, rho = CONFIG.dixonColesRho) {
         if (x === 0 && y === 0) return Math.max(0, 1 - (lambda * mu * rho));
         if (x === 0 && y === 1) return Math.max(0, 1 + (lambda * rho));
@@ -393,7 +477,6 @@
         return 1;
     }
 
-    // Executa a modelagem com TODAS as correções avançadas
     function calculateModel() {
         const homeTeam = document.getElementById('homeTeam').value;
         const awayTeam = document.getElementById('awayTeam').value;
@@ -404,7 +487,6 @@
         let awayScoredTotal = 0, awayConcededTotal = 0, awayGames = 0;
         let h2hMatches = [];
 
-        // Varredura Única no CSV
         csvMatches.forEach(m => {
             if (isNaN(m.FTHG) || isNaN(m.FTAG)) return;
             
@@ -429,11 +511,9 @@
         let lambda = attackHome * defenseAway * leagueAverages.homeAvg;
         let mu = attackAway * defenseHome * leagueAverages.awayAvg;
 
-        // Shrinkage Bayesiano
         lambda = (lambda * (1 - CONFIG.shrinkage)) + (leagueAverages.homeAvg * CONFIG.shrinkage);
         mu = (mu * (1 - CONFIG.shrinkage)) + (leagueAverages.awayAvg * CONFIG.shrinkage);
 
-        // Recência H2H Exponencial
         h2hMatches.reverse(); 
         if (h2hMatches.length > 0) {
             let weightedHome = 0, weightedAway = 0, totalWeight = 0;
@@ -586,7 +666,6 @@
             else goalsContainer.insertAdjacentHTML('beforeend', html);
         });
 
-        // Painel Operacional Final (Reconstruído e fechado perfeitamente)
         const report = document.getElementById('reportContainer');
         if (maxEV > 0.02 && bestMarket) {
             report.innerHTML = `
@@ -609,7 +688,7 @@
         } else {
             report.innerHTML = `
                 <div class="p-4 rounded-2xl bg-slate-900/40 border border-slate-800 text-center text-slate-500 text-xs uppercase tracking-wider py-8">
-                    Nenhuma entrada com valor matemático (+EV) e margem de segurança foi detectada para este confronto.
+                    Nenhuma entrada com valor matemático (+EV) e margem de segurança foi detectada.
                 </div>
             `;
         }
