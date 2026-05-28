@@ -27,7 +27,7 @@ def obter_dataframe(query="*"):
     return df
 
 
-driver = Driver(uc=True)
+driver = Driver(uc=True, headless=True)
 driver.get("https://br.betano.com/sport/futebol/brasil/brasileirao-serie-a/10016/")
 df = obter_dataframe(query="section")
 texto = df.loc[
