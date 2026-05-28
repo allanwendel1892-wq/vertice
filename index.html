@@ -199,6 +199,25 @@
     let uniqueTeams = [];
     let leagueAverages = { homeAvg: 1.40, awayAvg: 1.15 };
 
+    // Executa automaticamente a puxada direta do arquivo gerado pelo scraper assim que a UI carrega
+    window.addEventListener('DOMContentLoaded', () => {
+        toggleUIState(true);
+        fetch('./proximos_jogos_betano.csv')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('O arquivo "proximos_jogos_betano.csv" não foi encontrado na raiz. Use os botões acima para carregar dados.');
+                }
+                return response.text();
+            })
+            .then(rawText => {
+                processRawCSV(rawText);
+            })
+            .catch(error => {
+                console.warn(error.message);
+                toggleUIState(false);
+            });
+    });
+
     // Bloqueia e Desbloqueia UI durante o processamento
     function toggleUIState(isLoading) {
         const btnLoad = document.getElementById('btnLoadCSV');
@@ -220,49 +239,48 @@
     }
 
     // Parser manual de Texto para Objeto JS
- 
     function parseCSVText(text) {
-    const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-    if (lines.length === 0) return [];
-    
-    // Remove as aspas e transforma todo o cabeçalho em minúsculo para padronizar
-    const headers = lines[0].split(',').map(h => h.replace(/['"]+/g, '').trim().toLowerCase());
-    
-    // Busca os índices de forma 100% insensível a maiúsculas/minúsculas
-    let homeIdx = headers.indexOf('hometeam');
-    if (homeIdx === -1) homeIdx = headers.indexOf('mandante');
-    
-    let awayIdx = headers.indexOf('awayteam');
-    if (awayIdx === -1) awayIdx = headers.indexOf('visitante');
-    
-    let fthgIdx = headers.indexOf('fthg');
-    if (fthgIdx === -1) fthgIdx = headers.indexOf('mandante_placar'); 
-    if (fthgIdx === -1) fthgIdx = headers.indexOf('gols_mandante'); 
-    
-    let ftagIdx = headers.indexOf('ftag');
-    if (ftagIdx === -1) ftagIdx = headers.indexOf('visitante_placar'); 
-    if (ftagIdx === -1) ftagIdx = headers.indexOf('gols_visitante');
-
-    if (homeIdx === -1 || awayIdx === -1 || fthgIdx === -1 || ftagIdx === -1) {
-         throw new Error('As colunas necessárias (Home/Mandante, Away/Visitante, Gols) não foram identificadas no CSV.');
-    }
-
-    const parsed = [];
-    for (let i = 1; i < lines.length; i++) {
-        // Divide as colunas e limpa as aspas dos dados de cada linha
-        const cols = lines[i].split(',').map(c => c.replace(/['"]+/g, '').trim());
+        const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+        if (lines.length === 0) return [];
         
-        if (cols[homeIdx] && cols[awayIdx]) {
-            parsed.push({
-                HomeTeam: cols[homeIdx],
-                AwayTeam: cols[awayIdx],
-                FTHG: parseFloat(cols[fthgIdx]) || 0,
-                FTAG: parseFloat(cols[ftagIdx]) || 0
-            });
+        // Remove as aspas e transforma todo o cabeçalho em minúsculo para padronizar
+        const headers = lines[0].split(',').map(h => h.replace(/['"]+/g, '').trim().toLowerCase());
+        
+        // Busca os índices de forma 100% insensível a maiúsculas/minúsculas
+        let homeIdx = headers.indexOf('hometeam');
+        if (homeIdx === -1) homeIdx = headers.indexOf('mandante');
+        
+        let awayIdx = headers.indexOf('awayteam');
+        if (awayIdx === -1) awayIdx = headers.indexOf('visitante');
+        
+        let fthgIdx = headers.indexOf('fthg');
+        if (fthgIdx === -1) fthgIdx = headers.indexOf('mandante_placar'); 
+        if (fthgIdx === -1) fthgIdx = headers.indexOf('gols_mandante'); 
+        
+        let ftagIdx = headers.indexOf('ftag');
+        if (ftagIdx === -1) ftagIdx = headers.indexOf('visitante_placar'); 
+        if (ftagIdx === -1) ftagIdx = headers.indexOf('gols_visitante');
+
+        if (homeIdx === -1 || awayIdx === -1 || fthgIdx === -1 || ftagIdx === -1) {
+             throw new Error('As colunas necessárias (Home/Mandante, Away/Visitante, Gols) não foram identificadas no CSV.');
         }
+
+        const parsed = [];
+        for (let i = 1; i < lines.length; i++) {
+            // Divide as colunas e limpa as aspas dos dados de cada linha
+            const cols = lines[i].split(',').map(c => c.replace(/['"]+/g, '').trim());
+            
+            if (cols[homeIdx] && cols[awayIdx]) {
+                parsed.push({
+                    HomeTeam: cols[homeIdx],
+                    AwayTeam: cols[awayIdx],
+                    FTHG: parseFloat(cols[fthgIdx]) || 0,
+                    FTAG: parseFloat(cols[ftagIdx]) || 0
+                });
+            }
+        }
+        return parsed;
     }
-    return parsed;
-}
 
     // NÚCLEO DE EXTRAÇÃO: Compartilhado entre API e Upload Local
     function processRawCSV(rawText) {
@@ -349,7 +367,6 @@
             toggleUIState(false);
         };
 
-        // Reseta o input para permitir upload do mesmo arquivo repetidamente se necessário
         event.target.value = '';
         reader.readAsText(file);
     }
@@ -362,10 +379,12 @@
         return res;
     }
 
+    // Poisson Puro
     function poissonProb(k, lambda) {
         return (Math.pow(lambda, k) * Math.exp(-lambda)) / getFactorial(k);
     }
 
+    // Dixon Coles Corretor
     function dixonColes(x, y, lambda, mu, rho = CONFIG.dixonColesRho) {
         if (x === 0 && y === 0) return Math.max(0, 1 - (lambda * mu * rho));
         if (x === 0 && y === 1) return Math.max(0, 1 + (lambda * rho));
@@ -389,17 +408,14 @@
         csvMatches.forEach(m => {
             if (isNaN(m.FTHG) || isNaN(m.FTAG)) return;
             
-            // Agregações Gerais
             if (m.HomeTeam === homeTeam) { homeScoredTotal += m.FTHG; homeConcededTotal += m.FTAG; homeGames++; }
             if (m.AwayTeam === awayTeam) { awayScoredTotal += m.FTAG; awayConcededTotal += m.FTHG; awayGames++; }
             
-            // Filtro H2H (Confrontos Diretos)
             if ((m.HomeTeam === homeTeam && m.AwayTeam === awayTeam) || (m.HomeTeam === awayTeam && m.AwayTeam === homeTeam)) {
                 h2hMatches.push(m);
             }
         });
 
-        // 1. Médias Brutas e Forças Relativas
         const hScoredAvg = homeGames > 0 ? (homeScoredTotal / homeGames) : leagueAverages.homeAvg;
         const hConcededAvg = homeGames > 0 ? (homeConcededTotal / homeGames) : leagueAverages.awayAvg;
         const aScoredAvg = awayGames > 0 ? (awayScoredTotal / awayGames) : leagueAverages.awayAvg;
@@ -410,15 +426,14 @@
         const attackAway = aScoredAvg / leagueAverages.awayAvg;
         const defenseAway = aConcededAvg / leagueAverages.homeAvg;
 
-        // 2. Cálculo Base (Poisson Puro)
         let lambda = attackHome * defenseAway * leagueAverages.homeAvg;
         let mu = attackAway * defenseHome * leagueAverages.awayAvg;
 
-        // 3. Aplicação do Bayesian Shrinkage (Encolhimento à média da liga)
+        // Shrinkage Bayesiano
         lambda = (lambda * (1 - CONFIG.shrinkage)) + (leagueAverages.homeAvg * CONFIG.shrinkage);
         mu = (mu * (1 - CONFIG.shrinkage)) + (leagueAverages.awayAvg * CONFIG.shrinkage);
 
-        // 4. Aplicação da Recência Exponencial H2H
+        // Recência H2H Exponencial
         h2hMatches.reverse(); 
         if (h2hMatches.length > 0) {
             let weightedHome = 0, weightedAway = 0, totalWeight = 0;
@@ -441,11 +456,9 @@
             }
         }
 
-        // Segurança contra underflow
         lambda = Math.max(0.20, lambda);
         mu = Math.max(0.20, mu);
 
-        // Atualização UI de xG
         document.getElementById('homeLabel').innerText = homeTeam;
         document.getElementById('awayLabel').innerText = awayTeam;
         document.getElementById('homeXG').innerText = lambda.toFixed(2);
@@ -459,7 +472,6 @@
             <div class="flex justify-between"><span>Amostra Global Processada:</span><strong class="text-white">${csvMatches.length} partidas ativas</strong></div>
         `;
 
-        // 5. Matriz de Distribuição Bivariada Expandida (Com Correção Dixon-Coles)
         let matrix = [];
         let pHome = 0, pDraw = 0, pAway = 0, pUnder = 0, pBTTS = 0;
         let totalMatrixVol = 0;
@@ -473,7 +485,6 @@
             }
         }
 
-        // 6. Normalização Total (Fechamento 100%) e Agregação
         for (let x = 0; x <= CONFIG.matrixLimit; x++) {
             for (let y = 0; y <= CONFIG.matrixLimit; y++) {
                 matrix[x][y] /= totalMatrixVol;
@@ -488,7 +499,6 @@
             }
         }
 
-        // Dupla garantia matemática na aglomeração vetorial das odds 1x2 e Goals
         const sum1x2 = pHome + pDraw + pAway;
         pHome /= sum1x2; pDraw /= sum1x2; pAway /= sum1x2;
         
@@ -496,7 +506,6 @@
         pUnder /= sumGoals;
         let pOver = 1 - pUnder;
 
-        // 7. Renderiza Matriz 5x5 na interface
         const head = document.getElementById('matrixHead');
         const body = document.getElementById('matrixBody');
         head.innerHTML = '<th class="p-2 text-slate-500 font-mono-data text-xs border-b border-slate-800">C \\ F</th>';
@@ -514,7 +523,6 @@
             body.insertAdjacentHTML('beforeend', rowHtml);
         }
 
-        // Resgata as odds que o usuário inseriu na tela
         const oddsInput = {
             home: parseFloat(document.getElementById('oddHome').value) || 2.0,
             draw: parseFloat(document.getElementById('oddDraw').value) || 3.3,
@@ -544,7 +552,6 @@
             const fairOdd = 1 / m.prob;
             const isValue = ev > 0.02;
 
-            // 8. Cálculo de Risco: Quarter-Kelly Exato
             let stake = 0;
             if (m.odd > 1) {
                 const b = m.odd - 1;
@@ -579,7 +586,7 @@
             else goalsContainer.insertAdjacentHTML('beforeend', html);
         });
 
-        // Painel Operacional Final
+        // Painel Operacional Final (Reconstruído e fechado perfeitamente)
         const report = document.getElementById('reportContainer');
         if (maxEV > 0.02 && bestMarket) {
             report.innerHTML = `
@@ -589,23 +596,25 @@
                         <p class="text-xs text-slate-400 font-bold uppercase">${bestMarket.name}</p>
                         <p class="text-xl font-mono-data font-black text-emerald-400 mt-1">@ ${bestMarket.odd.toFixed(2)}</p>
                     </div>
-                    <div class="text-xs font-mono-data space-y-1 text-slate-300 bg-slate-950/40 p-3 rounded-xl border border-slate-900/60">
-                        <div class="flex justify-between"><span>Vantagem Positiva (+EV):</span><span class="text-emerald-400 font-bold">+ ${(bestMarket.ev * 100).toFixed(2)}% EV</span></div>
-                        <div class="flex justify-between"><span>Risco Quarter-Kelly:</span><span class="text-white font-bold">${bestMarket.stake.toFixed(2)}% da Banca</span></div>
+                    <div class="flex justify-between text-xs font-mono-data text-slate-400">
+                        <span>Vantagem Comercial (+EV):</span>
+                        <strong class="text-emerald-400">+${(bestMarket.ev * 100).toFixed(1)}%</strong>
+                    </div>
+                    <div class="flex justify-between items-center text-xs font-mono-data text-slate-400">
+                        <span>Gestão Quarter-Kelly (Stake):</span>
+                        <strong class="text-white">${bestMarket.stake.toFixed(2)}%</strong>
                     </div>
                 </div>
             `;
         } else {
             report.innerHTML = `
-                <div class="p-4 rounded-2xl bg-red-950/10 border border-red-500/20 text-slate-400 text-xs leading-relaxed">
-                    <p class="text-red-400 font-bold uppercase tracking-wider mb-1">Cenário Eficiente / Juiced</p>
-                    A modelagem computou todas as variáveis matemáticas e normalizou as métricas H2H e Dixon-Coles. As cotações que você informou foram precificadas de maneira eficiente pela casa, sem vantagem matemática real a seu favor. O sistema indica o cancelamento operacional desta entrada.
+                <div class="p-4 rounded-2xl bg-slate-900/40 border border-slate-800 text-center text-slate-500 text-xs uppercase tracking-wider py-8">
+                    Nenhuma entrada com valor matemático (+EV) e margem de segurança foi detectada para este confronto.
                 </div>
             `;
         }
-
+        
         document.getElementById('dashboard').classList.remove('hidden');
-        document.getElementById('dashboard').scrollIntoView({ behavior: 'smooth' });
     }
 </script>
 </body>
