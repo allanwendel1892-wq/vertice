@@ -15,15 +15,20 @@ add_printer(1)
 
 def obter_dataframe(query="*"):
     df = pd.DataFrame()
-    while df.empty:
-        df = get_df(
-            driver,
-            By,
-            WebDriverWait,
-            expected_conditions,
-            queryselector=query,
-            with_methods=True,
-        )
+    tentativas = 0
+    while df.empty and tentativas < 5:
+        try:
+            df = get_df(
+                driver,
+                By,
+                WebDriverWait,
+                expected_conditions,
+                queryselector=query,
+                with_methods=True,
+            )
+        except Exception:
+            pass
+        tentativas += 1
     return df
 
 
