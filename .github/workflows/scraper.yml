@@ -1,1 +1,35 @@
+name: Atualizar Odds Betano
 
+on:
+  schedule:
+    # Roda automaticamente toda Quinta e Sábado às 09:00 de Brasília (12:00 UTC)
+    - cron: '0 12 * * 4,6'
+  workflow_dispatch: # Permite que você clique num botão no GitHub para rodar a hora que quiser
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Baixar código do repositório
+      uses: actions/checkout@v4
+
+    - name: Configurar o Python no servidor
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+
+    - name: Instalar dependências e o Chrome
+      run: |
+        pip install selenium seleniumbase PrettyColorPrinter a-selenium2df pandas numpy
+        seleniumbase install chromedriver
+
+    - name: Executar o Scraper da Betano
+      run: python code_update.py
+
+    - name: Salvar e Atualizar o CSV no Repositório
+      run: |
+        git config --global user.name 'QuantEngine-Bot'
+        git config --global user.email 'bot@quantengine.com'
+        git add proximos_jogos_betano.csv
+        git diff --quiet && git diff --staged --quiet || (git commit -m "Odds Betano atualizadas automaticamente" && git push)
