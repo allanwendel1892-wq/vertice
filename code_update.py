@@ -64,3 +64,7 @@ df = df.loc[
 df = df.T
 df.columns = ["data", "hora", "team1_nome", "team2_nome", "team1", "empate", "team2"]
 df = df.astype({"team1": "Float64", "empate": "Float64", "team2": "Float64"})
+
+# ADICIONE ESTA LINHA ABAIXO PARA SALVAR O ARQUIVO:
+df.to_csv('proximos_jogos_betano.csv', index=False)
+print("Arquivo proximos_jogos_betano.csv gerado com sucesso!")
