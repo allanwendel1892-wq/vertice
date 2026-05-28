@@ -221,33 +221,44 @@
 
     // Parser manual de Texto para Objeto JS
     function parseCSVText(text) {
-        const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
-        if (lines.length === 0) return [];
-        
-        const headers = lines[0].split(',');
-        const homeIdx = headers.indexOf('HomeTeam');
-        const awayIdx = headers.indexOf('AwayTeam');
-        const fthgIdx = headers.indexOf('FTHG');
-        const ftagIdx = headers.indexOf('FTAG');
+    const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+    if (lines.length === 0) return [];
+    
+    const headers = lines[0].split(',');
+    
+    // Procura pelo padrão Europeu ou pelo mapeamento Brasileiro
+    let homeIdx = headers.indexOf('HomeTeam');
+    if (homeIdx === -1) homeIdx = headers.indexOf('mandante');
+    
+    let awayIdx = headers.indexOf('AwayTeam');
+    if (awayIdx === -1) awayIdx = headers.indexOf('visitante');
+    
+    let fthgIdx = headers.indexOf('FTHG');
+    if (fthgIdx === -1) fthgIdx = headers.indexOf('mandante_placar');
+    if (fthgIdx === -1) fthgIdx = headers.indexOf('gols_mandante'); // variação comum
+    
+    let ftagIdx = headers.indexOf('FTAG');
+    if (ftagIdx === -1) ftagIdx = headers.indexOf('visitante_placar');
+    if (ftagIdx === -1) ftagIdx = headers.indexOf('gols_visitante'); // variação comum
 
-        if (homeIdx === -1 || awayIdx === -1 || fthgIdx === -1 || ftagIdx === -1) {
-             throw new Error('As colunas HomeTeam, AwayTeam, FTHG, ou FTAG não foram encontradas no CSV.');
-        }
-
-        const parsed = [];
-        for (let i = 1; i < lines.length; i++) {
-            const cols = lines[i].split(',');
-            if (cols[homeIdx] && cols[awayIdx]) {
-                parsed.push({
-                    HomeTeam: cols[homeIdx].trim(),
-                    AwayTeam: cols[awayIdx].trim(),
-                    FTHG: parseFloat(cols[fthgIdx]),
-                    FTAG: parseFloat(cols[ftagIdx])
-                });
-            }
-        }
-        return parsed;
+    if (homeIdx === -1 || awayIdx === -1 || fthgIdx === -1 || ftagIdx === -1) {
+         throw new Error('As colunas necessárias (Home/Mandante, Away/Visitante, Gols) não foram identificadas no CSV.');
     }
+
+    const parsed = [];
+    for (let i = 1; i < lines.length; i++) {
+        const cols = lines[i].split(',');
+        if (cols[homeIdx] && cols[awayIdx]) {
+            parsed.push({
+                HomeTeam: cols[homeIdx].trim(),
+                AwayTeam: cols[awayIdx].trim(),
+                FTHG: parseFloat(cols[fthgIdx]),
+                FTAG: parseFloat(cols[ftagIdx])
+            });
+        }
+    }
+    return parsed;
+}
 
     // NÚCLEO DE EXTRAÇÃO: Compartilhado entre API e Upload Local
     function processRawCSV(rawText) {
