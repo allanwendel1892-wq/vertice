@@ -2,9 +2,8 @@ name: Atualizar Odds Betano
 
 on:
   schedule:
-    # Roda automaticamente toda Quinta e Sábado às 09:00 de Brasília (12:00 UTC)
     - cron: '0 12 * * 4,6'
-  workflow_dispatch: # Permite que você clique num botão no GitHub para rodar a hora que quiser
+  workflow_dispatch:
 
 jobs:
   scrape:
@@ -19,13 +18,15 @@ jobs:
       with:
         python-version: '3.10'
 
-    - name: Instalar dependências e o Chrome
+    - name: Instalar dependências, Chrome e Display Virtual
       run: |
+        sudo apt-get update
+        sudo apt-get install -y xvfb x11-utils
         pip install selenium seleniumbase PrettyColorPrinter a-selenium2df pandas numpy
         seleniumbase install chromedriver
 
-    - name: Executar o Scraper da Betano
-      run: python code_update.py
+    - name: Executar o Scraper da Betano com Tela Virtual
+      run: xvfb-run --server-args="-screen 0 1024x768x24" python code_update.py
 
     - name: Salvar CSV no Repositorio
       run: |
