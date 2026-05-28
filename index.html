@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>QUANT ENGINE V5 – AUTOMATIZADO PRO (LOCAL)</title>
+    <title>QUANT ENGINE V5 – AUTOMATIZADO PRO</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -30,29 +30,59 @@
     <header class="glass-panel rounded-3xl p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
             <h1 class="text-3xl font-extrabold text-white font-mono-data">
-                QUANT<span class="text-emerald-400 font-light">ENGINE</span> <span class="text-xs bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/20 font-bold">V5 ELITE AUTO (LOCAL)</span>
+                QUANT<span class="text-emerald-400 font-light">ENGINE</span> <span class="text-xs bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/20 font-bold">V5 ELITE AUTO</span>
             </h1>
             <p class="text-slate-400 text-xs mt-1">
-                Motor Standalone. Integra Dixon-Coles, Shrinkage Bayesiano, Recência H2H Exponencial e Quarter-Kelly. Upload Local.
+                Motor Standalone. Integra Dixon-Coles, Shrinkage Bayesiano, Recência H2H Exponencial e Quarter-Kelly. Upload Híbrido (Local/API).
             </p>
         </div>
     </header>
 
-    <section class="glass-panel rounded-3xl p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-            <label class="block text-[11px] uppercase tracking-wider text-slate-400 font-bold mb-2">Arquivo CSV do Computador</label>
-            <input type="file" id="csvFileInput" accept=".csv" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-2.5 text-sm text-slate-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-blue-600 file:text-white hover:file:bg-blue-500 cursor-pointer focus:outline-none transition-all">
+    <section class="glass-panel rounded-3xl p-6 grid grid-cols-1 xl:grid-cols-12 gap-6 items-end">
+        <div class="xl:col-span-8 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+                <label class="block text-[11px] uppercase tracking-wider text-slate-400 font-bold mb-2">Temporada</label>
+                <select id="season" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3.5 text-sm text-white focus:outline-none">
+                    <option value="2526">2025 / 2026</option>
+                    <option value="2425">2024 / 2025</option>
+                    <option value="2324">2023 / 2024</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-[11px] uppercase tracking-wider text-slate-400 font-bold mb-2">Liga / Competição</label>
+                <select id="league" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3.5 text-sm text-white focus:outline-none">
+                    <option value="E0">Premier League (Inglaterra)</option>
+                    <option value="E1">Championship (Inglaterra)</option>
+                    <option value="SP1">La Liga (Espanha)</option>
+                    <option value="D1">Bundesliga (Alemanha)</option>
+                    <option value="I1">Serie A (Itália)</option>
+                    <option value="F1">Ligue 1 (França)</option>
+                </select>
+            </div>
+            <div class="flex items-end">
+                <button id="btnLoadCSV" onclick="fetchAndParseCSV()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold uppercase tracking-wider text-xs p-4 rounded-2xl transition-all">
+                    Sincronizar API Europeia
+                </button>
+            </div>
         </div>
-        <div class="flex items-end">
-            <button id="btnLoadCSV" onclick="processCSVUpload()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold uppercase tracking-wider text-xs p-4 rounded-2xl transition-all">
-                Sincronizar e Extrair CSV Local
+
+        <div class="xl:col-span-1 flex items-center justify-center py-2 xl:py-0">
+            <span class="text-slate-600 font-bold text-[10px] uppercase tracking-widest px-4 py-1 rounded-full border border-slate-800 bg-slate-900/50">OU</span>
+        </div>
+
+        <div class="xl:col-span-3 w-full">
+            <label class="block text-[11px] uppercase tracking-wider text-slate-400 font-bold mb-2 text-center xl:text-left">Upload Manual</label>
+            <input type="file" id="localCsvFile" accept=".csv" class="hidden" onchange="handleFileUpload(event)">
+            <button id="btnUploadCSV" onclick="document.getElementById('localCsvFile').click()" class="w-full bg-slate-800 hover:bg-slate-700 border border-slate-600 text-white font-bold uppercase tracking-wider text-xs p-4 rounded-2xl transition-all flex items-center justify-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                Carregar CSV Local
             </button>
         </div>
     </section>
 
     <div id="loading" class="hidden text-center py-12 glass-panel rounded-3xl space-y-4">
         <div class="loader-ring rounded-full h-12 w-12 border-4 border-slate-800 mx-auto"></div>
-        <p id="loadingText" class="text-emerald-400 text-xs uppercase tracking-widest font-mono-data font-bold">Lendo arquivo local...</p>
+        <p id="loadingText" class="text-emerald-400 text-xs uppercase tracking-widest font-mono-data font-bold">Processando dados e injetando matriz...</p>
     </div>
 
     <section id="matchPanel" class="hidden space-y-6">
@@ -169,7 +199,27 @@
     let uniqueTeams = [];
     let leagueAverages = { homeAvg: 1.40, awayAvg: 1.15 };
 
-    // Parser manual
+    // Bloqueia e Desbloqueia UI durante o processamento
+    function toggleUIState(isLoading) {
+        const btnLoad = document.getElementById('btnLoadCSV');
+        const btnUpload = document.getElementById('btnUploadCSV');
+        const matchPanel = document.getElementById('matchPanel');
+        const dashboard = document.getElementById('dashboard');
+        const loading = document.getElementById('loading');
+
+        btnLoad.disabled = isLoading;
+        btnUpload.disabled = isLoading;
+
+        if (isLoading) {
+            matchPanel.classList.add('hidden');
+            dashboard.classList.add('hidden');
+            loading.classList.remove('hidden');
+        } else {
+            loading.classList.add('hidden');
+        }
+    }
+
+    // Parser manual de Texto para Objeto JS
     function parseCSVText(text) {
         const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
         if (lines.length === 0) return [];
@@ -179,6 +229,10 @@
         const awayIdx = headers.indexOf('AwayTeam');
         const fthgIdx = headers.indexOf('FTHG');
         const ftagIdx = headers.indexOf('FTAG');
+
+        if (homeIdx === -1 || awayIdx === -1 || fthgIdx === -1 || ftagIdx === -1) {
+             throw new Error('As colunas HomeTeam, AwayTeam, FTHG, ou FTAG não foram encontradas no CSV.');
+        }
 
         const parsed = [];
         for (let i = 1; i < lines.length; i++) {
@@ -195,87 +249,97 @@
         return parsed;
     }
 
-    // NOVA FUNÇÃO: Lê o arquivo CSV diretamente do computador do usuário
-    function processCSVUpload() {
-        const fileInput = document.getElementById('csvFileInput');
-        const button = document.getElementById('btnLoadCSV');
-        const loading = document.getElementById('loading');
-        const matchPanel = document.getElementById('matchPanel');
-        const dashboard = document.getElementById('dashboard');
-        
-        if (!fileInput.files || fileInput.files.length === 0) {
-            alert('Por favor, selecione um arquivo CSV do seu computador.');
-            return;
+    // NÚCLEO DE EXTRAÇÃO: Compartilhado entre API e Upload Local
+    function processRawCSV(rawText) {
+        csvMatches = parseCSVText(rawText);
+
+        if (csvMatches.length === 0) throw new Error('O arquivo CSV foi lido, mas nenhum dado válido de partida foi processado.');
+
+        const teamSet = new Set();
+        let totalHomeGoals = 0, totalAwayGoals = 0, validMatches = 0;
+
+        csvMatches.forEach(m => {
+            if (m.HomeTeam && m.AwayTeam && !isNaN(m.FTHG) && !isNaN(m.FTAG)) {
+                teamSet.add(m.HomeTeam);
+                teamSet.add(m.AwayTeam);
+                totalHomeGoals += m.FTHG;
+                totalAwayGoals += m.FTAG;
+                validMatches++;
+            }
+        });
+
+        if (validMatches === 0) throw new Error('O CSV contém colunas, mas nenhuma linha com resultados numéricos válidos foi encontrada.');
+
+        uniqueTeams = Array.from(teamSet).sort();
+        leagueAverages.homeAvg = totalHomeGoals / validMatches;
+        leagueAverages.awayAvg = totalAwayGoals / validMatches;
+
+        const homeSel = document.getElementById('homeTeam');
+        const awaySel = document.getElementById('awayTeam');
+        homeSel.innerHTML = '';
+        awaySel.innerHTML = '';
+
+        uniqueTeams.forEach(team => {
+            const opt = `<option value="${team}">${team}</option>`;
+            homeSel.insertAdjacentHTML('beforeend', opt);
+            awaySel.insertAdjacentHTML('beforeend', opt);
+        });
+
+        if (awaySel.options.length > 1) awaySel.selectedIndex = 1;
+
+        toggleUIState(false);
+        document.getElementById('matchPanel').classList.remove('hidden');
+    }
+
+    // MÉTODO 1: Requisição para API Externa
+    async function fetchAndParseCSV() {
+        toggleUIState(true);
+        const season = document.getElementById('season').value;
+        const league = document.getElementById('league').value;
+        const targetCsvUrl = `https://www.football-data.co.uk/mmz4281/${season}/${league}.csv`;
+
+        try {
+            const response = await fetch(`/api/fetch-football?url=${encodeURIComponent(targetCsvUrl)}`);
+            if (!response.ok) throw new Error('Não foi possível obter os dados do servidor Proxy.');
+            
+            const rawText = await response.text();
+            processRawCSV(rawText);
+
+        } catch (error) {
+            alert('Falha na extração de dados da API: ' + error.message);
+            toggleUIState(false);
         }
+    }
 
-        const file = fileInput.files[0];
+    // MÉTODO 2: Leitura de Arquivo Local
+    function handleFileUpload(event) {
+        const file = event.target.files[0];
+        if (!file) return;
 
-        button.disabled = true;
-        matchPanel.classList.add('hidden');
-        dashboard.classList.add('hidden');
-        loading.classList.remove('hidden');
+        toggleUIState(true);
 
         const reader = new FileReader();
-
-        reader.onload = function(event) {
+        reader.onload = function(e) {
             try {
-                const rawText = event.target.result;
-                csvMatches = parseCSVText(rawText);
-
-                if (csvMatches.length === 0) throw new Error('O arquivo CSV foi lido, mas nenhum dado válido de partida foi encontrado. Verifique os cabeçalhos padrão (HomeTeam, AwayTeam, FTHG, FTAG).');
-
-                const teamSet = new Set();
-                let totalHomeGoals = 0, totalAwayGoals = 0, validMatches = 0;
-
-                csvMatches.forEach(m => {
-                    if (m.HomeTeam && m.AwayTeam && !isNaN(m.FTHG) && !isNaN(m.FTAG)) {
-                        teamSet.add(m.HomeTeam);
-                        teamSet.add(m.AwayTeam);
-                        totalHomeGoals += m.FTHG;
-                        totalAwayGoals += m.FTAG;
-                        validMatches++;
-                    }
-                });
-
-                uniqueTeams = Array.from(teamSet).sort();
-                leagueAverages.homeAvg = totalHomeGoals / validMatches;
-                leagueAverages.awayAvg = totalAwayGoals / validMatches;
-
-                const homeSel = document.getElementById('homeTeam');
-                const awaySel = document.getElementById('awayTeam');
-                homeSel.innerHTML = '';
-                awaySel.innerHTML = '';
-
-                uniqueTeams.forEach(team => {
-                    const opt = `<option value="${team}">${team}</option>`;
-                    homeSel.insertAdjacentHTML('beforeend', opt);
-                    awaySel.insertAdjacentHTML('beforeend', opt);
-                });
-
-                if (awaySel.options.length > 1) awaySel.selectedIndex = 1;
-
-                loading.classList.add('hidden');
-                matchPanel.classList.remove('hidden');
-                button.disabled = false;
-
+                const rawText = e.target.result;
+                processRawCSV(rawText);
             } catch (error) {
-                alert('Falha na extração de dados: ' + error.message);
-                loading.classList.add('hidden');
-                button.disabled = false;
+                alert('Falha ao processar CSV local: ' + error.message);
+                toggleUIState(false);
             }
         };
-
+        
         reader.onerror = function() {
-            alert('Erro ao ler o arquivo selecionado.');
-            loading.classList.add('hidden');
-            button.disabled = false;
+            alert('Erro de leitura do sistema operacional.');
+            toggleUIState(false);
         };
 
-        // Dispara a leitura do arquivo como texto
+        // Reseta o input para permitir upload do mesmo arquivo repetidamente se necessário
+        event.target.value = '';
         reader.readAsText(file);
     }
 
-    // MATEMÁTICA ESTATÍSTICA DE ELITE (Mantida intacta)
+    // MATEMÁTICA ESTATÍSTICA DE ELITE
     function getFactorial(n) {
         if (n <= 1) return 1;
         let res = 1;
@@ -397,7 +461,7 @@
         // 6. Normalização Total (Fechamento 100%) e Agregação
         for (let x = 0; x <= CONFIG.matrixLimit; x++) {
             for (let y = 0; y <= CONFIG.matrixLimit; y++) {
-                matrix[x][y] /= totalMatrixVol; 
+                matrix[x][y] /= totalMatrixVol;
                 const p = matrix[x][y];
 
                 if (x > y) pHome += p;
@@ -463,7 +527,7 @@
         markets.forEach((m, idx) => {
             const ev = (m.prob * m.odd) - 1;
             const fairOdd = 1 / m.prob;
-            const isValue = ev > 0.02; // Edge de +2%
+            const isValue = ev > 0.02;
 
             // 8. Cálculo de Risco: Quarter-Kelly Exato
             let stake = 0;
@@ -471,7 +535,7 @@
                 const b = m.odd - 1;
                 const q = 1 - m.prob;
                 const k = ((b * m.prob) - q) / b;
-                if (k > 0) stake = Math.min(k * 0.25 * 100, 5.0); // Quarter-Kelly limitado ao teto estrito de 5% de banca
+                if (k > 0) stake = Math.min(k * 0.25 * 100, 5.0); 
             }
 
             if (ev > maxEV) {
