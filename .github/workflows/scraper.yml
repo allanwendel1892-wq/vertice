@@ -27,9 +27,10 @@ jobs:
     - name: Executar o Scraper da Betano
       run: python code_update.py
 
-    - name: Salvar e Atualizar o CSV no Repositório
+    - name: Salvar CSV no Repositorio
       run: |
-        git config --global user.name 'QuantEngine-Bot'
-        git config --global user.email 'bot@quantengine.com'
+        git config --global user.name 'github-actions[bot]'
+        git config --global user.email 'github-actions[bot]@users.noreply.github.com'
         git add proximos_jogos_betano.csv
-        git diff --quiet && git diff --staged --quiet || (git commit -m "Odds Betano atualizadas automaticamente" && git push)
+        git commit -m "Auto-update: proximos_jogos_betano.csv" || exit 0
+        git push
