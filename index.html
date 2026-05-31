@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>QUANT ENGINE V6 – AUTOMATIZADO PRO + BRASIL</title>
+    <title>QUANT ENGINE V7 – ENSEMBLE PRO & ANTI-TRAP</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -18,7 +18,7 @@
         .glass-card:hover { border-color: rgba(16, 185, 129, 0.2); transform: translateY(-2px); }
         .matrix-table td { width: 56px; height: 52px; text-align: center; border: 1px solid rgba(255, 255, 255, 0.02); font-size: 0.75rem; font-family: 'JetBrains Mono', monospace; }
         .value-bet-active { background: rgba(16, 185, 129, 0.06); border: 1px solid rgba(16, 185, 129, 0.35) !important; }
-        .no-bet-active { background: rgba(239, 68, 68, 0.02); border: 1px solid rgba(239, 68, 68, 0.15) !important; }
+        .trap-active { background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.4) !important; }
         .loader-ring { border-top-color: #10b981; animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
     </style>
@@ -27,13 +27,13 @@
 <body class="min-h-screen p-4 md:p-8">
 <div class="max-w-7xl mx-auto space-y-6">
 
-    <header class="glass-panel rounded-3xl p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+    <header class="glass-panel rounded-3xl p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b-4 border-b-emerald-600">
         <div>
             <h1 class="text-3xl font-extrabold text-white font-mono-data">
-                QUANT<span class="text-emerald-400 font-light">ENGINE</span> <span class="text-xs bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/20 font-bold">V6 ELITE + BRASIL</span>
+                QUANT<span class="text-emerald-400 font-light">ENGINE</span> <span class="text-[10px] bg-red-500/20 text-red-400 px-2 py-0.5 rounded border border-red-500/30 font-bold ml-2 uppercase tracking-widest">V7 Ensemble + Elo Rating</span>
             </h1>
             <p class="text-slate-400 text-xs mt-1">
-                Motor Standalone. Integra Dixon-Coles, Shrinkage Bayesiano, H2H Exponencial.
+                Motor Híbrido: Poisson Decaimento Exponencial + Filtro Elo + Detector de Anomalias de Mercado.
             </p>
         </div>
     </header>
@@ -49,21 +49,18 @@
                 </select>
             </div>
             <div>
-                <label class="block text-[11px] uppercase tracking-wider text-slate-400 font-bold mb-2">Liga / Competição (Treinamento)</label>
+                <label class="block text-[11px] uppercase tracking-wider text-slate-400 font-bold mb-2">Liga / Competição</label>
                 <select id="league" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3.5 text-sm text-white focus:outline-none">
                     <option value="BR" class="text-emerald-400 font-bold">Brasileirão Série A</option>
                     <option value="E0">Premier League (Inglaterra)</option>
-                    <option value="E1">Championship (Inglaterra)</option>
                     <option value="SP1">La Liga (Espanha)</option>
                     <option value="D1">Bundesliga (Alemanha)</option>
                     <option value="I1">Serie A (Itália)</option>
-                    <option value="F1">Ligue 1 (França)</option>
                 </select>
             </div>
             <div class="flex items-end">
                 <button id="btnLoadCSV" onclick="fetchAndParseCSV()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold uppercase tracking-wider text-xs p-4 rounded-2xl transition-all flex items-center justify-center gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                    Sincronizar Base
+                    Sincronizar Base API
                 </button>
             </div>
         </div>
@@ -73,10 +70,9 @@
         </div>
 
         <div class="xl:col-span-3 w-full">
-            <label class="block text-[11px] uppercase tracking-wider text-slate-400 font-bold mb-2 text-center xl:text-left">Upload Histórico Manual</label>
+            <label class="block text-[11px] uppercase tracking-wider text-slate-400 font-bold mb-2">Upload Histórico Manual</label>
             <input type="file" id="localCsvFile" accept=".csv" class="hidden" onchange="handleFileUpload(event)">
-            <button id="btnUploadCSV" onclick="document.getElementById('localCsvFile').click()" class="w-full bg-slate-800 hover:bg-slate-700 border border-slate-600 text-white font-bold uppercase tracking-wider text-xs p-4 rounded-2xl transition-all flex items-center justify-center gap-2">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+            <button id="btnUploadCSV" onclick="document.getElementById('localCsvFile').click()" class="w-full bg-slate-800 hover:bg-slate-700 border border-slate-600 text-white font-bold uppercase tracking-wider text-xs p-4 rounded-2xl transition-all">
                 Carregar CSV Local
             </button>
         </div>
@@ -84,57 +80,60 @@
 
     <div id="loading" class="hidden text-center py-12 glass-panel rounded-3xl space-y-4">
         <div class="loader-ring rounded-full h-12 w-12 border-4 border-slate-800 mx-auto"></div>
-        <p id="loadingText" class="text-emerald-400 text-xs uppercase tracking-widest font-mono-data font-bold">Processando dados e injetando matriz...</p>
+        <p id="loadingText" class="text-emerald-400 text-xs uppercase tracking-widest font-mono-data font-bold">Injetando dados na Rede Neural...</p>
     </div>
 
     <section id="matchPanel" class="hidden space-y-6">
         <div class="glass-panel rounded-3xl p-6 grid grid-cols-1 md:grid-cols-2 gap-5">
             <div>
                 <label class="block text-[11px] uppercase tracking-wider text-slate-400 font-bold mb-2">Equipa Casa (Mandante)</label>
-                <select id="homeTeam" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3.5 text-sm text-blue-400 font-semibold focus:outline-none"></select>
+                <div class="flex gap-2">
+                    <select id="homeTeam" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3.5 text-sm text-blue-400 font-bold focus:outline-none"></select>
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 text-xs flex flex-col justify-center items-center min-w-[80px]">
+                        <span class="text-[9px] text-slate-500 uppercase">ELO</span>
+                        <span id="homeEloBadge" class="font-mono-data font-bold text-white">---</span>
+                    </div>
+                </div>
             </div>
             <div>
                 <label class="block text-[11px] uppercase tracking-wider text-slate-400 font-bold mb-2">Equipa Fora (Visitante)</label>
-                <select id="awayTeam" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3.5 text-sm text-purple-400 font-semibold focus:outline-none"></select>
+                <div class="flex gap-2">
+                    <select id="awayTeam" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3.5 text-sm text-purple-400 font-bold focus:outline-none"></select>
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 text-xs flex flex-col justify-center items-center min-w-[80px]">
+                        <span class="text-[9px] text-slate-500 uppercase">ELO</span>
+                        <span id="awayEloBadge" class="font-mono-data font-bold text-white">---</span>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <div class="glass-panel rounded-3xl p-6 space-y-5">
-            <h2 class="text-xs uppercase tracking-widest font-black text-slate-400">Linhas de Odds do Mercado (Entrada Manual)</h2>
+        <div class="glass-panel rounded-3xl p-6 space-y-5 border border-slate-800/80 bg-slate-900/30">
+            <h2 class="text-xs uppercase tracking-widest font-black text-amber-500 flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                Radar Anti-Trap: Insira as Odds Atuais do Mercado
+            </h2>
             <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
-                <div>
-                    <label class="block text-[10px] uppercase text-slate-500 font-bold mb-1.5 text-center">Casa (1)</label>
-                    <input id="oddHome" type="number" step="0.01" value="2.10" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3.5 text-center font-mono-data font-bold text-emerald-400 text-lg focus:outline-none">
-                </div>
-                <div>
-                    <label class="block text-[10px] uppercase text-slate-500 font-bold mb-1.5 text-center">Empate (X)</label>
-                    <input id="oddDraw" type="number" step="0.01" value="3.30" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3.5 text-center font-mono-data font-bold text-emerald-400 text-lg focus:outline-none">
-                </div>
-                <div>
-                    <label class="block text-[10px] uppercase text-slate-500 font-bold mb-1.5 text-center">Fora (2)</label>
-                    <input id="oddAway" type="number" step="0.01" value="3.60" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3.5 text-center font-mono-data font-bold text-emerald-400 text-lg focus:outline-none">
-                </div>
-                <div>
-                    <label class="block text-[10px] uppercase text-slate-500 font-bold mb-1.5 text-center">Over 2.5</label>
-                    <input id="oddOver" type="number" step="0.01" value="1.95" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3.5 text-center font-mono-data font-bold text-emerald-400 text-lg focus:outline-none">
-                </div>
-                <div>
-                    <label class="block text-[10px] uppercase text-slate-500 font-bold mb-1.5 text-center">BTTS (Sim)</label>
-                    <input id="oddBTTS" type="number" step="0.01" value="1.80" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3.5 text-center font-mono-data font-bold text-emerald-400 text-lg focus:outline-none">
-                </div>
+                <div><label class="block text-[10px] uppercase text-slate-500 font-bold mb-1.5 text-center">Casa (1)</label><input id="oddHome" type="number" step="0.01" value="2.80" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3.5 text-center font-mono-data font-bold text-white text-lg"></div>
+                <div><label class="block text-[10px] uppercase text-slate-500 font-bold mb-1.5 text-center">Empate (X)</label><input id="oddDraw" type="number" step="0.01" value="3.10" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3.5 text-center font-mono-data font-bold text-white text-lg"></div>
+                <div><label class="block text-[10px] uppercase text-slate-500 font-bold mb-1.5 text-center">Fora (2)</label><input id="oddAway" type="number" step="0.01" value="2.60" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3.5 text-center font-mono-data font-bold text-white text-lg"></div>
+                <div><label class="block text-[10px] uppercase text-slate-500 font-bold mb-1.5 text-center">Over 2.5</label><input id="oddOver" type="number" step="0.01" value="2.10" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3.5 text-center font-mono-data font-bold text-white text-lg"></div>
+                <div><label class="block text-[10px] uppercase text-slate-500 font-bold mb-1.5 text-center">BTTS (Sim)</label><input id="oddBTTS" type="number" step="0.01" value="1.95" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3.5 text-center font-mono-data font-bold text-white text-lg"></div>
             </div>
 
-            <button onclick="calculateModel()" class="w-full bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-black uppercase tracking-widest text-xs p-4 rounded-2xl shadow-lg transition-all hover:scale-[1.01]">
-                Processar Motor Quantitativo de Alta Performance
+            <button onclick="calculateModel()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black uppercase tracking-widest text-xs p-5 rounded-2xl shadow-lg transition-all hover:scale-[1.01]">
+                PROCESSAR MATRIZ ENSEMBLE
             </button>
         </div>
     </section>
 
     <section id="dashboard" class="hidden space-y-6">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div class="glass-panel rounded-3xl p-6 flex flex-col justify-between space-y-5">
+        <div id="trapAlertContainer"></div> <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="glass-panel rounded-3xl p-6 flex flex-col justify-between space-y-5 relative overflow-hidden">
+                <div class="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
+                    <svg class="w-24 h-24 text-blue-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+                </div>
                 <div>
-                    <h2 class="text-xs uppercase tracking-widest font-black text-slate-400 border-b border-slate-800 pb-3">Projeção de Golos Poisson</h2>
+                    <h2 class="text-xs uppercase tracking-widest font-black text-slate-400 border-b border-slate-800 pb-3">Projeção Híbrida xG (Poisson + Elo)</h2>
                     <div class="space-y-4 mt-4">
                         <div>
                             <div class="flex justify-between items-end mb-1">
@@ -156,11 +155,10 @@
                         </div>
                     </div>
                 </div>
-                <div id="leagueStats" class="text-xs text-slate-500 font-mono-data pt-3 border-t border-slate-800 space-y-1"></div>
             </div>
 
             <div class="glass-panel rounded-3xl p-6 md:col-span-2 space-y-4">
-                <h2 class="text-xs uppercase tracking-widest font-black text-slate-400 border-b border-slate-800 pb-3">Vantagem Matemática Comercial (+EV)</h2>
+                <h2 class="text-xs uppercase tracking-widest font-black text-slate-400 border-b border-slate-800 pb-3">Mercado Analisado vs Realidade (+EV)</h2>
                 <div id="marketCards" class="grid grid-cols-1 sm:grid-cols-3 gap-4"></div>
                 <div id="goalCards" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
             </div>
@@ -169,8 +167,8 @@
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
             <div class="glass-panel rounded-3xl p-6 lg:col-span-7 overflow-x-auto">
                 <h2 class="text-xs uppercase tracking-widest font-black text-slate-400 mb-4 flex justify-between">
-                    <span>Matriz Probabilística Bidimensional</span>
-                    <span class="text-[10px] bg-slate-900 px-2 py-1 rounded text-emerald-400 border border-slate-800">Dixon-Coles ON</span>
+                    <span>Matriz Bidimensional Bivariada</span>
+                    <span class="text-[10px] bg-emerald-900/30 px-2 py-1 rounded text-emerald-400 border border-emerald-800/50">Dixon-Coles ON</span>
                 </h2>
                 <table class="w-full matrix-table">
                     <thead><tr id="matrixHead"></tr></thead>
@@ -179,7 +177,7 @@
             </div>
             <div class="glass-panel rounded-3xl p-6 lg:col-span-5 flex flex-col justify-between">
                 <div>
-                    <h2 class="text-xs uppercase tracking-widest font-black text-slate-400 border-b border-slate-800 pb-3 mb-4">Diretriz de Entrada Recomendada</h2>
+                    <h2 class="text-xs uppercase tracking-widest font-black text-slate-400 border-b border-slate-800 pb-3 mb-4">Relatório Tático de Ação</h2>
                     <div id="reportContainer"></div>
                 </div>
             </div>
@@ -188,78 +186,51 @@
 </div>
 
 <script>
-    // CONFIGURAÇÕES GLOBAIS DA MATEMÁTICA ESTATÍSTICA (RECALIBRADAS)
+    // MATEMÁTICA INSTITUCIONAL V7
     const CONFIG = {
-        shrinkage: 0.15,          
-        dixonColesRho: -0.12,     
-        h2hDecay: 0.60,           
-        matrixLimit: 12,          
-        visualLimit: 5,
-        recentMatchesWindow: 15   
+        shrinkage: 0.30,          // Suaviza excessos matemáticos puxando pra média.
+        timeDecayLambda: 0.04,    // O PESO DO TEMPO: Jogos antigos perdem relevância exponencialmente.
+        eloKFactor: 25,           // Elasticidade do rating Elo.
+        eloHomeAdvantage: 60,     // Pontos extras pro mandante no cálculo Elo.
+        matrixLimit: 9,          
+        visualLimit: 5
     };
 
     let csvMatches = [];
     let uniqueTeams = [];
+    let teamEloRatings = {};
     let leagueAverages = { homeAvg: 1.40, awayAvg: 1.15 };
 
-    // INICIALIZAÇÃO
-    window.addEventListener('DOMContentLoaded', () => {
-        fetchAndParseCSV();
-    });
+    window.addEventListener('DOMContentLoaded', () => { fetchAndParseCSV(); });
 
     function toggleUIState(isLoading) {
         const btnLoad = document.getElementById('btnLoadCSV');
-        const matchPanel = document.getElementById('matchPanel');
-        const dashboard = document.getElementById('dashboard');
-        const loading = document.getElementById('loading');
-
+        document.getElementById('matchPanel').classList.toggle('hidden', isLoading);
+        document.getElementById('dashboard').classList.add('hidden');
+        document.getElementById('loading').classList.toggle('hidden', !isLoading);
         btnLoad.disabled = isLoading;
-
-        if (isLoading) {
-            matchPanel.classList.add('hidden');
-            dashboard.classList.add('hidden');
-            loading.classList.remove('hidden');
-        } else {
-            loading.classList.add('hidden');
-        }
     }
 
+    // Processamento de Dados Brutos
     function parseCSVText(text) {
         const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
         if (lines.length === 0) return [];
-        
         const headers = lines[0].split(',').map(h => h.replace(/['"]+/g, '').trim().toLowerCase());
         
-        // Mapeamentos estendidos para suportar os padrões de ligas extras do football-data.co.uk (ex: BRA.csv usa 'Home', 'Away', 'HG', 'AG')
-        let homeIdx = headers.indexOf('hometeam');
-        if (homeIdx === -1) homeIdx = headers.indexOf('mandante');
-        if (homeIdx === -1) homeIdx = headers.indexOf('home');
-        
-        let awayIdx = headers.indexOf('awayteam');
-        if (awayIdx === -1) awayIdx = headers.indexOf('visitante');
-        if (awayIdx === -1) awayIdx = headers.indexOf('away');
-        
-        let fthgIdx = headers.indexOf('fthg');
-        if (fthgIdx === -1) fthgIdx = headers.indexOf('mandante_placar'); 
-        if (fthgIdx === -1) fthgIdx = headers.indexOf('hg'); 
-        
-        let ftagIdx = headers.indexOf('ftag');
-        if (ftagIdx === -1) ftagIdx = headers.indexOf('visitante_placar'); 
-        if (ftagIdx === -1) ftagIdx = headers.indexOf('ag'); 
+        let hIdx = headers.indexOf('hometeam'); if (hIdx === -1) hIdx = headers.indexOf('home');
+        let aIdx = headers.indexOf('awayteam'); if (aIdx === -1) aIdx = headers.indexOf('away');
+        let hgIdx = headers.indexOf('fthg'); if (hgIdx === -1) hgIdx = headers.indexOf('hg');
+        let agIdx = headers.indexOf('ftag'); if (agIdx === -1) agIdx = headers.indexOf('ag');
 
-        if (homeIdx === -1 || awayIdx === -1 || fthgIdx === -1 || ftagIdx === -1) {
-             throw new Error('Colunas estruturais ausentes. Utilize base completa com placares.');
-        }
+        if (hIdx === -1 || aIdx === -1 || hgIdx === -1 || agIdx === -1) throw new Error('Colunas CSV inválidas.');
 
         const parsed = [];
         for (let i = 1; i < lines.length; i++) {
             const cols = lines[i].split(',').map(c => c.replace(/['"]+/g, '').trim());
-            if (cols[homeIdx] && cols[awayIdx]) {
+            if (cols[hIdx] && cols[aIdx]) {
                 parsed.push({
-                    HomeTeam: cols[homeIdx],
-                    AwayTeam: cols[awayIdx],
-                    FTHG: parseFloat(cols[fthgIdx]) || 0,
-                    FTAG: parseFloat(cols[ftagIdx]) || 0
+                    HomeTeam: cols[hIdx], AwayTeam: cols[aIdx],
+                    FTHG: parseFloat(cols[hgIdx]) || 0, FTAG: parseFloat(cols[agIdx]) || 0
                 });
             }
         }
@@ -268,343 +239,303 @@
 
     function processRawCSV(rawText) {
         csvMatches = parseCSVText(rawText);
-        if (csvMatches.length === 0) throw new Error('Nenhum dado válido de partida.');
-
         const teamSet = new Set();
-        let totalHomeGoals = 0, totalAwayGoals = 0, validMatches = 0;
+        let thg = 0, tag = 0;
+
+        // INICIALIZAÇÃO DO SISTEMA ELO
+        teamEloRatings = {};
 
         csvMatches.forEach(m => {
             if (m.HomeTeam && m.AwayTeam && !isNaN(m.FTHG) && !isNaN(m.FTAG)) {
-                teamSet.add(m.HomeTeam);
-                teamSet.add(m.AwayTeam);
-                totalHomeGoals += m.FTHG;
-                totalAwayGoals += m.FTAG;
-                validMatches++;
+                teamSet.add(m.HomeTeam); teamSet.add(m.AwayTeam);
+                if (!teamEloRatings[m.HomeTeam]) teamEloRatings[m.HomeTeam] = 1500;
+                if (!teamEloRatings[m.AwayTeam]) teamEloRatings[m.AwayTeam] = 1500;
+                thg += m.FTHG; tag += m.FTAG;
             }
         });
 
         uniqueTeams = Array.from(teamSet).sort();
-        leagueAverages.homeAvg = totalHomeGoals / validMatches;
-        leagueAverages.awayAvg = totalAwayGoals / validMatches;
+        leagueAverages.homeAvg = thg / csvMatches.length;
+        leagueAverages.awayAvg = tag / csvMatches.length;
 
-        const homeSel = document.getElementById('homeTeam');
-        const awaySel = document.getElementById('awayTeam');
-        homeSel.innerHTML = '';
-        awaySel.innerHTML = '';
-
-        uniqueTeams.forEach(team => {
-            const opt = `<option value="${team}">${team}</option>`;
-            homeSel.insertAdjacentHTML('beforeend', opt);
-            awaySel.insertAdjacentHTML('beforeend', opt);
+        // CÁLCULO ELO DINÂMICO CHRONOLÓGICO DA BASE
+        csvMatches.forEach(m => {
+            const eloH = teamEloRatings[m.HomeTeam] + CONFIG.eloHomeAdvantage;
+            const eloA = teamEloRatings[m.AwayTeam];
+            const probH = 1 / (1 + Math.pow(10, (eloA - eloH) / 400));
+            const probA = 1 - probH;
+            
+            let actualH = m.FTHG > m.FTAG ? 1 : (m.FTHG === m.FTAG ? 0.5 : 0);
+            let actualA = 1 - actualH;
+            
+            // Margem de Vitória multiplica o ganho/perda
+            const goalDiff = Math.abs(m.FTHG - m.FTAG);
+            const kMultiplier = goalDiff <= 1 ? 1 : (goalDiff === 2 ? 1.5 : 1.75);
+            
+            teamEloRatings[m.HomeTeam] += CONFIG.eloKFactor * kMultiplier * (actualH - probH);
+            teamEloRatings[m.AwayTeam] += CONFIG.eloKFactor * kMultiplier * (actualA - probA);
         });
 
-        if (awaySel.options.length > 1) awaySel.selectedIndex = 1;
-
+        populateDropdowns();
         toggleUIState(false);
-        document.getElementById('matchPanel').classList.remove('hidden');
     }
 
-    // A ROTINA HÍBRIDA 100% PROXY 
+    function populateDropdowns() {
+        const hSel = document.getElementById('homeTeam');
+        const aSel = document.getElementById('awayTeam');
+        hSel.innerHTML = ''; aSel.innerHTML = '';
+        uniqueTeams.forEach(t => {
+            const opt = `<option value="${t}">${t}</option>`;
+            hSel.insertAdjacentHTML('beforeend', opt);
+            aSel.insertAdjacentHTML('beforeend', opt);
+        });
+        if (aSel.options.length > 1) aSel.selectedIndex = 1;
+        updateEloBadges();
+        
+        hSel.addEventListener('change', updateEloBadges);
+        aSel.addEventListener('change', updateEloBadges);
+    }
+
+    function updateEloBadges() {
+        const h = document.getElementById('homeTeam').value;
+        const a = document.getElementById('awayTeam').value;
+        document.getElementById('homeEloBadge').innerText = Math.round(teamEloRatings[h]);
+        document.getElementById('awayEloBadge').innerText = Math.round(teamEloRatings[a]);
+    }
+
     async function fetchAndParseCSV() {
         toggleUIState(true);
-        const season = document.getElementById('season').value;
-        const league = document.getElementById('league').value;
-        
-        let targetCsvUrl = "";
-        
-        if (league === "BR") {
-            // A Liga Brasileira no repositório oficial football-data fica como uma liga contínua em "new/BRA.csv"
-            targetCsvUrl = `/api/fetch-football?url=${encodeURIComponent('https://www.football-data.co.uk/new/BRA.csv')}`;
-        } else {
-            // Estrutura padrão de temporadas europeias
-            targetCsvUrl = `/api/fetch-football?url=${encodeURIComponent(`https://www.football-data.co.uk/mmz4281/${season}/${league}.csv`)}`;
-        }
-
+        const s = document.getElementById('season').value;
+        const l = document.getElementById('league').value;
+        const url = l === "BR" ? `https://www.football-data.co.uk/new/BRA.csv` : `https://www.football-data.co.uk/mmz4281/${s}/${l}.csv`;
         try {
-            const response = await fetch(targetCsvUrl);
-            if (!response.ok) throw new Error('Falha de conexão com a Base Hóspede.');
-            
-            const rawText = await response.text();
-            processRawCSV(rawText);
-        } catch (error) {
-            alert('Falha na extração de dados: ' + error.message);
+            const res = await fetch(`/api/fetch-football?url=${encodeURIComponent(url)}`);
+            if (!res.ok) throw new Error();
+            processRawCSV(await res.text());
+        } catch {
+            alert('Falha na API. Carregue o arquivo localmente ou verifique o servidor Vercel.');
             toggleUIState(false);
         }
     }
 
-    function handleFileUpload(event) {
-        const file = event.target.files[0];
-        if (!file) return;
+    function handleFileUpload(e) {
+        const f = e.target.files[0]; if (!f) return;
         toggleUIState(true);
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            try { processRawCSV(e.target.result); } 
-            catch (error) { alert(error.message); toggleUIState(false); }
-        };
-        event.target.value = '';
-        reader.readAsText(file);
+        const r = new FileReader();
+        r.onload = ev => { try { processRawCSV(ev.target.result); } catch (err) { alert(err.message); toggleUIState(false); } };
+        e.target.value = ''; r.readAsText(f);
     }
 
-    // =========================================================
-    // NÚCLEO MATEMÁTICO
-    // =========================================================
-    function getFactorial(n) {
-        if (n <= 1) return 1;
-        let res = 1;
-        for (let i = 2; i <= n; i++) res *= i;
-        return res;
-    }
-
-    function poissonProb(k, lambda) {
-        return (Math.pow(lambda, k) * Math.exp(-lambda)) / getFactorial(k);
-    }
-
-    function dixonColes(x, y, lambda, mu, rho = CONFIG.dixonColesRho) {
-        if (x === 0 && y === 0) return Math.max(0, 1 - (lambda * mu * rho));
-        if (x === 0 && y === 1) return Math.max(0, 1 + (lambda * rho));
-        if (x === 1 && y === 0) return Math.max(0, 1 + (mu * rho));
-        if (x === 1 && y === 1) return Math.max(0, 1 - rho);
+    // ==========================================
+    // NÚCLEO MATEMÁTICO E DETECÇÃO DE TRAPS
+    // ==========================================
+    function getFactorial(n) { return n <= 1 ? 1 : n * getFactorial(n - 1); }
+    function poissonProb(k, lambda) { return (Math.pow(lambda, k) * Math.exp(-lambda)) / getFactorial(k); }
+    function dixonColes(x, y, L, M, rho = -0.1) {
+        if (x===0 && y===0) return Math.max(0, 1 - L*M*rho);
+        if (x===0 && y===1) return Math.max(0, 1 + L*rho);
+        if (x===1 && y===0) return Math.max(0, 1 + M*rho);
+        if (x===1 && y===1) return Math.max(0, 1 - rho);
         return 1;
+    }
+
+    function removeVig(o1, oX, o2) {
+        const p1 = 1/o1, pX = 1/oX, p2 = 1/o2;
+        const margin = p1 + pX + p2;
+        return { real1: p1/margin, realX: pX/margin, real2: p2/margin };
     }
 
     function calculateModel() {
         const homeTeam = document.getElementById('homeTeam').value;
         const awayTeam = document.getElementById('awayTeam').value;
+        if (homeTeam === awayTeam) return alert('Selecione times diferentes.');
 
-        if (homeTeam === awayTeam) return alert('Selecione equipas diferentes para o confronto.');
+        // 1. ANÁLISE TEMPORAL EXPONENCIAL (EMA)
+        let wHomeScored = 0, wHomeConceded = 0, weightHomeSum = 0;
+        let wAwayScored = 0, wAwayConceded = 0, weightAwaySum = 0;
 
-        let h2hMatches = [];
-        let homeTeamHomeGames = [];
-        let awayTeamAwayGames = [];
+        const homeGames = csvMatches.filter(m => m.HomeTeam === homeTeam);
+        const awayGames = csvMatches.filter(m => m.AwayTeam === awayTeam);
 
-        // Separação prévia dos jogos para aplicar a janela móvel
-        csvMatches.forEach(m => {
-            if (isNaN(m.FTHG) || isNaN(m.FTAG)) return;
-            
-            if (m.HomeTeam === homeTeam) homeTeamHomeGames.push(m);
-            if (m.AwayTeam === awayTeam) awayTeamAwayGames.push(m);
-            
-            if ((m.HomeTeam === homeTeam && m.AwayTeam === awayTeam) || (m.HomeTeam === awayTeam && m.AwayTeam === homeTeam)) {
-                h2hMatches.push(m);
-            }
+        // Dá mais peso aos jogos recentes. O último jogo da base tem índice 0 na reversão.
+        homeGames.reverse().forEach((m, idx) => {
+            const weight = Math.exp(-CONFIG.timeDecayLambda * idx);
+            wHomeScored += m.FTHG * weight; wHomeConceded += m.FTAG * weight; weightHomeSum += weight;
+        });
+        awayGames.reverse().forEach((m, idx) => {
+            const weight = Math.exp(-CONFIG.timeDecayLambda * idx);
+            wAwayScored += m.FTAG * weight; wAwayConceded += m.FTHG * weight; weightAwaySum += weight;
         });
 
-        // =========================================================
-        // CORREÇÃO 1: Janela Móvel Estrita (Recência)
-        // =========================================================
-        homeTeamHomeGames = homeTeamHomeGames.slice(-CONFIG.recentMatchesWindow);
-        awayTeamAwayGames = awayTeamAwayGames.slice(-CONFIG.recentMatchesWindow);
+        const hScoredAvg = weightHomeSum > 0 ? (wHomeScored / weightHomeSum) : leagueAverages.homeAvg;
+        const hConcededAvg = weightHomeSum > 0 ? (wHomeConceded / weightHomeSum) : leagueAverages.awayAvg;
+        const aScoredAvg = weightAwaySum > 0 ? (wAwayScored / weightAwaySum) : leagueAverages.awayAvg;
+        const aConcededAvg = weightAwaySum > 0 ? (wAwayConceded / weightAwaySum) : leagueAverages.homeAvg;
 
-        let homeScoredTotal = 0, homeConcededTotal = 0, homeGames = homeTeamHomeGames.length;
-        let awayScoredTotal = 0, awayConcededTotal = 0, awayGames = awayTeamAwayGames.length;
+        let lambda = (hScoredAvg / leagueAverages.homeAvg) * (aConcededAvg / leagueAverages.homeAvg) * leagueAverages.homeAvg;
+        let mu = (aScoredAvg / leagueAverages.awayAvg) * (hConcededAvg / leagueAverages.awayAvg) * leagueAverages.awayAvg;
 
-        homeTeamHomeGames.forEach(m => {
-            homeScoredTotal += m.FTHG; 
-            homeConcededTotal += m.FTAG;
-        });
-
-        awayTeamAwayGames.forEach(m => {
-            awayScoredTotal += m.FTAG; 
-            awayConcededTotal += m.FTHG;
-        });
-
-        const hScoredAvg = homeGames > 0 ? (homeScoredTotal / homeGames) : leagueAverages.homeAvg;
-        const hConcededAvg = homeGames > 0 ? (homeConcededTotal / homeGames) : leagueAverages.awayAvg;
-        const aScoredAvg = awayGames > 0 ? (awayScoredTotal / awayGames) : leagueAverages.awayAvg;
-        const aConcededAvg = awayGames > 0 ? (awayConcededTotal / awayGames) : leagueAverages.homeAvg;
-
-        const attackHome = hScoredAvg / leagueAverages.homeAvg;
-        const defenseHome = hConcededAvg / leagueAverages.awayAvg;
-        const attackAway = aScoredAvg / leagueAverages.awayAvg;
-        const defenseAway = aConcededAvg / leagueAverages.homeAvg;
-
-        let lambda = attackHome * defenseAway * leagueAverages.homeAvg;
-        let mu = attackAway * defenseHome * leagueAverages.awayAvg;
+        // 2. FILTRO ELO RATING (Intervenção Forçada)
+        // Se o Elo do Visitante for absurdamente maior que o Casa, ajustamos os xG.
+        const eloDiff = (teamEloRatings[awayTeam]) - (teamEloRatings[homeTeam] + CONFIG.eloHomeAdvantage);
+        if (eloDiff > 100) { lambda *= 0.85; mu *= 1.2; } // Visitante muito superior
+        if (eloDiff < -100) { lambda *= 1.2; mu *= 0.85; } // Casa muito superior
 
         lambda = (lambda * (1 - CONFIG.shrinkage)) + (leagueAverages.homeAvg * CONFIG.shrinkage);
         mu = (mu * (1 - CONFIG.shrinkage)) + (leagueAverages.awayAvg * CONFIG.shrinkage);
+        
+        lambda = Math.max(0.2, lambda); mu = Math.max(0.2, mu);
 
-        h2hMatches.reverse(); 
-        if (h2hMatches.length > 0) {
-            let weightedHome = 0, weightedAway = 0, totalWeight = 0;
-            h2hMatches.slice(0, 6).forEach((m, index) => { 
-                const weight = Math.exp(-index * CONFIG.h2hDecay);
-                const isHome = m.HomeTeam === homeTeam;
-                const hG = isHome ? m.FTHG : m.FTAG;
-                const aG = isHome ? m.FTAG : m.FTHG;
-                
-                weightedHome += hG * weight;
-                weightedAway += aG * weight;
-                totalWeight += weight;
-            });
-            
-            if (totalWeight > 0) {
-                const h2hHomeAvg = weightedHome / totalWeight;
-                const h2hAwayAvg = weightedAway / totalWeight;
-                
-                // =========================================================
-                // CORREÇÃO 2: Castração da Influência H2H (Restrito a 1%)
-                // =========================================================
-                lambda = (lambda * 0.99) + (h2hHomeAvg * 0.01); 
-                mu = (mu * 0.99) + (h2hAwayAvg * 0.01);
-            }
-        }
-
-        lambda = Math.max(0.20, lambda);
-        mu = Math.max(0.20, mu);
-
-        document.getElementById('homeLabel').innerText = homeTeam;
-        document.getElementById('awayLabel').innerText = awayTeam;
-        document.getElementById('homeXG').innerText = lambda.toFixed(2);
-        document.getElementById('awayXG').innerText = mu.toFixed(2);
-        document.getElementById('homeBar').style.width = `${Math.min(lambda * 25, 100)}%`;
-        document.getElementById('awayBar').style.width = `${Math.min(mu * 25, 100)}%`;
-        document.getElementById('leagueStats').innerHTML = `
-            <div class="flex justify-between"><span>Shrinkage Aplicado:</span><strong class="text-emerald-400">${(CONFIG.shrinkage * 100)}%</strong></div>
-            <div class="flex justify-between"><span>Confrontos H2H:</span><strong class="text-white">${h2hMatches.length} jogos avaliados</strong></div>
-            <div class="flex justify-between"><span>Janela Móvel (Forma):</span><strong class="text-white">Últimos ${CONFIG.recentMatchesWindow} Jogos</strong></div>
-            <div class="flex justify-between"><span>Amostra Global Processada:</span><strong class="text-white">${csvMatches.length} partidas ativas</strong></div>
-        `;
-
-        let matrix = [];
-        let pHome = 0, pDraw = 0, pAway = 0, pUnder = 0, pBTTS = 0;
-        let totalMatrixVol = 0;
-
+        // 3. CONSTRUÇÃO DA MATRIZ BIVARIADA
+        let matrix = [], pHome = 0, pDraw = 0, pAway = 0, pUnder = 0, pBTTS = 0, totalMatrix = 0;
         for (let x = 0; x <= CONFIG.matrixLimit; x++) {
             matrix[x] = [];
             for (let y = 0; y <= CONFIG.matrixLimit; y++) {
                 const p = poissonProb(x, lambda) * poissonProb(y, mu) * dixonColes(x, y, lambda, mu);
-                matrix[x][y] = p;
-                totalMatrixVol += p;
+                matrix[x][y] = p; totalMatrix += p;
             }
         }
 
-        for (let x = 0; x <= CONFIG.matrixLimit; x++) {
-            for (let y = 0; y <= CONFIG.matrixLimit; y++) {
-                matrix[x][y] /= totalMatrixVol;
-                const p = matrix[x][y];
-
-                if (x > y) pHome += p;
-                else if (x === y) pDraw += p;
-                else pAway += p;
-
-                if ((x + y) < 2.5) pUnder += p;
-                if (x > 0 && y > 0) pBTTS += p;
+        for (let x=0; x<=CONFIG.matrixLimit; x++) {
+            for (let y=0; y<=CONFIG.matrixLimit; y++) {
+                matrix[x][y] /= totalMatrix;
+                let p = matrix[x][y];
+                if (x > y) pHome += p; else if (x === y) pDraw += p; else pAway += p;
+                if ((x+y) < 2.5) pUnder += p;
+                if (x>0 && y>0) pBTTS += p;
             }
         }
-
-        const sum1x2 = pHome + pDraw + pAway;
-        pHome /= sum1x2; pDraw /= sum1x2; pAway /= sum1x2;
         
-        const sumGoals = pUnder + (1 - pUnder);
-        pUnder /= sumGoals;
+        // Normalize 1X2 just in case
+        const sum = pHome + pDraw + pAway; pHome /= sum; pDraw /= sum; pAway /= sum;
         let pOver = 1 - pUnder;
 
-        const head = document.getElementById('matrixHead');
-        const body = document.getElementById('matrixBody');
-        head.innerHTML = '<th class="p-2 text-slate-500 font-mono-data text-xs border-b border-slate-800">C \\ F</th>';
-        for (let i = 0; i <= CONFIG.visualLimit; i++) head.insertAdjacentHTML('beforeend', `<th class="p-2 text-slate-400 font-mono-data text-xs border-b border-slate-800">${i}</th>`);
-
-        body.innerHTML = '';
-        for (let x = 0; x <= CONFIG.visualLimit; x++) {
-            let rowHtml = `<tr><th class="bg-slate-950/40 text-blue-400 p-2 font-mono-data text-xs border-r border-slate-800">${x}</th>`;
-            for (let y = 0; y <= CONFIG.visualLimit; y++) {
-                const val = (matrix[x][y] * 100).toFixed(1);
-                let c = x === y ? 'bg-slate-900/60 font-bold' : (x > y ? 'text-blue-400/80' : 'text-purple-400/80');
-                rowHtml += `<td class="${c} font-mono-data text-xs p-2">${val}%</td>`;
-            }
-            rowHtml += '</tr>';
-            body.insertAdjacentHTML('beforeend', rowHtml);
-        }
-
-        const oddsInput = {
-            home: parseFloat(document.getElementById('oddHome').value) || 2.0,
-            draw: parseFloat(document.getElementById('oddDraw').value) || 3.3,
-            away: parseFloat(document.getElementById('oddAway').value) || 3.5,
-            over25: parseFloat(document.getElementById('oddOver').value) || 1.95,
-            btts: parseFloat(document.getElementById('oddBTTS').value) || 1.8
+        // 4. LEITURA DE MERCADO E DETECÇÃO DE TRAPS
+        const odds = {
+            h: parseFloat(document.getElementById('oddHome').value),
+            d: parseFloat(document.getElementById('oddDraw').value),
+            a: parseFloat(document.getElementById('oddAway').value),
+            o: parseFloat(document.getElementById('oddOver').value),
+            b: parseFloat(document.getElementById('oddBTTS').value)
         };
 
+        const trueMarket = removeVig(odds.h, odds.d, odds.a);
+        
+        // LOGICA DE DETECÇÃO DE ARMADILHA
+        let trapDetected = false;
+        let trapMessage = "";
+
+        // Trap 1: Inversão de Favoritismo. Motor acha Casa favorito, Mercado esmaga a odd do Visitante.
+        if (pHome > pAway && trueMarket.real2 > trueMarket.real1 * 1.15) {
+            trapDetected = true;
+            trapMessage = "⚠️ INVERSÃO DE FAVORITISMO: O mercado precifica o Visitante como amplo favorito, contrariando o histórico. Forte indício de desfalques graves no mandante ou campo neutro (ex: jogos afetados no Brasileirão).";
+        }
+        // Trap 2: Inversão de Favoritismo Inversa.
+        else if (pAway > pHome && trueMarket.real1 > trueMarket.real2 * 1.15) {
+            trapDetected = true;
+            trapMessage = "⚠️ INVERSÃO DE FAVORITISMO: Motor aponta superioridade visitante, mas dinheiro massivo entrou no Casa. Possível poupada de elenco ou crise.";
+        }
+        // Trap 3: O "Descolamento" Absurdo (EV falso)
+        else if (Math.abs(pHome - trueMarket.real1) > 0.25) {
+            trapDetected = true;
+            trapMessage = "⚠️ DESCOLAMENTO EXTREMO: Discrepância superior a 25% entre a matemática e a odd da casa. As casas de apostas raramente erram por essa margem. Cuidado com armadilhas.";
+        }
+
+        // RENDERIZAÇÃO UI
+        document.getElementById('homeXG').innerText = lambda.toFixed(2);
+        document.getElementById('awayXG').innerText = mu.toFixed(2);
+        document.getElementById('homeLabel').innerText = homeTeam;
+        document.getElementById('awayLabel').innerText = awayTeam;
+        document.getElementById('homeBar').style.width = `${Math.min(lambda*25, 100)}%`;
+        document.getElementById('awayBar').style.width = `${Math.min(mu*25, 100)}%`;
+
+        const alertBox = document.getElementById('trapAlertContainer');
+        if (trapDetected) {
+            alertBox.innerHTML = `
+                <div class="glass-panel border-red-500/50 bg-red-950/20 rounded-3xl p-5 mb-6 shadow-[0_0_15px_rgba(239,68,68,0.1)]">
+                    <h3 class="text-red-400 font-black uppercase text-sm mb-2 flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                        RADAR DE ARMADILHA (TRAP) ACIONADO
+                    </h3>
+                    <p class="text-slate-300 text-xs font-mono-data leading-relaxed">${trapMessage}</p>
+                    <p class="text-[10px] text-red-400/80 mt-2 font-bold uppercase">Operação vetada pelo Motor de Segurança.</p>
+                </div>`;
+        } else {
+            alertBox.innerHTML = `<div class="glass-panel border-emerald-500/20 bg-emerald-950/10 rounded-3xl p-3 mb-6 text-center text-emerald-500 text-[10px] font-bold uppercase tracking-widest">Nenhuma anomalia de mercado detectada. Green Light.</div>`;
+        }
+
         const markets = [
-            { id: 'Casa', name: `Vitória - ${homeTeam}`, prob: pHome, odd: oddsInput.home },
-            { id: 'Empate', name: `Empate (X)`, prob: pDraw, odd: oddsInput.draw },
-            { id: 'Fora', name: `Vitória - ${awayTeam}`, prob: pAway, odd: oddsInput.away },
-            { id: 'Over', name: `Mais de 2.5 Golos`, prob: pOver, odd: oddsInput.over25 },
-            { id: 'BTTS', name: `Ambas Marcam (Sim)`, prob: pBTTS, odd: oddsInput.btts }
+            { id: 'Casa', name: `Vitória - ${homeTeam}`, prob: pHome, odd: odds.h },
+            { id: 'Empate', name: `Empate (X)`, prob: pDraw, odd: odds.d },
+            { id: 'Fora', name: `Vitória - ${awayTeam}`, prob: pAway, odd: odds.a },
+            { id: 'Over', name: `Mais de 2.5 Golos`, prob: pOver, odd: odds.o },
+            { id: 'BTTS', name: `Ambas Marcam (Sim)`, prob: pBTTS, odd: odds.b }
         ];
 
-        const mainContainer = document.getElementById('marketCards');
-        const goalsContainer = document.getElementById('goalCards');
-        mainContainer.innerHTML = '';
-        goalsContainer.innerHTML = '';
-
-        let bestMarket = null;
-        let maxEV = -Infinity;
+        let bestMarket = null, maxEV = -Infinity;
+        const mainC = document.getElementById('marketCards'), goalC = document.getElementById('goalCards');
+        mainC.innerHTML = ''; goalC.innerHTML = '';
 
         markets.forEach((m, idx) => {
             const ev = (m.prob * m.odd) - 1;
-            const fairOdd = 1 / m.prob;
-            const isValue = ev > 0.02;
+            const fair = 1 / m.prob;
+            const isValue = ev > 0.03 && !trapDetected; // Se tem Trap, cancela as green zones
 
             let stake = 0;
-            if (m.odd > 1) {
+            if (isValue && m.odd > 1) {
                 const b = m.odd - 1;
-                const q = 1 - m.prob;
-                const k = ((b * m.prob) - q) / b;
-                if (k > 0) stake = Math.min(k * 0.25 * 100, 5.0); 
+                stake = Math.min((((b * m.prob) - (1 - m.prob)) / b) * 0.25 * 100, 4.0); // Max 4% Banca
             }
 
-            if (ev > maxEV) {
-                maxEV = ev;
-                bestMarket = { ...m, ev, fairOdd, stake };
-            }
+            if (isValue && ev > maxEV) { maxEV = ev; bestMarket = { ...m, ev, stake }; }
+
+            const cardClass = trapDetected ? (ev > 0 ? 'trap-active' : 'glass-card opacity-50') : (isValue ? 'value-bet-active' : 'glass-card opacity-80');
 
             const html = `
-                <div class="p-4 rounded-2xl flex flex-col justify-between glass-card ${isValue ? 'value-bet-active' : 'no-bet-active'}">
-                    <div class="space-y-2">
-                        <h3 class="font-bold text-white text-xs truncate border-b border-slate-800 pb-1.5 uppercase">${m.name}</h3>
-                        <div class="space-y-1 font-mono-data text-[11px] text-slate-400">
-                            <div class="flex justify-between"><span>Prob Modelada:</span><span class="text-white">${(m.prob * 100).toFixed(1)}%</span></div>
-                            <div class="flex justify-between"><span>Odd Justa Real:</span><span class="text-blue-400">${fairOdd.toFixed(2)}</span></div>
-                            <div class="flex justify-between"><span>Odd Comercial:</span><span class="text-emerald-400">${m.odd.toFixed(2)}</span></div>
-                        </div>
+                <div class="p-4 rounded-2xl flex flex-col justify-between ${cardClass}">
+                    <h3 class="font-bold text-white text-xs border-b border-slate-800 pb-1.5 uppercase">${m.name}</h3>
+                    <div class="space-y-1 font-mono-data text-[11px] text-slate-400 mt-2">
+                        <div class="flex justify-between"><span>Real:</span><span class="text-blue-400">${fair.toFixed(2)}</span></div>
+                        <div class="flex justify-between"><span>Odd:</span><span class="text-white">${m.odd.toFixed(2)}</span></div>
                     </div>
-                    <div class="mt-3 pt-2 border-t border-slate-800/60 flex justify-between items-center">
-                        <span class="font-bold text-xs ${ev > 0 ? 'text-emerald-400' : 'text-red-400/60'}">EV: ${(ev * 100).toFixed(1)}%</span>
-                        ${isValue ? `<span class="text-[9px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-1.5 py-0.5 rounded font-bold">Stake: ${stake.toFixed(2)}%</span>` : '<span class="text-[9px] text-slate-600">No Edge</span>'}
+                    <div class="mt-2 pt-2 border-t border-slate-800 flex justify-between">
+                        <span class="font-bold text-xs ${ev > 0 ? (trapDetected ? 'text-red-400' : 'text-emerald-400') : 'text-slate-500'}">EV: ${(ev*100).toFixed(1)}%</span>
                     </div>
-                </div>
-            `;
-
-            if (idx < 3) mainContainer.insertAdjacentHTML('beforeend', html);
-            else goalsContainer.insertAdjacentHTML('beforeend', html);
+                </div>`;
+            idx < 3 ? mainC.insertAdjacentHTML('beforeend', html) : goalC.insertAdjacentHTML('beforeend', html);
         });
 
         const report = document.getElementById('reportContainer');
-        if (maxEV > 0.02 && bestMarket) {
+        if (trapDetected) {
+            report.innerHTML = `<div class="p-4 rounded-2xl bg-red-950/20 border border-red-500/30 text-center py-8"><p class="text-red-400 font-bold text-xs uppercase tracking-widest">ALERTA DE SEGURANÇA: FIQUE DE FORA DESTE JOGO</p></div>`;
+        } else if (bestMarket) {
             report.innerHTML = `
                 <div class="p-4 rounded-2xl bg-emerald-950/10 border border-emerald-500/20 space-y-3">
-                    <p class="text-emerald-400 font-bold text-xs uppercase tracking-wider">Sinal Matemático Identificado</p>
+                    <p class="text-emerald-400 font-bold text-xs uppercase tracking-wider">Entrada +EV Aprovada</p>
                     <div class="bg-slate-950/80 border border-slate-900 rounded-xl p-3 text-center">
                         <p class="text-xs text-slate-400 font-bold uppercase">${bestMarket.name}</p>
                         <p class="text-xl font-mono-data font-black text-emerald-400 mt-1">@ ${bestMarket.odd.toFixed(2)}</p>
                     </div>
                     <div class="flex justify-between text-xs font-mono-data text-slate-400">
-                        <span>Vantagem Comercial (+EV):</span>
-                        <strong class="text-emerald-400">+${(bestMarket.ev * 100).toFixed(1)}%</strong>
+                        <span>Gestão Quarter-Kelly:</span>
+                        <strong class="text-white">${bestMarket.stake.toFixed(2)}% Banca</strong>
                     </div>
-                    <div class="flex justify-between items-center text-xs font-mono-data text-slate-400">
-                        <span>Gestão Quarter-Kelly (Stake):</span>
-                        <strong class="text-white">${bestMarket.stake.toFixed(2)}%</strong>
-                    </div>
-                </div>
-            `;
+                </div>`;
         } else {
-            report.innerHTML = `
-                <div class="p-4 rounded-2xl bg-slate-900/40 border border-slate-800 text-center text-slate-500 text-xs uppercase tracking-wider py-8">
-                    Nenhuma entrada com valor matemático (+EV) e margem de segurança foi detectada para este confronto.
-                </div>
-            `;
+            report.innerHTML = `<div class="p-4 rounded-2xl bg-slate-900/40 border border-slate-800 text-center text-slate-500 text-xs py-8 uppercase tracking-wider">Nenhum valor encontrado. Pule o jogo.</div>`;
+        }
+
+        // Render Matrix Table...
+        const head = document.getElementById('matrixHead'), body = document.getElementById('matrixBody');
+        head.innerHTML = '<th class="p-2 text-slate-500 border-b border-slate-800">C\\F</th>';
+        for (let i=0; i<=CONFIG.visualLimit; i++) head.insertAdjacentHTML('beforeend', `<th class="p-2 text-slate-400 text-xs border-b border-slate-800">${i}</th>`);
+        body.innerHTML = '';
+        for (let x=0; x<=CONFIG.visualLimit; x++) {
+            let row = `<tr><th class="bg-slate-950/40 text-blue-400 p-2 text-xs border-r border-slate-800">${x}</th>`;
+            for (let y=0; y<=CONFIG.visualLimit; y++) {
+                row += `<td class="text-xs p-2 ${x===y?'bg-slate-900/60 font-bold':(x>y?'text-blue-400/80':'text-purple-400/80')}">${(matrix[x][y]*100).toFixed(1)}%</td>`;
+            }
+            body.insertAdjacentHTML('beforeend', row + '</tr>');
         }
         
         document.getElementById('dashboard').classList.remove('hidden');
