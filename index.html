@@ -51,7 +51,7 @@
             <div>
                 <label class="block text-[11px] uppercase tracking-wider text-slate-400 font-bold mb-2">Liga / Competição (Treinamento)</label>
                 <select id="league" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3.5 text-sm text-white focus:outline-none">
-                    <option value="BRA" class="text-emerald-400 font-bold">Brasileirão Betano (Série A)</option>
+                    <option value="BR" class="text-emerald-400 font-bold">Brasileirão Série A</option>
                     <option value="E0">Premier League (Inglaterra)</option>
                     <option value="E1">Championship (Inglaterra)</option>
                     <option value="SP1">La Liga (Espanha)</option>
@@ -188,14 +188,14 @@
 </div>
 
 <script>
-    // CONFIGURAÇÕES GLOBAIS DA MATEMÁTICA ESTATÍSTICA
+    // CONFIGURAÇÕES GLOBAIS DA MATEMÁTICA ESTATÍSTICA (RECALIBRADAS)
     const CONFIG = {
-        shrinkage: 0.15,
-        dixonColesRho: -0.12,
-        h2hDecay: 0.60,
+        shrinkage: 0.15,          
+        dixonColesRho: -0.12,     
+        h2hDecay: 0.60,           
         matrixLimit: 12,          
         visualLimit: 5,
-        recentMatchesWindow: 15
+        recentMatchesWindow: 15   
     };
 
     let csvMatches = [];
@@ -230,17 +230,22 @@
         
         const headers = lines[0].split(',').map(h => h.replace(/['"]+/g, '').trim().toLowerCase());
         
+        // Mapeamentos estendidos para suportar os padrões de ligas extras do football-data.co.uk (ex: BRA.csv usa 'Home', 'Away', 'HG', 'AG')
         let homeIdx = headers.indexOf('hometeam');
         if (homeIdx === -1) homeIdx = headers.indexOf('mandante');
+        if (homeIdx === -1) homeIdx = headers.indexOf('home');
         
         let awayIdx = headers.indexOf('awayteam');
         if (awayIdx === -1) awayIdx = headers.indexOf('visitante');
+        if (awayIdx === -1) awayIdx = headers.indexOf('away');
         
         let fthgIdx = headers.indexOf('fthg');
         if (fthgIdx === -1) fthgIdx = headers.indexOf('mandante_placar'); 
+        if (fthgIdx === -1) fthgIdx = headers.indexOf('hg'); 
         
         let ftagIdx = headers.indexOf('ftag');
         if (ftagIdx === -1) ftagIdx = headers.indexOf('visitante_placar'); 
+        if (ftagIdx === -1) ftagIdx = headers.indexOf('ag'); 
 
         if (homeIdx === -1 || awayIdx === -1 || fthgIdx === -1 || ftagIdx === -1) {
              throw new Error('Colunas estruturais ausentes. Utilize base completa com placares.');
@@ -299,7 +304,7 @@
         document.getElementById('matchPanel').classList.remove('hidden');
     }
 
-    // A ROTINA AGORA USA EXCLUSIVAMENTE A API FOOTBALL-DATA.CO.UK
+    // A ROTINA HÍBRIDA 100% PROXY 
     async function fetchAndParseCSV() {
         toggleUIState(true);
         const season = document.getElementById('season').value;
@@ -307,10 +312,11 @@
         
         let targetCsvUrl = "";
         
-        // Brasileirão Betano (Série A) fica nas 'Extra Leagues' e o arquivo central unificado é BRA.csv
-        if (league === "BRA") {
-            targetCsvUrl = `/api/fetch-football?url=${encodeURIComponent(`https://www.football-data.co.uk/new/BRA.csv`)}`;
+        if (league === "BR") {
+            // A Liga Brasileira no repositório oficial football-data fica como uma liga contínua em "new/BRA.csv"
+            targetCsvUrl = `/api/fetch-football?url=${encodeURIComponent('https://www.football-data.co.uk/new/BRA.csv')}`;
         } else {
+            // Estrutura padrão de temporadas europeias
             targetCsvUrl = `/api/fetch-football?url=${encodeURIComponent(`https://www.football-data.co.uk/mmz4281/${season}/${league}.csv`)}`;
         }
 
@@ -340,7 +346,7 @@
     }
 
     // =========================================================
-    // NÚCLEO MATEMÁTICO (MANTIDO INTACTO)
+    // NÚCLEO MATEMÁTICO
     // =========================================================
     function getFactorial(n) {
         if (n <= 1) return 1;
@@ -369,4 +375,240 @@
 
         let h2hMatches = [];
         let homeTeamHomeGames = [];
-        let awayTea
+        let awayTeamAwayGames = [];
+
+        // Separação prévia dos jogos para aplicar a janela móvel
+        csvMatches.forEach(m => {
+            if (isNaN(m.FTHG) || isNaN(m.FTAG)) return;
+            
+            if (m.HomeTeam === homeTeam) homeTeamHomeGames.push(m);
+            if (m.AwayTeam === awayTeam) awayTeamAwayGames.push(m);
+            
+            if ((m.HomeTeam === homeTeam && m.AwayTeam === awayTeam) || (m.HomeTeam === awayTeam && m.AwayTeam === homeTeam)) {
+                h2hMatches.push(m);
+            }
+        });
+
+        // =========================================================
+        // CORREÇÃO 1: Janela Móvel Estrita (Recência)
+        // =========================================================
+        homeTeamHomeGames = homeTeamHomeGames.slice(-CONFIG.recentMatchesWindow);
+        awayTeamAwayGames = awayTeamAwayGames.slice(-CONFIG.recentMatchesWindow);
+
+        let homeScoredTotal = 0, homeConcededTotal = 0, homeGames = homeTeamHomeGames.length;
+        let awayScoredTotal = 0, awayConcededTotal = 0, awayGames = awayTeamAwayGames.length;
+
+        homeTeamHomeGames.forEach(m => {
+            homeScoredTotal += m.FTHG; 
+            homeConcededTotal += m.FTAG;
+        });
+
+        awayTeamAwayGames.forEach(m => {
+            awayScoredTotal += m.FTAG; 
+            awayConcededTotal += m.FTHG;
+        });
+
+        const hScoredAvg = homeGames > 0 ? (homeScoredTotal / homeGames) : leagueAverages.homeAvg;
+        const hConcededAvg = homeGames > 0 ? (homeConcededTotal / homeGames) : leagueAverages.awayAvg;
+        const aScoredAvg = awayGames > 0 ? (awayScoredTotal / awayGames) : leagueAverages.awayAvg;
+        const aConcededAvg = awayGames > 0 ? (awayConcededTotal / awayGames) : leagueAverages.homeAvg;
+
+        const attackHome = hScoredAvg / leagueAverages.homeAvg;
+        const defenseHome = hConcededAvg / leagueAverages.awayAvg;
+        const attackAway = aScoredAvg / leagueAverages.awayAvg;
+        const defenseAway = aConcededAvg / leagueAverages.homeAvg;
+
+        let lambda = attackHome * defenseAway * leagueAverages.homeAvg;
+        let mu = attackAway * defenseHome * leagueAverages.awayAvg;
+
+        lambda = (lambda * (1 - CONFIG.shrinkage)) + (leagueAverages.homeAvg * CONFIG.shrinkage);
+        mu = (mu * (1 - CONFIG.shrinkage)) + (leagueAverages.awayAvg * CONFIG.shrinkage);
+
+        h2hMatches.reverse(); 
+        if (h2hMatches.length > 0) {
+            let weightedHome = 0, weightedAway = 0, totalWeight = 0;
+            h2hMatches.slice(0, 6).forEach((m, index) => { 
+                const weight = Math.exp(-index * CONFIG.h2hDecay);
+                const isHome = m.HomeTeam === homeTeam;
+                const hG = isHome ? m.FTHG : m.FTAG;
+                const aG = isHome ? m.FTAG : m.FTHG;
+                
+                weightedHome += hG * weight;
+                weightedAway += aG * weight;
+                totalWeight += weight;
+            });
+            
+            if (totalWeight > 0) {
+                const h2hHomeAvg = weightedHome / totalWeight;
+                const h2hAwayAvg = weightedAway / totalWeight;
+                
+                // =========================================================
+                // CORREÇÃO 2: Castração da Influência H2H (Restrito a 1%)
+                // =========================================================
+                lambda = (lambda * 0.99) + (h2hHomeAvg * 0.01); 
+                mu = (mu * 0.99) + (h2hAwayAvg * 0.01);
+            }
+        }
+
+        lambda = Math.max(0.20, lambda);
+        mu = Math.max(0.20, mu);
+
+        document.getElementById('homeLabel').innerText = homeTeam;
+        document.getElementById('awayLabel').innerText = awayTeam;
+        document.getElementById('homeXG').innerText = lambda.toFixed(2);
+        document.getElementById('awayXG').innerText = mu.toFixed(2);
+        document.getElementById('homeBar').style.width = `${Math.min(lambda * 25, 100)}%`;
+        document.getElementById('awayBar').style.width = `${Math.min(mu * 25, 100)}%`;
+        document.getElementById('leagueStats').innerHTML = `
+            <div class="flex justify-between"><span>Shrinkage Aplicado:</span><strong class="text-emerald-400">${(CONFIG.shrinkage * 100)}%</strong></div>
+            <div class="flex justify-between"><span>Confrontos H2H:</span><strong class="text-white">${h2hMatches.length} jogos avaliados</strong></div>
+            <div class="flex justify-between"><span>Janela Móvel (Forma):</span><strong class="text-white">Últimos ${CONFIG.recentMatchesWindow} Jogos</strong></div>
+            <div class="flex justify-between"><span>Amostra Global Processada:</span><strong class="text-white">${csvMatches.length} partidas ativas</strong></div>
+        `;
+
+        let matrix = [];
+        let pHome = 0, pDraw = 0, pAway = 0, pUnder = 0, pBTTS = 0;
+        let totalMatrixVol = 0;
+
+        for (let x = 0; x <= CONFIG.matrixLimit; x++) {
+            matrix[x] = [];
+            for (let y = 0; y <= CONFIG.matrixLimit; y++) {
+                const p = poissonProb(x, lambda) * poissonProb(y, mu) * dixonColes(x, y, lambda, mu);
+                matrix[x][y] = p;
+                totalMatrixVol += p;
+            }
+        }
+
+        for (let x = 0; x <= CONFIG.matrixLimit; x++) {
+            for (let y = 0; y <= CONFIG.matrixLimit; y++) {
+                matrix[x][y] /= totalMatrixVol;
+                const p = matrix[x][y];
+
+                if (x > y) pHome += p;
+                else if (x === y) pDraw += p;
+                else pAway += p;
+
+                if ((x + y) < 2.5) pUnder += p;
+                if (x > 0 && y > 0) pBTTS += p;
+            }
+        }
+
+        const sum1x2 = pHome + pDraw + pAway;
+        pHome /= sum1x2; pDraw /= sum1x2; pAway /= sum1x2;
+        
+        const sumGoals = pUnder + (1 - pUnder);
+        pUnder /= sumGoals;
+        let pOver = 1 - pUnder;
+
+        const head = document.getElementById('matrixHead');
+        const body = document.getElementById('matrixBody');
+        head.innerHTML = '<th class="p-2 text-slate-500 font-mono-data text-xs border-b border-slate-800">C \\ F</th>';
+        for (let i = 0; i <= CONFIG.visualLimit; i++) head.insertAdjacentHTML('beforeend', `<th class="p-2 text-slate-400 font-mono-data text-xs border-b border-slate-800">${i}</th>`);
+
+        body.innerHTML = '';
+        for (let x = 0; x <= CONFIG.visualLimit; x++) {
+            let rowHtml = `<tr><th class="bg-slate-950/40 text-blue-400 p-2 font-mono-data text-xs border-r border-slate-800">${x}</th>`;
+            for (let y = 0; y <= CONFIG.visualLimit; y++) {
+                const val = (matrix[x][y] * 100).toFixed(1);
+                let c = x === y ? 'bg-slate-900/60 font-bold' : (x > y ? 'text-blue-400/80' : 'text-purple-400/80');
+                rowHtml += `<td class="${c} font-mono-data text-xs p-2">${val}%</td>`;
+            }
+            rowHtml += '</tr>';
+            body.insertAdjacentHTML('beforeend', rowHtml);
+        }
+
+        const oddsInput = {
+            home: parseFloat(document.getElementById('oddHome').value) || 2.0,
+            draw: parseFloat(document.getElementById('oddDraw').value) || 3.3,
+            away: parseFloat(document.getElementById('oddAway').value) || 3.5,
+            over25: parseFloat(document.getElementById('oddOver').value) || 1.95,
+            btts: parseFloat(document.getElementById('oddBTTS').value) || 1.8
+        };
+
+        const markets = [
+            { id: 'Casa', name: `Vitória - ${homeTeam}`, prob: pHome, odd: oddsInput.home },
+            { id: 'Empate', name: `Empate (X)`, prob: pDraw, odd: oddsInput.draw },
+            { id: 'Fora', name: `Vitória - ${awayTeam}`, prob: pAway, odd: oddsInput.away },
+            { id: 'Over', name: `Mais de 2.5 Golos`, prob: pOver, odd: oddsInput.over25 },
+            { id: 'BTTS', name: `Ambas Marcam (Sim)`, prob: pBTTS, odd: oddsInput.btts }
+        ];
+
+        const mainContainer = document.getElementById('marketCards');
+        const goalsContainer = document.getElementById('goalCards');
+        mainContainer.innerHTML = '';
+        goalsContainer.innerHTML = '';
+
+        let bestMarket = null;
+        let maxEV = -Infinity;
+
+        markets.forEach((m, idx) => {
+            const ev = (m.prob * m.odd) - 1;
+            const fairOdd = 1 / m.prob;
+            const isValue = ev > 0.02;
+
+            let stake = 0;
+            if (m.odd > 1) {
+                const b = m.odd - 1;
+                const q = 1 - m.prob;
+                const k = ((b * m.prob) - q) / b;
+                if (k > 0) stake = Math.min(k * 0.25 * 100, 5.0); 
+            }
+
+            if (ev > maxEV) {
+                maxEV = ev;
+                bestMarket = { ...m, ev, fairOdd, stake };
+            }
+
+            const html = `
+                <div class="p-4 rounded-2xl flex flex-col justify-between glass-card ${isValue ? 'value-bet-active' : 'no-bet-active'}">
+                    <div class="space-y-2">
+                        <h3 class="font-bold text-white text-xs truncate border-b border-slate-800 pb-1.5 uppercase">${m.name}</h3>
+                        <div class="space-y-1 font-mono-data text-[11px] text-slate-400">
+                            <div class="flex justify-between"><span>Prob Modelada:</span><span class="text-white">${(m.prob * 100).toFixed(1)}%</span></div>
+                            <div class="flex justify-between"><span>Odd Justa Real:</span><span class="text-blue-400">${fairOdd.toFixed(2)}</span></div>
+                            <div class="flex justify-between"><span>Odd Comercial:</span><span class="text-emerald-400">${m.odd.toFixed(2)}</span></div>
+                        </div>
+                    </div>
+                    <div class="mt-3 pt-2 border-t border-slate-800/60 flex justify-between items-center">
+                        <span class="font-bold text-xs ${ev > 0 ? 'text-emerald-400' : 'text-red-400/60'}">EV: ${(ev * 100).toFixed(1)}%</span>
+                        ${isValue ? `<span class="text-[9px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-1.5 py-0.5 rounded font-bold">Stake: ${stake.toFixed(2)}%</span>` : '<span class="text-[9px] text-slate-600">No Edge</span>'}
+                    </div>
+                </div>
+            `;
+
+            if (idx < 3) mainContainer.insertAdjacentHTML('beforeend', html);
+            else goalsContainer.insertAdjacentHTML('beforeend', html);
+        });
+
+        const report = document.getElementById('reportContainer');
+        if (maxEV > 0.02 && bestMarket) {
+            report.innerHTML = `
+                <div class="p-4 rounded-2xl bg-emerald-950/10 border border-emerald-500/20 space-y-3">
+                    <p class="text-emerald-400 font-bold text-xs uppercase tracking-wider">Sinal Matemático Identificado</p>
+                    <div class="bg-slate-950/80 border border-slate-900 rounded-xl p-3 text-center">
+                        <p class="text-xs text-slate-400 font-bold uppercase">${bestMarket.name}</p>
+                        <p class="text-xl font-mono-data font-black text-emerald-400 mt-1">@ ${bestMarket.odd.toFixed(2)}</p>
+                    </div>
+                    <div class="flex justify-between text-xs font-mono-data text-slate-400">
+                        <span>Vantagem Comercial (+EV):</span>
+                        <strong class="text-emerald-400">+${(bestMarket.ev * 100).toFixed(1)}%</strong>
+                    </div>
+                    <div class="flex justify-between items-center text-xs font-mono-data text-slate-400">
+                        <span>Gestão Quarter-Kelly (Stake):</span>
+                        <strong class="text-white">${bestMarket.stake.toFixed(2)}%</strong>
+                    </div>
+                </div>
+            `;
+        } else {
+            report.innerHTML = `
+                <div class="p-4 rounded-2xl bg-slate-900/40 border border-slate-800 text-center text-slate-500 text-xs uppercase tracking-wider py-8">
+                    Nenhuma entrada com valor matemático (+EV) e margem de segurança foi detectada para este confronto.
+                </div>
+            `;
+        }
+        
+        document.getElementById('dashboard').classList.remove('hidden');
+    }
+</script>
+</body>
+</html>
