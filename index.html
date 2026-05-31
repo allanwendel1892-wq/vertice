@@ -134,7 +134,7 @@
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div class="glass-panel rounded-3xl p-6 flex flex-col justify-between space-y-5">
                 <div>
-                    <h2 class="text-xs uppercase tracking-widest font-black text-slate-400 border-b border-slate-800 pb-3">Golos Esperados Calculados (xG)</h2>
+                    <h2 class="text-xs uppercase tracking-widest font-black text-slate-400 border-b border-slate-800 pb-3">Projeção de Golos Poisson</h2>
                     <div class="space-y-4 mt-4">
                         <div>
                             <div class="flex justify-between items-end mb-1">
@@ -188,13 +188,14 @@
 </div>
 
 <script>
-    // CONFIGURAÇÕES GLOBAIS DA MATEMÁTICA ESTATÍSTICA
+    // CONFIGURAÇÕES GLOBAIS DA MATEMÁTICA ESTATÍSTICA (RECALIBRADAS)
     const CONFIG = {
-        shrinkage: 0.18,          
-        dixonColesRho: -0.075,    
-        h2hDecay: 0.45,           
+        shrinkage: 0.15,          // Ajustado de 0.18 para 0.15
+        dixonColesRho: -0.12,     // Ajustado de -0.075 para -0.12
+        h2hDecay: 0.60,           // Ajustado de 0.45 para 0.60
         matrixLimit: 12,          
-        visualLimit: 5            
+        visualLimit: 5,
+        recentMatchesWindow: 15   // Nova Regra Estrita: Limite de jogos recentes na amostra
     };
 
     // Endereço público RAW de um repositório confiável contendo os Placares (Gols) da Série A
@@ -206,7 +207,6 @@
 
     // INICIALIZAÇÃO
     window.addEventListener('DOMContentLoaded', () => {
-        // Puxa a base de dados imediatamente ao carregar a página
         fetchAndParseCSV();
     });
 
@@ -368,19 +368,39 @@
 
         if (homeTeam === awayTeam) return alert('Selecione equipas diferentes para o confronto.');
 
-        let homeScoredTotal = 0, homeConcededTotal = 0, homeGames = 0;
-        let awayScoredTotal = 0, awayConcededTotal = 0, awayGames = 0;
         let h2hMatches = [];
+        let homeTeamHomeGames = [];
+        let awayTeamAwayGames = [];
 
+        // Separação prévia dos jogos para aplicar a janela móvel
         csvMatches.forEach(m => {
             if (isNaN(m.FTHG) || isNaN(m.FTAG)) return;
             
-            if (m.HomeTeam === homeTeam) { homeScoredTotal += m.FTHG; homeConcededTotal += m.FTAG; homeGames++; }
-            if (m.AwayTeam === awayTeam) { awayScoredTotal += m.FTAG; awayConcededTotal += m.FTHG; awayGames++; }
+            if (m.HomeTeam === homeTeam) homeTeamHomeGames.push(m);
+            if (m.AwayTeam === awayTeam) awayTeamAwayGames.push(m);
             
             if ((m.HomeTeam === homeTeam && m.AwayTeam === awayTeam) || (m.HomeTeam === awayTeam && m.AwayTeam === homeTeam)) {
                 h2hMatches.push(m);
             }
+        });
+
+        // =========================================================
+        // CORREÇÃO 1: Janela Móvel Estrita (Recência)
+        // =========================================================
+        homeTeamHomeGames = homeTeamHomeGames.slice(-CONFIG.recentMatchesWindow);
+        awayTeamAwayGames = awayTeamAwayGames.slice(-CONFIG.recentMatchesWindow);
+
+        let homeScoredTotal = 0, homeConcededTotal = 0, homeGames = homeTeamHomeGames.length;
+        let awayScoredTotal = 0, awayConcededTotal = 0, awayGames = awayTeamAwayGames.length;
+
+        homeTeamHomeGames.forEach(m => {
+            homeScoredTotal += m.FTHG; 
+            homeConcededTotal += m.FTAG;
+        });
+
+        awayTeamAwayGames.forEach(m => {
+            awayScoredTotal += m.FTAG; 
+            awayConcededTotal += m.FTHG;
         });
 
         const hScoredAvg = homeGames > 0 ? (homeScoredTotal / homeGames) : leagueAverages.homeAvg;
@@ -416,8 +436,12 @@
             if (totalWeight > 0) {
                 const h2hHomeAvg = weightedHome / totalWeight;
                 const h2hAwayAvg = weightedAway / totalWeight;
-                lambda = (lambda * 0.95) + (h2hHomeAvg * 0.05); 
-                mu = (mu * 0.95) + (h2hAwayAvg * 0.05);
+                
+                // =========================================================
+                // CORREÇÃO 2: Castração da Influência H2H (Restrito a 1%)
+                // =========================================================
+                lambda = (lambda * 0.99) + (h2hHomeAvg * 0.01); 
+                mu = (mu * 0.99) + (h2hAwayAvg * 0.01);
             }
         }
 
@@ -432,8 +456,8 @@
         document.getElementById('awayBar').style.width = `${Math.min(mu * 25, 100)}%`;
         document.getElementById('leagueStats').innerHTML = `
             <div class="flex justify-between"><span>Shrinkage Aplicado:</span><strong class="text-emerald-400">${(CONFIG.shrinkage * 100)}%</strong></div>
-            <div class="flex justify-between"><span>Confrontos H2H:</span><strong class="text-white">${h2hMatches.length} jogos validados</strong></div>
-            <div class="flex justify-between"><span>Média Geral Casa/Fora:</span><strong class="text-white">${leagueAverages.homeAvg.toFixed(2)} / ${leagueAverages.awayAvg.toFixed(2)}</strong></div>
+            <div class="flex justify-between"><span>Confrontos H2H:</span><strong class="text-white">${h2hMatches.length} jogos avaliados</strong></div>
+            <div class="flex justify-between"><span>Janela Móvel (Forma):</span><strong class="text-white">Últimos ${CONFIG.recentMatchesWindow} Jogos</strong></div>
             <div class="flex justify-between"><span>Amostra Global Processada:</span><strong class="text-white">${csvMatches.length} partidas ativas</strong></div>
         `;
 
