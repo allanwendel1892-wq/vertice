@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>QUANT ENGINE V7.1 – ENSEMBLE PRO & ANTI-TRAP</title>
+    <title>QUANT ENGINE V7.1.1 – ENSEMBLE PRO & ANTI-TRAP (STATISTICAL EDITION)</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -30,10 +30,10 @@
     <header class="glass-panel rounded-3xl p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b-4 border-b-emerald-600">
         <div>
             <h1 class="text-3xl font-extrabold text-white font-mono-data">
-                QUANT<span class="text-emerald-400 font-light">ENGINE</span> <span class="text-[10px] bg-red-500/20 text-red-400 px-2 py-0.5 rounded border border-red-500/30 font-bold ml-2 uppercase tracking-widest">V7.1 Machine Learning Ready</span>
+                QUANT<span class="text-emerald-400 font-light">ENGINE</span> <span class="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/30 font-bold ml-2 uppercase tracking-widest">V7.1.1 PhD Calibrated</span>
             </h1>
             <p class="text-slate-400 text-xs mt-1">
-                Motor Híbrido: Poisson Temporal Exato + Elo Carry-Over + xG Sintético + Info Assimétrica.
+                Motor Híbrido: Poisson Temporal Exato + Elo Carry-Over + xG Dinâmico + Power Method (Vig).
             </p>
         </div>
     </header>
@@ -80,7 +80,7 @@
 
     <div id="loading" class="hidden text-center py-12 glass-panel rounded-3xl space-y-4">
         <div class="loader-ring rounded-full h-12 w-12 border-4 border-slate-800 mx-auto"></div>
-        <p id="loadingText" class="text-emerald-400 text-xs uppercase tracking-widest font-mono-data font-bold">Calibrando Pesos Temporais...</p>
+        <p id="loadingText" class="text-emerald-400 text-xs uppercase tracking-widest font-mono-data font-bold">Calibrando Parâmetros Dinâmicos...</p>
     </div>
 
     <section id="matchPanel" class="hidden space-y-6">
@@ -168,7 +168,7 @@
             <div class="glass-panel rounded-3xl p-6 lg:col-span-7 overflow-x-auto">
                 <h2 class="text-xs uppercase tracking-widest font-black text-slate-400 mb-4 flex justify-between">
                     <span>Matriz Bidimensional Bivariada</span>
-                    <span class="text-[10px] bg-emerald-900/30 px-2 py-1 rounded text-emerald-400 border border-emerald-800/50">Dixon-Coles ON</span>
+                    <span class="text-[10px] bg-emerald-900/30 px-2 py-1 rounded text-emerald-400 border border-emerald-800/50" id="dixonIndicator">Dixon-Coles Dinâmico</span>
                 </h2>
                 <table class="w-full matrix-table">
                     <thead><tr id="matrixHead"></tr></thead>
@@ -186,15 +186,14 @@
 </div>
 
 <script>
-    // MATEMÁTICA INSTITUCIONAL V7.1
+    // MATEMÁTICA INSTITUCIONAL V7.1.1 (PhD Edition)
     const CONFIG = {
-        shrinkage: 0.25,          // Reduzido para dar mais peso ao modelo real vs média da liga
-        timeDecayLambda: 0.003,   // Ajustado para DIAS REAIS (e não index de jogo). 0.003 = meia vida de ~230 dias.
-        eloKFactor: 25,           // Elasticidade do rating Elo.
-        eloHomeAdvantage: 60,     // Pontos extras pro mandante no cálculo Elo.
+        shrinkage: 0.25,          
+        timeDecayLambda: 0.003,   
+        eloKFactor: 25,           
         matrixLimit: 9,          
         visualLimit: 5,
-        eloCarryOver: 0.20        // Regressão à média (1500) em caso de virada de temporada (> 60 dias sem jogar)
+        eloCarryOver: 0.20        
     };
 
     let csvMatches = [];
@@ -203,6 +202,10 @@
     let teamLastPlayed = {};
     let leagueAverages = { homeAvg: 1.40, awayAvg: 1.15 };
     let globalLatestDate = new Date(2000, 0, 1);
+    
+    // Variáveis Dinâmicas de Liga
+    let dynamicHFA = 60;
+    let dynamicRho = -0.05;
 
     window.addEventListener('DOMContentLoaded', () => { fetchAndParseCSV(); });
 
@@ -214,7 +217,6 @@
         btnLoad.disabled = isLoading;
     }
 
-    // Processamento de Dados Brutos e Datas Reais
     function parseCSVText(text) {
         const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
         if (lines.length === 0) return [];
@@ -225,10 +227,10 @@
         let hgIdx = headers.indexOf('fthg'); if (hgIdx === -1) hgIdx = headers.indexOf('hg');
         let agIdx = headers.indexOf('ftag'); if (agIdx === -1) agIdx = headers.indexOf('ag');
         
-        // Dados para xG Sintético (Chutes no alvo)
-        let hstIdx = headers.indexOf('hst');
-        let astIdx = headers.indexOf('ast');
-
+        // Coleta robusta para xG Sintético
+        let hstIdx = headers.indexOf('hst'); let astIdx = headers.indexOf('ast');
+        let hsIdx = headers.indexOf('hs');   let asIdx = headers.indexOf('as');
+        let hcIdx = headers.indexOf('hc');   let acIdx = headers.indexOf('ac');
         let dateIdx = headers.indexOf('date');
 
         if (hIdx === -1 || aIdx === -1 || hgIdx === -1 || agIdx === -1 || dateIdx === -1) throw new Error('Colunas CSV obrigatórias ausentes (Date, Home, Away, HG, AG).');
@@ -238,22 +240,39 @@
             const cols = lines[i].split(',').map(c => c.replace(/['"]+/g, '').trim());
             if (cols[hIdx] && cols[aIdx] && cols[dateIdx]) {
                 
-                // Parse Date DD/MM/YYYY ou DD/MM/YY
                 let dateParts = cols[dateIdx].split('/');
                 if(dateParts.length === 3) {
                     let year = parseInt(dateParts[2]);
                     if (year < 100) year += 2000;
                     let dObj = new Date(year, parseInt(dateParts[1])-1, parseInt(dateParts[0]));
                     
-                    // Parse xG Sintético
                     let fthg = parseFloat(cols[hgIdx]) || 0;
                     let ftag = parseFloat(cols[agIdx]) || 0;
+                    
                     let hst = hstIdx !== -1 ? parseInt(cols[hstIdx]) : null;
                     let ast = astIdx !== -1 ? parseInt(cols[astIdx]) : null;
+                    let hs = hsIdx !== -1 ? parseInt(cols[hsIdx]) : null;
+                    let as = asIdx !== -1 ? parseInt(cols[asIdx]) : null;
+                    let hc = hcIdx !== -1 ? parseInt(cols[hcIdx]) : null;
+                    let ac = acIdx !== -1 ? parseInt(cols[acIdx]) : null;
 
-                    // Criação do xG Sintético: Combina gols com volume de chutes no alvo (Se existir)
-                    let home_xG = (hst !== null && !isNaN(hst)) ? (fthg * 0.6 + hst * 0.15) : fthg;
-                    let away_xG = (ast !== null && !isNaN(ast)) ? (ftag * 0.6 + ast * 0.15) : ftag;
+                    // CORREÇÃO ESTATÍSTICA 1: Fim da Colinearidade (Distribuição balanceada por volume ofensivo)
+                    let home_xG = fthg;
+                    let away_xG = ftag;
+
+                    if (hst !== null && !isNaN(hst)) {
+                        let hst_weight = hst * 0.30;
+                        let hs_weight = (hs !== null && !isNaN(hs)) ? Math.max(0, hs - hst) * 0.03 : 0;
+                        let hc_weight = (hc !== null && !isNaN(hc)) ? hc * 0.02 : 0;
+                        home_xG = (fthg * 0.40) + (hst_weight * 0.40) + (hs_weight * 0.10) + (hc_weight * 0.10);
+                    }
+
+                    if (ast !== null && !isNaN(ast)) {
+                        let ast_weight = ast * 0.30;
+                        let as_weight = (as !== null && !isNaN(as)) ? Math.max(0, as - ast) * 0.03 : 0;
+                        let ac_weight = (ac !== null && !isNaN(ac)) ? ac * 0.02 : 0;
+                        away_xG = (ftag * 0.40) + (ast_weight * 0.40) + (as_weight * 0.10) + (ac_weight * 0.10);
+                    }
 
                     parsed.push({
                         HomeTeam: cols[hIdx], 
@@ -268,7 +287,6 @@
             }
         }
         
-        // CRÍTICO: ORDENAR POR DATA CRESCENTE (Garante que a linha do tempo do Elo e do EMA sejam perfeitas)
         parsed.sort((a, b) => a.DateObj - b.DateObj);
         return parsed;
     }
@@ -279,23 +297,34 @@
         let thg = 0, tag = 0;
 
         if (csvMatches.length === 0) return alert("Nenhum dado válido encontrado.");
-        
         globalLatestDate = csvMatches[csvMatches.length - 1].DateObj;
 
-        // NÃO ZERAR O ELO SE FOR UMA INJEÇÃO CONTÍNUA (Memória)
-        // Se for primeiro load, inicia tudo vazio.
+        // CORREÇÃO ESTATÍSTICA 3 (Passo A): Calibração Dinâmica de Parâmetros (HFA e Rho)
+        let totalH = 0, totalA = 0, totalD = 0;
+        csvMatches.forEach(m => {
+            totalH += m.FTHG;
+            totalA += m.FTAG;
+            if (m.FTHG === m.FTAG) totalD++;
+        });
+        let totalM = csvMatches.length || 1;
+        
+        let goalAdvantage = (totalH - totalA) / totalM;
+        dynamicHFA = goalAdvantage * 120; // Adaptação realística da força do mando de campo da liga selecionada
+        
+        let actualDrawRate = totalD / totalM;
+        dynamicRho = (0.24 - actualDrawRate); // Balanceamento de empate relativo à liga
+
+        // Inicialização
         teamEloRatings = {};
         teamLastPlayed = {};
 
         csvMatches.forEach(m => {
             teamSet.add(m.HomeTeam); teamSet.add(m.AwayTeam);
             
-            // Inicialização (Cold Start) ou Carry Over
             [m.HomeTeam, m.AwayTeam].forEach(team => {
                 if (!teamEloRatings[team]) {
                     teamEloRatings[team] = 1500;
                 } else if (teamLastPlayed[team]) {
-                    // Regressão à média se passou mais de 60 dias (Fim de Temporada)
                     const daysSinceLastMatch = (m.DateObj - teamLastPlayed[team]) / (1000 * 3600 * 24);
                     if (daysSinceLastMatch > 60) {
                         const differenceFromMean = 1500 - teamEloRatings[team];
@@ -307,8 +336,8 @@
 
             thg += m.HXG; tag += m.AXG;
 
-            // CÁLCULO ELO DINÂMICO
-            const eloH = teamEloRatings[m.HomeTeam] + CONFIG.eloHomeAdvantage;
+            // CORREÇÃO ESTATÍSTICA 3 (Passo B): Aplicação do HFA Dinâmico
+            const eloH = teamEloRatings[m.HomeTeam] + dynamicHFA;
             const eloA = teamEloRatings[m.AwayTeam];
             const probH = 1 / (1 + Math.pow(10, (eloA - eloH) / 400));
             const probA = 1 - probH;
@@ -328,6 +357,7 @@
         leagueAverages.awayAvg = tag / csvMatches.length;
 
         populateDropdowns();
+        document.getElementById('dixonIndicator').innerText = `Rho: ${dynamicRho.toFixed(3)} | HFA: +${Math.round(dynamicHFA)}`;
         toggleUIState(false);
     }
 
@@ -383,8 +413,7 @@
     function getFactorial(n) { return n <= 1 ? 1 : n * getFactorial(n - 1); }
     function poissonProb(k, lambda) { return (Math.pow(lambda, k) * Math.exp(-lambda)) / getFactorial(k); }
     
-    // Rho otimizado levemente negativo para compensar a superestimação de empates no Poisson tradicional
-    function dixonColes(x, y, L, M, rho = -0.05) {
+    function dixonColes(x, y, L, M, rho) {
         if (x===0 && y===0) return Math.max(0, 1 - L*M*rho);
         if (x===0 && y===1) return Math.max(0, 1 + L*rho);
         if (x===1 && y===0) return Math.max(0, 1 + M*rho);
@@ -392,10 +421,24 @@
         return 1;
     }
 
+    // CORREÇÃO ESTATÍSTICA 2: Power Method para Remoção do VIG (Favorito-Azarão)
     function removeVig(o1, oX, o2) {
-        const p1 = 1/o1, pX = 1/oX, p2 = 1/o2;
-        const margin = p1 + pX + p2;
-        return { real1: p1/margin, realX: pX/margin, real2: p2/margin };
+        let p1 = 1/o1, pX = 1/oX, p2 = 1/o2;
+        let margin = p1 + pX + p2;
+        
+        if (margin <= 1.0) return { real1: p1, realX: pX, real2: p2 };
+
+        let k = Math.log(3) / Math.log((3 * margin)); 
+        for(let i=0; i<3; i++) {
+            let sum = Math.pow(p1, k) + Math.pow(pX, k) + Math.pow(p2, k);
+            k = k - (sum - 1) / (Math.pow(p1, k)*Math.log(p1) + Math.pow(pX, k)*Math.log(pX) + Math.pow(p2, k)*Math.log(p2));
+        }
+
+        return { 
+            real1: Math.pow(p1, k), 
+            realX: Math.pow(pX, k), 
+            real2: Math.pow(p2, k) 
+        };
     }
 
     function calculateModel() {
@@ -403,7 +446,6 @@
         const awayTeam = document.getElementById('awayTeam').value;
         if (homeTeam === awayTeam) return alert('Selecione times diferentes.');
 
-        // 1. ANÁLISE TEMPORAL (Baseada em DIAS reais) e xG SINTÉTICO
         let wHomeScored = 0, wHomeConceded = 0, weightHomeSum = 0;
         let wAwayScored = 0, wAwayConceded = 0, weightAwaySum = 0;
 
@@ -429,9 +471,8 @@
         let lambda = (hScoredAvg / leagueAverages.homeAvg) * (aConcededAvg / leagueAverages.homeAvg) * leagueAverages.homeAvg;
         let mu = (aScoredAvg / leagueAverages.awayAvg) * (hConcededAvg / leagueAverages.awayAvg) * leagueAverages.awayAvg;
 
-        // 2. FILTRO ELO RATING (Intervenção Forçada)
-        const eloDiff = (teamEloRatings[awayTeam]) - (teamEloRatings[homeTeam] + CONFIG.eloHomeAdvantage);
-        // Ajuste mais suave do impacto Elo no xG
+        // FILTRO ELO RATING (Intervenção Forçada com HFA Dinâmico)
+        const eloDiff = (teamEloRatings[awayTeam]) - (teamEloRatings[homeTeam] + dynamicHFA);
         if (eloDiff > 150) { lambda *= 0.88; mu *= 1.15; } 
         else if (eloDiff < -150) { lambda *= 1.15; mu *= 0.88; } 
 
@@ -440,12 +481,12 @@
         
         lambda = Math.max(0.2, lambda); mu = Math.max(0.2, mu);
 
-        // 3. CONSTRUÇÃO DA MATRIZ BIVARIADA
+        // CONSTRUÇÃO DA MATRIZ BIVARIADA
         let matrix = [], pHome = 0, pDraw = 0, pAway = 0, pUnder = 0, pBTTS = 0, totalMatrix = 0;
         for (let x = 0; x <= CONFIG.matrixLimit; x++) {
             matrix[x] = [];
             for (let y = 0; y <= CONFIG.matrixLimit; y++) {
-                const p = poissonProb(x, lambda) * poissonProb(y, mu) * dixonColes(x, y, lambda, mu);
+                const p = poissonProb(x, lambda) * poissonProb(y, mu) * dixonColes(x, y, lambda, mu, dynamicRho);
                 matrix[x][y] = p; totalMatrix += p;
             }
         }
@@ -463,7 +504,7 @@
         const sum = pHome + pDraw + pAway; pHome /= sum; pDraw /= sum; pAway /= sum;
         let pOver = 1 - pUnder;
 
-        // 4. LEITURA DE MERCADO E DETECÇÃO DE INFORMAÇÃO ASSIMÉTRICA
+        // LEITURA DE MERCADO E DETECÇÃO DE INFORMAÇÃO ASSIMÉTRICA
         const odds = {
             h: parseFloat(document.getElementById('oddHome').value),
             d: parseFloat(document.getElementById('oddDraw').value),
@@ -477,7 +518,6 @@
         let trapDetected = false;
         let trapMessage = "";
 
-        // Nova Lógica: Se o mercado difere MASSIVAMENTE do modelo, assumimos que O MERCADO ESTÁ CERTO e nosso modelo desconhece uma variável crítica (lesão, campo neutro, clima).
         if (Math.abs(pHome - trueMarket.real1) > 0.25 || Math.abs(pAway - trueMarket.real2) > 0.25) {
             trapDetected = true;
             trapMessage = "⚠️ INFORMAÇÃO ASSIMÉTRICA: A linha de fechamento/atual do mercado divergiu brutalmente (>25%) das estatísticas puras. O mercado absorveu uma informação externa crítica (desfalque do astro, time misto, clima extremo). Operação abortada por segurança.";
@@ -486,7 +526,6 @@
             trapMessage = "⚠️ INVERSÃO DE FAVORITISMO SÚBITA: Dados apontam o mandante como favorito, mas o dinheiro dos sindicatos (Smart Money) empurrou a odd do visitante para baixo.";
         }
 
-        // RENDERIZAÇÃO UI
         document.getElementById('homeXG').innerText = lambda.toFixed(2);
         document.getElementById('awayXG').innerText = mu.toFixed(2);
         document.getElementById('homeLabel').innerText = homeTeam;
@@ -517,26 +556,35 @@
             { id: 'BTTS', name: `Ambas Marcam (Sim)`, prob: pBTTS, odd: odds.b }
         ];
 
+        // CORREÇÃO ESTATÍSTICA 4: Otimização de Risco e Escolha Exclusiva
         let bestMarket = null, maxEV = -Infinity;
+        
+        // Passagem 1: Encontrar o mercado Absoluto de maior valor
+        markets.forEach(m => {
+            const ev = (m.prob * m.odd) - 1;
+            if (ev > 0.03 && !trapDetected && ev > maxEV) { maxEV = ev; }
+        });
+
         const mainC = document.getElementById('marketCards'), goalC = document.getElementById('goalCards');
         mainC.innerHTML = ''; goalC.innerHTML = '';
 
+        // Passagem 2: Renderizar forçando a indicação única
         markets.forEach((m, idx) => {
             const ev = (m.prob * m.odd) - 1;
             const fair = 1 / m.prob;
             const isValue = ev > 0.03 && !trapDetected; 
+            const isBestMarket = isValue && Math.abs(ev - maxEV) < 0.001;
 
             let stake = 0;
-            if (isValue && m.odd > 1) {
-                // Critério de Kelly Fracionado Teórico
+            if (isBestMarket && m.odd > 1) {
                 const b = m.odd - 1;
-                // Dividimos a Kelly por 4 (Quarter-Kelly) para proteção de variância
-                stake = Math.min((((b * m.prob) - (1 - m.prob)) / b) * 0.25 * 100, 3.5); // Teto de 3.5%
+                // Fração segura institucional: 1/8 Kelly com teto máximo de 2%
+                stake = Math.min((((b * m.prob) - (1 - m.prob)) / b) * 0.125 * 100, 2.0); 
+                bestMarket = { ...m, ev, stake };
             }
 
-            if (isValue && ev > maxEV) { maxEV = ev; bestMarket = { ...m, ev, stake }; }
-
-            const cardClass = trapDetected ? (ev > 0 ? 'trap-active' : 'glass-card opacity-50') : (isValue ? 'value-bet-active' : 'glass-card opacity-80');
+            const cardClass = trapDetected ? (ev > 0 ? 'trap-active' : 'glass-card opacity-50') : 
+                              (isBestMarket ? 'value-bet-active' : (isValue ? 'glass-card border-emerald-500/30' : 'glass-card opacity-80'));
 
             const html = `
                 <div class="p-4 rounded-2xl flex flex-col justify-between ${cardClass}">
@@ -558,13 +606,13 @@
         } else if (bestMarket) {
             report.innerHTML = `
                 <div class="p-4 rounded-2xl bg-emerald-950/10 border border-emerald-500/20 space-y-3">
-                    <p class="text-emerald-400 font-bold text-xs uppercase tracking-wider">Entrada +EV Aprovada</p>
+                    <p class="text-emerald-400 font-bold text-xs uppercase tracking-wider">Entrada Principal +EV (Mutuamente Exclusiva)</p>
                     <div class="bg-slate-950/80 border border-slate-900 rounded-xl p-3 text-center">
                         <p class="text-xs text-slate-400 font-bold uppercase">${bestMarket.name}</p>
                         <p class="text-xl font-mono-data font-black text-emerald-400 mt-1">@ ${bestMarket.odd.toFixed(2)}</p>
                     </div>
                     <div class="flex justify-between text-xs font-mono-data text-slate-400">
-                        <span>Gestão Q-Kelly:</span>
+                        <span>Gestão (1/8 Kelly):</span>
                         <strong class="text-white">${bestMarket.stake.toFixed(2)}% Banca</strong>
                     </div>
                 </div>`;
