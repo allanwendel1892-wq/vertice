@@ -466,8 +466,10 @@
         const eloA = teamEloRatings[awayTeam];
         const eloDiffHome = eloH_adjusted - eloA;
         
-        let lambda_Elo = leagueAverages.homeAvg * Math.pow(10, eloDiffHome / 400);
-        let mu_Elo = leagueAverages.awayAvg * Math.pow(10, -eloDiffHome / 400);
+        // A constante de Euler (Math.exp) garante um dimensionamento realista. 
+        // 400 pontos de vantagem geram ~2.7x mais gols que a média (Ex: 1.4 * 2.7 = 3.78 gols), o que é historicamente exato.
+        let lambda_Elo = leagueAverages.homeAvg * Math.exp(eloDiffHome / 400);
+        let mu_Elo = leagueAverages.awayAvg * Math.exp(-eloDiffHome / 400);
 
         // C. O Verdadeiro ENSEMBLE (Média Ponderada: 65% Momento Tático, 35% Histórico de Força)
         let lambda = (lambda_xG * 0.65) + (lambda_Elo * 0.35);
