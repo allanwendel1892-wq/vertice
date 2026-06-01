@@ -425,21 +425,41 @@
         // --- RENDER RELATÓRIO ANALÍTICO ---
         const rep = document.getElementById('reportContainer');
         
-        // 1. Bloco de Ranking de Gols
+        // 1. Bloco de Ranking de Gols COM COLUNA DE TENDÊNCIA
         let gHTML = `<div class="bg-slate-900/60 rounded-xl p-4 border border-slate-800">
             <h3 class="text-[10px] uppercase tracking-widest font-bold text-slate-400 mb-3 text-center">Probabilidade de Gols (Excluindo Empates)</h3>
             <div class="flex justify-between text-xs font-mono-data border-b border-slate-700 pb-2 mb-2 text-slate-500 font-bold">
-                <span class="w-1/3">Gols</span><span class="w-1/3 text-center text-blue-400">Casa</span><span class="w-1/3 text-right text-purple-400">Fora</span>
+                <span class="w-1/4">Gols</span>
+                <span class="w-1/4 text-center text-blue-400">Casa</span>
+                <span class="w-1/4 text-center text-purple-400">Fora</span>
+                <span class="w-1/4 text-right text-emerald-400">Tendência</span>
             </div>`;
+            
         const labels = ['0', '1', '2', '3+'];
         for(let i=0; i<4; i++) {
             let ch = (hG[i]*100).toFixed(1), ca = (aG[i]*100).toFixed(1);
             let hlH = hG[i] > aG[i] ? 'text-white font-bold' : 'text-slate-400';
             let hlA = aG[i] > hG[i] ? 'text-white font-bold' : 'text-slate-400';
+            
+            // Lógica P(x) / xG
+            let ratioH = hG[i] / lam;
+            let ratioA = aG[i] / mu;
+            let tendency = "-";
+            let tendClass = "text-slate-500";
+            
+            if (ratioH > ratioA) {
+                tendency = "CASA";
+                tendClass = "text-blue-400 font-bold";
+            } else if (ratioA > ratioH) {
+                tendency = "FORA";
+                tendClass = "text-purple-400 font-bold";
+            }
+
             gHTML += `<div class="flex justify-between text-xs font-mono-data py-1">
-                <span class="w-1/3 text-slate-500">${labels[i]} Gol(s)</span>
-                <span class="w-1/3 text-center ${hlH}">${ch}%</span>
-                <span class="w-1/3 text-right ${hlA}">${ca}%</span>
+                <span class="w-1/4 text-slate-500">${labels[i]} Gol(s)</span>
+                <span class="w-1/4 text-center ${hlH}">${ch}%</span>
+                <span class="w-1/4 text-center ${hlA}">${ca}%</span>
+                <span class="w-1/4 text-right ${tendClass}">${tendency}</span>
             </div>`;
         }
         gHTML += `</div>`;
