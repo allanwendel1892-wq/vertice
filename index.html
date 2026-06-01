@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>QUANT ENGINE V7.3 – ENSEMBLE PRO & ANTI-TRAP</title>
+    <title>QUANT ENGINE V7.4 – CROSS-VALIDATION ENSEMBLE</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -21,6 +21,11 @@
         .trap-active { background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.4) !important; }
         .loader-ring { border-top-color: #10b981; animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
+        
+        /* Custom Scrollbar para a área de relatório */
+        .custom-scroll::-webkit-scrollbar { width: 6px; }
+        .custom-scroll::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.5); border-radius: 10px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: rgba(51, 65, 85, 0.8); border-radius: 10px; }
     </style>
 </head>
 
@@ -30,10 +35,10 @@
     <header class="glass-panel rounded-3xl p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b-4 border-b-emerald-600">
         <div>
             <h1 class="text-3xl font-extrabold text-white font-mono-data">
-                QUANT<span class="text-emerald-400 font-light">ENGINE</span> <span class="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/30 font-bold ml-2 uppercase tracking-widest">V7.3 True Ensemble</span>
+                QUANT<span class="text-emerald-400 font-light">ENGINE</span> <span class="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/30 font-bold ml-2 uppercase tracking-widest">V7.4 Analítico</span>
             </h1>
             <p class="text-slate-400 text-xs mt-1">
-                Motor Institucional: Ensemble Ponderado (xG Temporal + Elo) + Correção de Colinearidade + Bayesian Shrinkage.
+                Motor Institucional + Validação Cruzada (Matriz Bivariada vs xG vs Fator +EV)
             </p>
         </div>
     </header>
@@ -110,7 +115,7 @@
         <div class="glass-panel rounded-3xl p-6 space-y-5 border border-slate-800/80 bg-slate-900/30">
             <h2 class="text-xs uppercase tracking-widest font-black text-amber-500 flex items-center gap-2">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                Radar Anti-Trap: Insira as Odds Atuais do Mercado
+                Inputs de Mercado: Insira as Odds Atuais
             </h2>
             <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
                 <div><label class="block text-[10px] uppercase text-slate-500 font-bold mb-1.5 text-center">Casa (1)</label><input id="oddHome" type="number" step="0.01" value="2.80" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3.5 text-center font-mono-data font-bold text-white text-lg"></div>
@@ -121,13 +126,14 @@
             </div>
 
             <button onclick="calculateModel()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black uppercase tracking-widest text-xs p-5 rounded-2xl shadow-lg transition-all hover:scale-[1.01]">
-                PROCESSAR MATRIZ ENSEMBLE
+                GERAR ANÁLISE QUANTITATIVA
             </button>
         </div>
     </section>
 
     <section id="dashboard" class="hidden space-y-6">
         <div id="trapAlertContainer"></div> 
+        
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div class="glass-panel rounded-3xl p-6 flex flex-col justify-between space-y-5 relative overflow-hidden">
                 <div class="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
@@ -166,7 +172,7 @@
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            <div class="glass-panel rounded-3xl p-6 lg:col-span-7 overflow-x-auto">
+            <div class="glass-panel rounded-3xl p-6 lg:col-span-6 overflow-x-auto">
                 <h2 class="text-xs uppercase tracking-widest font-black text-slate-400 mb-4 flex justify-between">
                     <span>Matriz Bidimensional Bivariada</span>
                     <span class="text-[10px] bg-emerald-900/30 px-2 py-1 rounded text-emerald-400 border border-emerald-800/50" id="dixonIndicator">Dixon-Coles Dinâmico</span>
@@ -176,18 +182,17 @@
                     <tbody id="matrixBody"></tbody>
                 </table>
             </div>
-            <div class="glass-panel rounded-3xl p-6 lg:col-span-5 flex flex-col justify-between">
-                <div>
-                    <h2 class="text-xs uppercase tracking-widest font-black text-slate-400 border-b border-slate-800 pb-3 mb-4">Relatório Tático de Ação</h2>
-                    <div id="reportContainer"></div>
-                </div>
+            
+            <div class="glass-panel rounded-3xl p-6 lg:col-span-6 flex flex-col h-full">
+                <h2 class="text-xs uppercase tracking-widest font-black text-slate-400 border-b border-slate-800 pb-3 mb-4">Relatório de Inteligência Cruzada</h2>
+                <div id="reportContainer" class="flex-grow custom-scroll overflow-y-auto pr-2"></div>
             </div>
         </div>
     </section>
 </div>
 
 <script>
-    // MATEMÁTICA INSTITUCIONAL V7.3 (True Ensemble Edition)
+    // MATEMÁTICA INSTITUCIONAL V7.4
     const CONFIG = {
         timeDecayLambda: 0.003,   
         eloKFactor: 25,           
@@ -204,7 +209,6 @@
     let leagueAverages = { homeAvg: 1.40, awayAvg: 1.15 };
     let globalLatestDate = new Date(2000, 0, 1);
     
-    // Variáveis Globais Finais da Liga
     let dynamicHFA = 60;
     let dynamicRho = -0.05;
 
@@ -233,7 +237,7 @@
         let hcIdx = headers.indexOf('hc');   let acIdx = headers.indexOf('ac');
         let dateIdx = headers.indexOf('date');
 
-        if (hIdx === -1 || aIdx === -1 || hgIdx === -1 || agIdx === -1 || dateIdx === -1) throw new Error('Colunas CSV obrigatórias ausentes (Date, Home, Away, HG, AG).');
+        if (hIdx === -1 || aIdx === -1 || hgIdx === -1 || agIdx === -1 || dateIdx === -1) throw new Error('Colunas CSV obrigatórias ausentes.');
 
         const parsed = [];
         
@@ -263,7 +267,6 @@
                 }
             }
         }
-        
         parsed.sort((a, b) => a.DateObj - b.DateObj);
         return parsed;
     }
@@ -271,25 +274,19 @@
     function processRawCSV(rawText) {
         csvMatches = parseCSVText(rawText);
         const teamSet = new Set();
-
         if (csvMatches.length === 0) return alert("Nenhum dado válido encontrado.");
         globalLatestDate = csvMatches[csvMatches.length - 1].DateObj;
-
-        teamEloRatings = {};
-        teamLastPlayed = {};
-
+        teamEloRatings = {}; teamLastPlayed = {};
         let rollingH = 0, rollingA = 0, rollingD = 0, rollingMatches = 0;
         let rollingGoals = 0, rollingSoT = 0, rollingShotsOff = 0, rollingCorners = 0;
 
         csvMatches.forEach(m => {
             teamSet.add(m.HomeTeam); teamSet.add(m.AwayTeam);
-            
             let wSoT = rollingSoT > 100 ? (rollingGoals / rollingSoT) : 0.30;
             let wOff = rollingShotsOff > 100 ? (rollingGoals / rollingShotsOff) : 0.03;
             let wCor = rollingCorners > 100 ? (rollingGoals / rollingCorners) : 0.02;
 
             m.HXG = m.FTHG; m.AXG = m.FTAG; 
-            
             if (m.HST !== null && !isNaN(m.HST)) {
                 let offT = (m.HS !== null && !isNaN(m.HS)) ? Math.max(0, m.HS - m.HST) : 0;
                 let hCor = (m.HC !== null && !isNaN(m.HC)) ? m.HC : 0;
@@ -302,28 +299,21 @@
             }
 
             [m.HomeTeam, m.AwayTeam].forEach(team => {
-                if (!teamEloRatings[team]) {
-                    teamEloRatings[team] = 1500;
-                } else if (teamLastPlayed[team]) {
+                if (!teamEloRatings[team]) teamEloRatings[team] = 1500;
+                else if (teamLastPlayed[team]) {
                     const daysSinceLastMatch = (m.DateObj - teamLastPlayed[team]) / (1000 * 3600 * 24);
-                    if (daysSinceLastMatch > 60) {
-                        const differenceFromMean = 1500 - teamEloRatings[team];
-                        teamEloRatings[team] += differenceFromMean * CONFIG.eloCarryOver;
-                    }
+                    if (daysSinceLastMatch > 60) teamEloRatings[team] += (1500 - teamEloRatings[team]) * CONFIG.eloCarryOver;
                 }
                 teamLastPlayed[team] = m.DateObj;
             });
 
             let currentHFA = rollingMatches > 20 ? ((rollingH - rollingA) / rollingMatches) * 120 : 60;
-            
             const eloH = teamEloRatings[m.HomeTeam] + currentHFA;
             const eloA = teamEloRatings[m.AwayTeam];
             const probH = 1 / (1 + Math.pow(10, (eloA - eloH) / 400));
             const probA = 1 - probH;
-            
             let actualH = m.FTHG > m.FTAG ? 1 : (m.FTHG === m.FTAG ? 0.5 : 0);
             let actualA = 1 - actualH;
-            
             const goalDiff = Math.abs(m.FTHG - m.FTAG);
             const absEloDiff = Math.abs(eloH - eloA);
             const continuousKMultiplier = Math.log(goalDiff + 1) * (2.2 / ((absEloDiff * 0.001) + 2.2));
@@ -335,7 +325,6 @@
             rollingMatches++;
             rollingH += m.FTHG; rollingA += m.FTAG;
             if (m.FTHG === m.FTAG) rollingD++;
-
             rollingGoals += (m.FTHG + m.FTAG);
             if (m.HST !== null) { 
                 rollingSoT += (m.HST + m.AST); 
@@ -366,16 +355,13 @@
         });
         if (aSel.options.length > 1) aSel.selectedIndex = 1;
         updateEloBadges();
-        
         hSel.addEventListener('change', updateEloBadges);
         aSel.addEventListener('change', updateEloBadges);
     }
 
     function updateEloBadges() {
-        const h = document.getElementById('homeTeam').value;
-        const a = document.getElementById('awayTeam').value;
-        document.getElementById('homeEloBadge').innerText = Math.round(teamEloRatings[h]);
-        document.getElementById('awayEloBadge').innerText = Math.round(teamEloRatings[a]);
+        document.getElementById('homeEloBadge').innerText = Math.round(teamEloRatings[document.getElementById('homeTeam').value]);
+        document.getElementById('awayEloBadge').innerText = Math.round(teamEloRatings[document.getElementById('awayTeam').value]);
     }
 
     async function fetchAndParseCSV() {
@@ -388,7 +374,7 @@
             if (!res.ok) throw new Error();
             processRawCSV(await res.text());
         } catch {
-            alert('Falha na API. Carregue o arquivo localmente ou verifique o servidor.');
+            alert('Falha na API. Carregue o arquivo localmente.');
             toggleUIState(false);
         }
     }
@@ -401,12 +387,8 @@
         e.target.value = ''; r.readAsText(f);
     }
 
-    // ==========================================
-    // NÚCLEO MATEMÁTICO E DETECÇÃO DE TRAPS
-    // ==========================================
     function getFactorial(n) { return n <= 1 ? 1 : n * getFactorial(n - 1); }
     function poissonProb(k, lambda) { return (Math.pow(lambda, k) * Math.exp(-lambda)) / getFactorial(k); }
-    
     function dixonColes(x, y, L, M, rho) {
         if (x===0 && y===0) return Math.max(0, 1 - L*M*rho);
         if (x===0 && y===1) return Math.max(0, 1 + L*rho);
@@ -414,19 +396,14 @@
         if (x===1 && y===1) return Math.max(0, 1 - rho);
         return 1;
     }
-
     function removeVig(o1, oX, o2) {
-        let p1 = 1/o1, pX = 1/oX, p2 = 1/o2;
-        let margin = p1 + pX + p2;
-        
+        let p1 = 1/o1, pX = 1/oX, p2 = 1/o2, margin = p1 + pX + p2;
         if (margin <= 1.0) return { real1: p1, realX: pX, real2: p2 };
-
         let k = Math.log(3) / Math.log((3 * margin)); 
         for(let i=0; i<3; i++) {
             let sum = Math.pow(p1, k) + Math.pow(pX, k) + Math.pow(p2, k);
             k = k - (sum - 1) / (Math.pow(p1, k)*Math.log(p1) + Math.pow(pX, k)*Math.log(pX) + Math.pow(p2, k)*Math.log(p2));
         }
-
         return { real1: Math.pow(p1, k), realX: Math.pow(pX, k), real2: Math.pow(p2, k) };
     }
 
@@ -438,17 +415,12 @@
         let wHomeScored = 0, wHomeConceded = 0, weightHomeSum = 0;
         let wAwayScored = 0, wAwayConceded = 0, weightAwaySum = 0;
 
-        const homeGames = csvMatches.filter(m => m.HomeTeam === homeTeam);
-        const awayGames = csvMatches.filter(m => m.AwayTeam === awayTeam);
-
-        homeGames.forEach(m => {
-            const daysAgo = (globalLatestDate - m.DateObj) / (1000 * 3600 * 24);
-            const weight = Math.exp(-CONFIG.timeDecayLambda * daysAgo);
+        csvMatches.filter(m => m.HomeTeam === homeTeam).forEach(m => {
+            const weight = Math.exp(-CONFIG.timeDecayLambda * ((globalLatestDate - m.DateObj) / 86400000));
             wHomeScored += m.HXG * weight; wHomeConceded += m.AXG * weight; weightHomeSum += weight;
         });
-        awayGames.forEach(m => {
-            const daysAgo = (globalLatestDate - m.DateObj) / (1000 * 3600 * 24);
-            const weight = Math.exp(-CONFIG.timeDecayLambda * daysAgo);
+        csvMatches.filter(m => m.AwayTeam === awayTeam).forEach(m => {
+            const weight = Math.exp(-CONFIG.timeDecayLambda * ((globalLatestDate - m.DateObj) / 86400000));
             wAwayScored += m.AXG * weight; wAwayConceded += m.HXG * weight; weightAwaySum += weight;
         });
 
@@ -457,53 +429,35 @@
         const aScoredAvg = weightAwaySum > 0 ? (wAwayScored / weightAwaySum) : leagueAverages.awayAvg;
         const aConcededAvg = weightAwaySum > 0 ? (wAwayConceded / weightAwaySum) : leagueAverages.homeAvg;
 
-        // A. Modelo Puramente xG/Poisson
         let lambda_xG = (hScoredAvg / leagueAverages.homeAvg) * (aConcededAvg / leagueAverages.homeAvg) * leagueAverages.homeAvg;
         let mu_xG = (aScoredAvg / leagueAverages.awayAvg) * (hConcededAvg / leagueAverages.awayAvg) * leagueAverages.awayAvg;
 
-        // B. Modelo Puramente ELO (Correção da Colinearidade)
-        const eloH_adjusted = teamEloRatings[homeTeam] + dynamicHFA;
-        const eloA = teamEloRatings[awayTeam];
-        const eloDiffHome = eloH_adjusted - eloA;
-        
-        // A constante de Euler (Math.exp) garante um dimensionamento realista. 
-        // 400 pontos de vantagem geram ~2.7x mais gols que a média (Ex: 1.4 * 2.7 = 3.78 gols), o que é historicamente exato.
+        const eloDiffHome = (teamEloRatings[homeTeam] + dynamicHFA) - teamEloRatings[awayTeam];
         let lambda_Elo = leagueAverages.homeAvg * Math.exp(eloDiffHome / 400);
         let mu_Elo = leagueAverages.awayAvg * Math.exp(-eloDiffHome / 400);
 
-        // C. O Verdadeiro ENSEMBLE (Média Ponderada: 65% Momento Tático, 35% Histórico de Força)
         let lambda = (lambda_xG * 0.65) + (lambda_Elo * 0.35);
         let mu = (mu_xG * 0.65) + (mu_Elo * 0.35);
 
-        // D. Laplace Smoothing (Shrinkage Dinâmico e Proporcional ao Volume)
         let homeShrinkage = CONFIG.basePriorShrinkage / (CONFIG.basePriorShrinkage + weightHomeSum);
         let awayShrinkage = CONFIG.basePriorShrinkage / (CONFIG.basePriorShrinkage + weightAwaySum);
 
-        lambda = (lambda * (1 - homeShrinkage)) + (leagueAverages.homeAvg * homeShrinkage);
-        mu = (mu * (1 - awayShrinkage)) + (leagueAverages.awayAvg * awayShrinkage);
-        
-        lambda = Math.max(0.2, lambda); mu = Math.max(0.2, mu);
+        lambda = Math.max(0.2, (lambda * (1 - homeShrinkage)) + (leagueAverages.homeAvg * homeShrinkage));
+        mu = Math.max(0.2, (mu * (1 - awayShrinkage)) + (leagueAverages.awayAvg * awayShrinkage));
 
-        // CONSTRUÇÃO DA MATRIZ BIVARIADA
         let matrix = [], pHome = 0, pDraw = 0, pAway = 0, pUnder = 0, pBTTS = 0, totalMatrix = 0;
         for (let x = 0; x <= CONFIG.matrixLimit; x++) {
             matrix[x] = [];
             for (let y = 0; y <= CONFIG.matrixLimit; y++) {
                 let p = poissonProb(x, lambda) * poissonProb(y, mu) * dixonColes(x, y, lambda, mu, dynamicRho);
-                
-                // Game State Modifier (Estímulo Weibull de cenário aberto)
-                if (x >= 2 && y >= 2) {
-                    p *= 1.15;
-                }
-                
+                if (x >= 2 && y >= 2) p *= 1.15;
                 matrix[x][y] = p; totalMatrix += p;
             }
         }
 
         for (let x=0; x<=CONFIG.matrixLimit; x++) {
             for (let y=0; y<=CONFIG.matrixLimit; y++) {
-                matrix[x][y] /= totalMatrix;
-                let p = matrix[x][y];
+                matrix[x][y] /= totalMatrix; let p = matrix[x][y];
                 if (x > y) pHome += p; else if (x === y) pDraw += p; else pAway += p;
                 if ((x+y) < 2.5) pUnder += p;
                 if (x>0 && y>0) pBTTS += p;
@@ -513,27 +467,17 @@
         const sum = pHome + pDraw + pAway; pHome /= sum; pDraw /= sum; pAway /= sum;
         let pOver = 1 - pUnder;
 
-        // LEITURA DE MERCADO E DETECÇÃO DE INFORMAÇÃO ASSIMÉTRICA
         const odds = {
-            h: parseFloat(document.getElementById('oddHome').value),
-            d: parseFloat(document.getElementById('oddDraw').value),
-            a: parseFloat(document.getElementById('oddAway').value),
-            o: parseFloat(document.getElementById('oddOver').value),
+            h: parseFloat(document.getElementById('oddHome').value), d: parseFloat(document.getElementById('oddDraw').value),
+            a: parseFloat(document.getElementById('oddAway').value), o: parseFloat(document.getElementById('oddOver').value),
             b: parseFloat(document.getElementById('oddBTTS').value)
         };
 
         const trueMarket = removeVig(odds.h, odds.d, odds.a);
-        
         let trapDetected = false;
-        let trapMessage = "";
 
-        if (Math.abs(pHome - trueMarket.real1) > 0.25 || Math.abs(pAway - trueMarket.real2) > 0.25) {
-            trapDetected = true;
-            trapMessage = "⚠️ INFORMAÇÃO ASSIMÉTRICA: A linha de fechamento/atual do mercado divergiu brutalmente (>25%) das estatísticas puras. O mercado absorveu uma informação externa crítica (desfalque do astro, time misto, clima extremo). Operação abortada por segurança.";
-        } else if (pHome > pAway && trueMarket.real2 > trueMarket.real1 * 1.05) {
-            trapDetected = true;
-            trapMessage = "⚠️ INVERSÃO DE FAVORITISMO SÚBITA: Dados apontam o mandante como favorito, mas o dinheiro dos sindicatos (Smart Money) empurrou a odd do visitante para baixo.";
-        }
+        if (Math.abs(pHome - trueMarket.real1) > 0.25 || Math.abs(pAway - trueMarket.real2) > 0.25) trapDetected = true;
+        else if (pHome > pAway && trueMarket.real2 > trueMarket.real1 * 1.05) trapDetected = true;
 
         document.getElementById('homeXG').innerText = lambda.toFixed(2);
         document.getElementById('awayXG').innerText = mu.toFixed(2);
@@ -543,24 +487,14 @@
         document.getElementById('awayBar').style.width = `${Math.min(mu*25, 100)}%`;
 
         const alertBox = document.getElementById('trapAlertContainer');
-        
-        // Alerta de Cold Start Condicional
-        let coldStartWarning = weightHomeSum < 4 || weightAwaySum < 4 
-            ? `<div class="bg-amber-900/40 border border-amber-500/30 text-amber-400 p-2 text-[10px] text-center uppercase tracking-widest rounded-xl mb-3">⚠️ COLD START: Volume de jogos inferior ao ideal. Variância alta.</div>` 
-            : ``;
-
         if (trapDetected) {
-            alertBox.innerHTML = coldStartWarning + `
+            alertBox.innerHTML = `
                 <div class="glass-panel border-red-500/50 bg-red-950/20 rounded-3xl p-5 mb-6 shadow-[0_0_15px_rgba(239,68,68,0.1)]">
-                    <h3 class="text-red-400 font-black uppercase text-sm mb-2 flex items-center gap-2">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                        MERCADO REAGINDO A FATORES EXTERNOS
-                    </h3>
-                    <p class="text-slate-300 text-xs font-mono-data leading-relaxed">${trapMessage}</p>
-                    <p class="text-[10px] text-red-400/80 mt-2 font-bold uppercase">Aposte no mercado, não contra o fluxo primário. Fique de fora.</p>
+                    <h3 class="text-red-400 font-black uppercase text-sm mb-1 flex items-center gap-2">⚠️ MERCADO REAGINDO A FATORES EXTERNOS</h3>
+                    <p class="text-slate-300 text-xs font-mono-data">Divergência superior a 25% entre estatísticas e mercado. Possível desfalque ou ajuste brusco de liquidez.</p>
                 </div>`;
         } else {
-            alertBox.innerHTML = coldStartWarning + `<div class="glass-panel border-emerald-500/20 bg-emerald-950/10 rounded-3xl p-3 mb-6 text-center text-emerald-500 text-[10px] font-bold uppercase tracking-widest">Modelagem em sintonia com a liquidez do mercado. Green Light.</div>`;
+            alertBox.innerHTML = `<div class="glass-panel border-emerald-500/20 bg-emerald-950/10 rounded-3xl p-3 mb-6 text-center text-emerald-500 text-[10px] font-bold uppercase tracking-widest">Modelagem em sintonia com a liquidez do mercado. Green Light.</div>`;
         }
 
         const markets = [
@@ -572,10 +506,9 @@
         ];
 
         let bestMarket = null, maxEV = -Infinity;
-        
         markets.forEach(m => {
             const ev = (m.prob * m.odd) - 1;
-            if (ev > 0.03 && !trapDetected && ev > maxEV) { maxEV = ev; }
+            if (ev > 0.03 && !trapDetected && ev > maxEV) { maxEV = ev; bestMarket = { ...m, ev }; }
         });
 
         const mainC = document.getElementById('marketCards'), goalC = document.getElementById('goalCards');
@@ -584,18 +517,9 @@
         markets.forEach((m, idx) => {
             const ev = (m.prob * m.odd) - 1;
             const fair = 1 / m.prob;
-            const isValue = ev > 0.03 && !trapDetected; 
-            const isBestMarket = isValue && Math.abs(ev - maxEV) < 0.001;
-
-            let stake = 0;
-            if (isBestMarket && m.odd > 1) {
-                const b = m.odd - 1;
-                stake = Math.min((((b * m.prob) - (1 - m.prob)) / b) * 0.125 * 100, 2.0); 
-                bestMarket = { ...m, ev, stake };
-            }
-
+            const isBest = bestMarket && m.id === bestMarket.id;
             const cardClass = trapDetected ? (ev > 0 ? 'trap-active' : 'glass-card opacity-50') : 
-                              (isBestMarket ? 'value-bet-active' : (isValue ? 'glass-card border-emerald-500/30' : 'glass-card opacity-80'));
+                              (isBest ? 'value-bet-active' : (ev > 0.03 ? 'glass-card border-emerald-500/30' : 'glass-card opacity-80'));
 
             const html = `
                 <div class="p-4 rounded-2xl flex flex-col justify-between ${cardClass}">
@@ -611,24 +535,101 @@
             idx < 3 ? mainC.insertAdjacentHTML('beforeend', html) : goalC.insertAdjacentHTML('beforeend', html);
         });
 
+        // -------------------------------------------------------------
+        // NOVO MOTOR DE RELATÓRIO CRUZADO (ANALÍTICO)
+        // -------------------------------------------------------------
         const report = document.getElementById('reportContainer');
+        
         if (trapDetected) {
-            report.innerHTML = `<div class="p-4 rounded-2xl bg-red-950/20 border border-red-500/30 text-center py-8"><p class="text-red-400 font-bold text-xs uppercase tracking-widest">NO BET: PROTEÇÃO DE CAPITAL ATIVADA</p></div>`;
-        } else if (bestMarket) {
             report.innerHTML = `
-                <div class="p-4 rounded-2xl bg-emerald-950/10 border border-emerald-500/20 space-y-3">
-                    <p class="text-emerald-400 font-bold text-xs uppercase tracking-wider">Entrada Principal +EV (Mutuamente Exclusiva)</p>
-                    <div class="bg-slate-950/80 border border-slate-900 rounded-xl p-3 text-center">
-                        <p class="text-xs text-slate-400 font-bold uppercase">${bestMarket.name}</p>
-                        <p class="text-xl font-mono-data font-black text-emerald-400 mt-1">@ ${bestMarket.odd.toFixed(2)}</p>
+                <div class="p-6 rounded-2xl bg-red-950/20 border border-red-500/30 flex flex-col items-center justify-center h-full text-center space-y-3">
+                    <svg class="w-10 h-10 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                    <div>
+                        <h3 class="text-red-400 font-bold text-sm uppercase tracking-widest">Proteção de Capital</h3>
+                        <p class="text-slate-400 text-xs mt-2">O algoritmo detectou uma anomalia severa de precificação. A matemática histórica foi invalidada por dados em tempo real do mercado. <strong>Não aposte.</strong></p>
                     </div>
-                    <div class="flex justify-between text-xs font-mono-data text-slate-400">
-                        <span>Gestão (1/8 Kelly):</span>
-                        <strong class="text-white">${bestMarket.stake.toFixed(2)}% Banca</strong>
+                </div>`;
+        } else if (bestMarket) {
+            let score = 0;
+            let analysisBullets = "";
+
+            // 1. Cruzamento de EV Sustentável
+            if (bestMarket.ev < 0.15) { 
+                score += 35; 
+                analysisBullets += `<li class="flex items-start gap-3"><span class="text-emerald-500 font-bold mt-0.5">✓</span> <span class="text-slate-300 text-xs leading-relaxed"><strong class="text-white">Filtro EV:</strong> EV Sustentável e realista (${(bestMarket.ev*100).toFixed(1)}%). Baixo risco de ser uma 'armadilha' ignorada pelo modelo.</span></li>`; 
+            } else if (bestMarket.ev < 0.25) { 
+                score += 15; 
+                analysisBullets += `<li class="flex items-start gap-3"><span class="text-amber-500 font-bold mt-0.5">!</span> <span class="text-slate-300 text-xs leading-relaxed"><strong class="text-white">Filtro EV:</strong> EV Agressivo (${(bestMarket.ev*100).toFixed(1)}%). Requer validação manual das escalações.</span></li>`; 
+            } else { 
+                score -= 20; 
+                analysisBullets += `<li class="flex items-start gap-3"><span class="text-red-500 font-bold mt-0.5">✗</span> <span class="text-slate-300 text-xs leading-relaxed"><strong class="text-white">Filtro EV:</strong> Alerta Vermelho! EV Irreal (${(bestMarket.ev*100).toFixed(1)}%). Alta chance do algoritmo estar cego para um desfalque grave.</span></li>`; 
+            }
+
+            // 2. Cruzamento de Viabilidade na Matriz
+            if (bestMarket.prob > 0.40) { 
+                score += 35; 
+                analysisBullets += `<li class="flex items-start gap-3"><span class="text-emerald-500 font-bold mt-0.5">✓</span> <span class="text-slate-300 text-xs leading-relaxed"><strong class="text-white">Filtro Matriz:</strong> Ocorrência base robusta (${(bestMarket.prob*100).toFixed(1)}%). Cenário principal mais provável de acontecer.</span></li>`; 
+            } else if (bestMarket.prob > 0.30) { 
+                score += 15; 
+                analysisBullets += `<li class="flex items-start gap-3"><span class="text-amber-500 font-bold mt-0.5">!</span> <span class="text-slate-300 text-xs leading-relaxed"><strong class="text-white">Filtro Matriz:</strong> Ocorrência mediana (${(bestMarket.prob*100).toFixed(1)}%). Aposta justificada apenas pelo preço da Odd.</span></li>`; 
+            } else { 
+                score -= 10; 
+                analysisBullets += `<li class="flex items-start gap-3"><span class="text-red-500 font-bold mt-0.5">✗</span> <span class="text-slate-300 text-xs leading-relaxed"><strong class="text-white">Filtro Matriz:</strong> Ocorrência baixa (${(bestMarket.prob*100).toFixed(1)}%). Cenário de alta variância (Zebra). Reduza o peso da aposta.</span></li>`; 
+            }
+
+            // 3. Cruzamento Tático (xG)
+            const xGDiff = lambda - mu;
+            if (bestMarket.id === 'Casa' && xGDiff > 0.4) { 
+                score += 30; 
+                analysisBullets += `<li class="flex items-start gap-3"><span class="text-emerald-500 font-bold mt-0.5">✓</span> <span class="text-slate-300 text-xs leading-relaxed"><strong class="text-white">Filtro xG:</strong> Confirmação tática. O mandante produz e previne chances reais de gol muito melhor que o oponente.</span></li>`; 
+            } else if (bestMarket.id === 'Fora' && xGDiff < -0.4) { 
+                score += 30; 
+                analysisBullets += `<li class="flex items-start gap-3"><span class="text-emerald-500 font-bold mt-0.5">✓</span> <span class="text-slate-300 text-xs leading-relaxed"><strong class="text-white">Filtro xG:</strong> Confirmação tática. Visitante possui nítida superioridade ofensiva no modelo esperado.</span></li>`; 
+            } else if (bestMarket.id === 'Over' && (lambda + mu) > 2.7) {
+                score += 30; 
+                analysisBullets += `<li class="flex items-start gap-3"><span class="text-emerald-500 font-bold mt-0.5">✓</span> <span class="text-slate-300 text-xs leading-relaxed"><strong class="text-white">Filtro xG:</strong> Volume projetado alto (${(lambda+mu).toFixed(2)} gols esperados) apoia agressivamente a linha Over.</span></li>`; 
+            } else if (bestMarket.id === 'Empate' && Math.abs(xGDiff) < 0.3) {
+                score += 30; 
+                analysisBullets += `<li class="flex items-start gap-3"><span class="text-emerald-500 font-bold mt-0.5">✓</span> <span class="text-slate-300 text-xs leading-relaxed"><strong class="text-white">Filtro xG:</strong> Equilíbrio extremo entre ataque e defesa das equipes suporta a tese de empate.</span></li>`; 
+            } else { 
+                score += 5; 
+                analysisBullets += `<li class="flex items-start gap-3"><span class="text-slate-500 font-bold mt-0.5">-</span> <span class="text-slate-300 text-xs leading-relaxed"><strong class="text-white">Filtro xG Neutro:</strong> Vantagem tática de campo é marginal. Aposta estritamente baseada no desajuste numérico da Odd.</span></li>`; 
+            }
+
+            score = Math.max(0, Math.min(100, score));
+
+            // Gestão de Stake (Critério de Kelly Fracionado + Ajuste pelo Score)
+            let b = bestMarket.odd - 1;
+            let fullKelly = ((b * bestMarket.prob) - (1 - bestMarket.prob)) / b;
+            let adjustedStake = Math.min((fullKelly * 0.125 * (score / 100)) * 100, 2.0);
+
+            let scoreColor = score >= 75 ? 'text-emerald-400' : (score >= 50 ? 'text-amber-400' : 'text-red-400');
+            let scoreBg = score >= 75 ? 'bg-emerald-500/10 border-emerald-500/30' : (score >= 50 ? 'bg-amber-500/10 border-amber-500/30' : 'bg-red-500/10 border-red-500/30');
+
+            report.innerHTML = `
+                <div class="space-y-5">
+                    <div class="flex items-center justify-between p-4 rounded-2xl ${scoreBg} border">
+                        <div>
+                            <p class="text-[10px] text-slate-400 uppercase font-bold tracking-widest mb-1">Entrada Quantitativa</p>
+                            <p class="text-sm font-bold text-white">${bestMarket.name}</p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-[10px] text-slate-400 uppercase font-bold tracking-widest mb-1">Score Confiança</p>
+                            <p class="text-2xl font-black font-mono-data ${scoreColor}">${score}/100</p>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-900/40 rounded-xl p-4 border border-slate-800">
+                        <ul class="space-y-3">${analysisBullets}</ul>
+                    </div>
+
+                    <div class="flex justify-between items-center text-xs font-mono-data border-t border-slate-800 pt-4 mt-2">
+                        <span class="text-slate-400 uppercase tracking-wider">Gestão (Kelly Ajustado):</span>
+                        <strong class="text-white text-sm bg-slate-800 px-3 py-1 rounded-lg">${adjustedStake > 0.1 ? adjustedStake.toFixed(2) + '% Banca' : 'NO BET'}</strong>
                     </div>
                 </div>`;
         } else {
-            report.innerHTML = `<div class="p-4 rounded-2xl bg-slate-900/40 border border-slate-800 text-center text-slate-500 text-xs py-8 uppercase tracking-wider">Nenhum valor encontrado. Pule o jogo.</div>`;
+            report.innerHTML = `<div class="p-6 rounded-2xl bg-slate-900/40 border border-slate-800 flex items-center justify-center h-full text-center text-slate-500 text-xs uppercase tracking-wider">Nenhuma discrepância estatística suficiente. Pulverize o risco pulando o jogo.</div>`;
         }
 
         const head = document.getElementById('matrixHead'), body = document.getElementById('matrixBody');
