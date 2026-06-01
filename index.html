@@ -3,11 +3,9 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>QUANT ENGINE V8 – WALK-FORWARD CALIBRATED</title>
-
+    <title>QUANT ENGINE V7.1 – ENSEMBLE PRO & ANTI-TRAP</title>
+    
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
@@ -20,13 +18,9 @@
         .glass-card:hover { border-color: rgba(16, 185, 129, 0.2); transform: translateY(-2px); }
         .matrix-table td { width: 56px; height: 52px; text-align: center; border: 1px solid rgba(255, 255, 255, 0.02); font-size: 0.75rem; font-family: 'JetBrains Mono', monospace; }
         .value-bet-active { background: rgba(16, 185, 129, 0.06); border: 1px solid rgba(16, 185, 129, 0.35) !important; }
-        .risk-low { background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25) !important; }
-        .risk-mid { background: rgba(245, 158, 11, 0.08); border: 1px solid rgba(245, 158, 11, 0.25) !important; }
-        .risk-high { background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.35) !important; }
+        .trap-active { background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.4) !important; }
         .loader-ring { border-top-color: #10b981; animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
-        .scrollbar-hide::-webkit-scrollbar { display: none; }
-        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
 
@@ -36,16 +30,11 @@
     <header class="glass-panel rounded-3xl p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b-4 border-b-emerald-600">
         <div>
             <h1 class="text-3xl font-extrabold text-white font-mono-data">
-                QUANT<span class="text-emerald-400 font-light">ENGINE</span>
-                <span class="text-[10px] bg-blue-500/20 text-blue-300 px-2 py-0.5 rounded border border-blue-500/30 font-bold ml-2 uppercase tracking-widest">V8 Walk-Forward Calibrated</span>
+                QUANT<span class="text-emerald-400 font-light">ENGINE</span> <span class="text-[10px] bg-red-500/20 text-red-400 px-2 py-0.5 rounded border border-red-500/30 font-bold ml-2 uppercase tracking-widest">V7.1 Machine Learning Ready</span>
             </h1>
             <p class="text-slate-400 text-xs mt-1">
-                Poisson com ataque/defesa por time, Elo como feature auxiliar, Dixon-Coles estimado por dados, calibração e backtest walk-forward.
+                Motor Híbrido: Poisson Temporal Exato + Elo Carry-Over + xG Sintético + Info Assimétrica.
             </p>
-        </div>
-        <div class="text-right">
-            <p class="text-[10px] uppercase tracking-[0.3em] text-slate-500 font-bold">Modo analítico</p>
-            <p class="text-xs text-slate-300 mt-1">Treino · Validação · Teste · ROI por mercado</p>
         </div>
     </header>
 
@@ -91,7 +80,7 @@
 
     <div id="loading" class="hidden text-center py-12 glass-panel rounded-3xl space-y-4">
         <div class="loader-ring rounded-full h-12 w-12 border-4 border-slate-800 mx-auto"></div>
-        <p id="loadingText" class="text-emerald-400 text-xs uppercase tracking-widest font-mono-data font-bold">Lendo CSV e treinando pipeline walk-forward...</p>
+        <p id="loadingText" class="text-emerald-400 text-xs uppercase tracking-widest font-mono-data font-bold">Calibrando Pesos Temporais...</p>
     </div>
 
     <section id="matchPanel" class="hidden space-y-6">
@@ -100,7 +89,7 @@
                 <label class="block text-[11px] uppercase tracking-wider text-slate-400 font-bold mb-2">Equipa Casa (Mandante)</label>
                 <div class="flex gap-2">
                     <select id="homeTeam" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3.5 text-sm text-blue-400 font-bold focus:outline-none"></select>
-                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 text-xs flex flex-col justify-center items-center min-w-[90px]">
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 text-xs flex flex-col justify-center items-center min-w-[80px]">
                         <span class="text-[9px] text-slate-500 uppercase">ELO</span>
                         <span id="homeEloBadge" class="font-mono-data font-bold text-white">---</span>
                     </div>
@@ -110,7 +99,7 @@
                 <label class="block text-[11px] uppercase tracking-wider text-slate-400 font-bold mb-2">Equipa Fora (Visitante)</label>
                 <div class="flex gap-2">
                     <select id="awayTeam" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3.5 text-sm text-purple-400 font-bold focus:outline-none"></select>
-                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 text-xs flex flex-col justify-center items-center min-w-[90px]">
+                    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 text-xs flex flex-col justify-center items-center min-w-[80px]">
                         <span class="text-[9px] text-slate-500 uppercase">ELO</span>
                         <span id="awayEloBadge" class="font-mono-data font-bold text-white">---</span>
                     </div>
@@ -121,34 +110,14 @@
         <div class="glass-panel rounded-3xl p-6 space-y-5 border border-slate-800/80 bg-slate-900/30">
             <h2 class="text-xs uppercase tracking-widest font-black text-amber-500 flex items-center gap-2">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                Mercado atual
+                Radar Anti-Trap: Insira as Odds Atuais do Mercado
             </h2>
-
             <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
                 <div><label class="block text-[10px] uppercase text-slate-500 font-bold mb-1.5 text-center">Casa (1)</label><input id="oddHome" type="number" step="0.01" value="2.80" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3.5 text-center font-mono-data font-bold text-white text-lg"></div>
                 <div><label class="block text-[10px] uppercase text-slate-500 font-bold mb-1.5 text-center">Empate (X)</label><input id="oddDraw" type="number" step="0.01" value="3.10" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3.5 text-center font-mono-data font-bold text-white text-lg"></div>
                 <div><label class="block text-[10px] uppercase text-slate-500 font-bold mb-1.5 text-center">Fora (2)</label><input id="oddAway" type="number" step="0.01" value="2.60" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3.5 text-center font-mono-data font-bold text-white text-lg"></div>
                 <div><label class="block text-[10px] uppercase text-slate-500 font-bold mb-1.5 text-center">Over 2.5</label><input id="oddOver" type="number" step="0.01" value="2.10" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3.5 text-center font-mono-data font-bold text-white text-lg"></div>
                 <div><label class="block text-[10px] uppercase text-slate-500 font-bold mb-1.5 text-center">BTTS (Sim)</label><input id="oddBTTS" type="number" step="0.01" value="1.95" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3.5 text-center font-mono-data font-bold text-white text-lg"></div>
-            </div>
-
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 pt-2">
-                <div class="glass-card rounded-2xl p-4">
-                    <h3 class="text-[10px] uppercase tracking-[0.25em] text-slate-400 font-black mb-3">Odds de abertura (opcional)</h3>
-                    <div class="grid grid-cols-3 gap-2">
-                        <input id="openOddHome" type="number" step="0.01" placeholder="1" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-center text-sm text-white">
-                        <input id="openOddDraw" type="number" step="0.01" placeholder="X" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-center text-sm text-white">
-                        <input id="openOddAway" type="number" step="0.01" placeholder="2" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-center text-sm text-white">
-                    </div>
-                </div>
-                <div class="glass-card rounded-2xl p-4">
-                    <h3 class="text-[10px] uppercase tracking-[0.25em] text-slate-400 font-black mb-3">Book alternativo (opcional)</h3>
-                    <div class="grid grid-cols-3 gap-2">
-                        <input id="altOddHome" type="number" step="0.01" placeholder="1" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-center text-sm text-white">
-                        <input id="altOddDraw" type="number" step="0.01" placeholder="X" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-center text-sm text-white">
-                        <input id="altOddAway" type="number" step="0.01" placeholder="2" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-center text-sm text-white">
-                    </div>
-                </div>
             </div>
 
             <button onclick="calculateModel()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black uppercase tracking-widest text-xs p-5 rounded-2xl shadow-lg transition-all hover:scale-[1.01]">
@@ -158,15 +127,13 @@
     </section>
 
     <section id="dashboard" class="hidden space-y-6">
-        <div id="riskAlertContainer"></div>
-
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div id="trapAlertContainer"></div> <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div class="glass-panel rounded-3xl p-6 flex flex-col justify-between space-y-5 relative overflow-hidden">
                 <div class="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
                     <svg class="w-24 h-24 text-blue-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
                 </div>
                 <div>
-                    <h2 class="text-xs uppercase tracking-widest font-black text-slate-400 border-b border-slate-800 pb-3">Projeção híbrida xG</h2>
+                    <h2 class="text-xs uppercase tracking-widest font-black text-slate-400 border-b border-slate-800 pb-3">Projeção Híbrida xG (Poisson + Elo)</h2>
                     <div class="space-y-4 mt-4">
                         <div>
                             <div class="flex justify-between items-end mb-1">
@@ -197,27 +164,21 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-1 xl:grid-cols-12 gap-6">
-            <div class="glass-panel rounded-3xl p-6 xl:col-span-7 overflow-x-auto scrollbar-hide">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div class="glass-panel rounded-3xl p-6 lg:col-span-7 overflow-x-auto">
                 <h2 class="text-xs uppercase tracking-widest font-black text-slate-400 mb-4 flex justify-between">
-                    <span>Matriz bivariada</span>
-                    <span class="text-[10px] bg-emerald-900/30 px-2 py-1 rounded text-emerald-400 border border-emerald-800/50">Dixon-Coles estimado</span>
+                    <span>Matriz Bidimensional Bivariada</span>
+                    <span class="text-[10px] bg-emerald-900/30 px-2 py-1 rounded text-emerald-400 border border-emerald-800/50">Dixon-Coles ON</span>
                 </h2>
                 <table class="w-full matrix-table">
                     <thead><tr id="matrixHead"></tr></thead>
                     <tbody id="matrixBody"></tbody>
                 </table>
             </div>
-
-            <div class="glass-panel rounded-3xl p-6 xl:col-span-5 flex flex-col justify-between space-y-4">
+            <div class="glass-panel rounded-3xl p-6 lg:col-span-5 flex flex-col justify-between">
                 <div>
-                    <h2 class="text-xs uppercase tracking-widest font-black text-slate-400 border-b border-slate-800 pb-3 mb-4">Relatório tático de ação</h2>
+                    <h2 class="text-xs uppercase tracking-widest font-black text-slate-400 border-b border-slate-800 pb-3 mb-4">Relatório Tático de Ação</h2>
                     <div id="reportContainer"></div>
-                </div>
-
-                <div class="glass-card rounded-2xl p-4">
-                    <h3 class="text-[10px] uppercase tracking-[0.25em] text-slate-400 font-black mb-3">Backtest / calibração</h3>
-                    <div id="backtestContainer" class="space-y-3"></div>
                 </div>
             </div>
         </div>
@@ -225,1281 +186,406 @@
 </div>
 
 <script>
-const CONFIG = {
-    shrinkage: 0.18,
-    matrixLimit: 9,
-    visualLimit: 5,
-    maxGoalsEval: 9,
-    minSeasonMatches: 40,
-    trainRatio: 0.65,
-    valRatio: 0.2,
-    testRatio: 0.15,
-    gdEpochs: 36,
-    learningRate: 0.010,
-    regularization: 0.012,
-    eloHomeAdvantage: 60,
-    eloKFactor: 22,
-    eloFeatureWeight: 0.10,
-    dixonColesRange: 0.18,
-    dixonColesStep: 0.01,
-    riskThresholds: { low: 35, mid: 60 },
-    edgeThresholds: {
-        favorite: 0.025,
-        medium: 0.040,
-        zebra: 0.055
-    }
-};
-
-const LEAGUE_PROFILES = {
-    BR: { name: "Brasileirão Série A", homeBias: 0.16, decay: 0.034, regularization: 0.013, learningRate: 0.010, minMatches: 50 },
-    E0: { name: "Premier League", homeBias: 0.14, decay: 0.030, regularization: 0.011, learningRate: 0.009, minMatches: 50 },
-    SP1: { name: "La Liga", homeBias: 0.13, decay: 0.028, regularization: 0.010, learningRate: 0.009, minMatches: 45 },
-    D1: { name: "Bundesliga", homeBias: 0.15, decay: 0.032, regularization: 0.011, learningRate: 0.010, minMatches: 40 },
-    I1: { name: "Serie A", homeBias: 0.12, decay: 0.029, regularization: 0.010, learningRate: 0.009, minMatches: 45 }
-};
-
-let rawMatches = [];
-let csvMatches = [];
-let uniqueTeams = [];
-let teamEloRatings = {};
-let leagueAverages = { homeAvg: 1.40, awayAvg: 1.15 };
-let currentModel = null;
-let calibrationModels = null;
-let backtestSummary = null;
-let currentSeasonKey = null;
-let latestPredictionSnapshot = null;
-
-window.addEventListener('DOMContentLoaded', () => { fetchAndParseCSV(); });
-
-function toggleUIState(isLoading) {
-    const btnLoad = document.getElementById('btnLoadCSV');
-    document.getElementById('matchPanel').classList.toggle('hidden', isLoading);
-    document.getElementById('dashboard').classList.add('hidden');
-    document.getElementById('loading').classList.toggle('hidden', !isLoading);
-    btnLoad.disabled = isLoading;
-}
-
-function clamp(v, min, max) {
-    return Math.max(min, Math.min(max, v));
-}
-
-function safeNumber(v, fallback = null) {
-    const n = parseFloat(v);
-    return Number.isFinite(n) ? n : fallback;
-}
-
-function normText(v) {
-    return String(v || '')
-        .trim()
-        .toLowerCase()
-        .replace(/\s+/g, '')
-        .replace(/[^\w\d]+/g, '');
-}
-
-function pickValue(row, keys) {
-    const normalized = {};
-    Object.keys(row).forEach(k => normalized[normText(k)] = row[k]);
-    for (const key of keys) {
-        const nk = normText(key);
-        if (normalized[nk] !== undefined && String(normalized[nk]).trim() !== '') return normalized[nk];
-    }
-    return '';
-}
-
-function parseDateFlexible(value) {
-    if (!value) return null;
-    const raw = String(value).trim();
-    let d = new Date(raw);
-    if (!isNaN(d.getTime())) return d;
-
-    const parts = raw.split(/[\/\-.]/).map(x => parseInt(x, 10));
-    if (parts.length === 3 && parts.every(n => Number.isFinite(n))) {
-        let day = parts[0], month = parts[1], year = parts[2];
-        if (year < 100) year += 2000;
-        if (year > 1900 && month >= 1 && month <= 12 && day >= 1 && day <= 31) {
-            d = new Date(Date.UTC(year, month - 1, day));
-            if (!isNaN(d.getTime())) return d;
-        }
-    }
-    return null;
-}
-
-function inferSeasonKey(dateObj) {
-    if (!dateObj) return 'unknown';
-    const y = dateObj.getUTCFullYear();
-    const m = dateObj.getUTCMonth() + 1;
-    const startYear = m >= 7 ? y : (y - 1);
-    const endYear = startYear + 1;
-    return String(startYear).slice(2) + String(endYear).slice(2);
-}
-
-function getLeagueProfile(leagueCode) {
-    return Object.assign({
-        name: 'Liga',
-        homeBias: 0.14,
-        decay: 0.03,
-        regularization: 0.012,
-        learningRate: 0.010,
-        minMatches: 40
-    }, LEAGUE_PROFILES[leagueCode] || {});
-}
-
-function createLocalStorageHistoryKey() {
-    return 'quant_engine_v8_history';
-}
-
-function readHistory() {
-    try {
-        const raw = localStorage.getItem(createLocalStorageHistoryKey());
-        return raw ? JSON.parse(raw) : [];
-    } catch {
-        return [];
-    }
-}
-
-function writeHistory(items) {
-    try {
-        localStorage.setItem(createLocalStorageHistoryKey(), JSON.stringify(items.slice(-500)));
-    } catch {}
-}
-
-function storePredictionSnapshot(snapshot) {
-    const hist = readHistory();
-    hist.push(snapshot);
-    writeHistory(hist);
-}
-
-function normalizeOutcome1X2(homeGoals, awayGoals) {
-    if (homeGoals > awayGoals) return 'H';
-    if (homeGoals < awayGoals) return 'A';
-    return 'D';
-}
-
-function normalizeOutcomeBinary(homeGoals, awayGoals, threshold = 2.5) {
-    return (homeGoals + awayGoals) > threshold ? 1 : 0;
-}
-
-function normalizeBTTS(homeGoals, awayGoals) {
-    return (homeGoals > 0 && awayGoals > 0) ? 1 : 0;
-}
-
-function parseCSVText(text) {
-    const parsed = Papa.parse(text, {
-        header: true,
-        skipEmptyLines: true,
-        transformHeader: h => String(h || '').trim()
-    });
-
-    if (!parsed || !parsed.data || !parsed.data.length) return [];
-
-    const rows = [];
-    for (const row of parsed.data) {
-        const dateRaw = pickValue(row, ['Date', 'date', 'matchdate', 'time']);
-        const dateObj = parseDateFlexible(dateRaw);
-        const home = pickValue(row, ['HomeTeam', 'home', 'hometeam', 'team_home']);
-        const away = pickValue(row, ['AwayTeam', 'away', 'awayteam', 'team_away']);
-        const hg = safeNumber(pickValue(row, ['FTHG', 'hg', 'homegoals', 'ft_home_goals', 'home_goals']), null);
-        const ag = safeNumber(pickValue(row, ['FTAG', 'ag', 'awaygoals', 'ft_away_goals', 'away_goals']), null);
-        if (!home || !away || !Number.isFinite(hg) || !Number.isFinite(ag) || !dateObj) continue;
-
-        const match = {
-            raw: row,
-            date: dateObj,
-            seasonKey: inferSeasonKey(dateObj),
-            homeTeam: String(home).trim(),
-            awayTeam: String(away).trim(),
-            homeGoals: hg,
-            awayGoals: ag,
-            odds: {
-                home: safeNumber(pickValue(row, ['B365H', 'PSH', 'WHH', 'H'],), null),
-                draw: safeNumber(pickValue(row, ['B365D', 'PSD', 'WHD', 'D'],), null),
-                away: safeNumber(pickValue(row, ['B365A', 'PSA', 'WHA', 'A'],), null),
-                over25: safeNumber(pickValue(row, ['B365>2.5', 'BbAv>2.5', 'Over25', 'OU2.5H', 'O2.5']), null),
-                under25: safeNumber(pickValue(row, ['B365<2.5', 'BbAv<2.5', 'Under25', 'OU2.5A', 'U2.5']), null),
-                bttsYes: safeNumber(pickValue(row, ['B365BTTS Yes', 'BbAvBTTS Yes', 'BTTSYes', 'BTSYes']), null),
-                bttsNo: safeNumber(pickValue(row, ['B365BTTS No', 'BbAvBTTS No', 'BTTSNo', 'BTSNo']), null)
-            }
-        };
-        rows.push(match);
-    }
-
-    rows.sort((a, b) => a.date - b.date);
-    return rows;
-}
-
-function groupBySeason(matches) {
-    const groups = {};
-    matches.forEach(m => {
-        const key = m.seasonKey || 'unknown';
-        if (!groups[key]) groups[key] = [];
-        groups[key].push(m);
-    });
-    return groups;
-}
-
-function weightedMean(arr, weightFn) {
-    let s = 0, w = 0;
-    for (let i = 0; i < arr.length; i++) {
-        const ww = weightFn(i, arr[i]);
-        s += arr[i] * ww;
-        w += ww;
-    }
-    return w > 0 ? s / w : 0;
-}
-
-function poissonProb(k, lambda) {
-    if (k < 0) return 0;
-    let f = 1;
-    for (let i = 2; i <= k; i++) f *= i;
-    return Math.pow(lambda, k) * Math.exp(-lambda) / f;
-}
-
-function dixonColesTau(x, y, lambda, mu, rho) {
-    const r = clamp(rho, -0.3, 0.3);
-    if (x === 0 && y === 0) return Math.max(0.001, 1 - lambda * mu * r);
-    if (x === 0 && y === 1) return Math.max(0.001, 1 + lambda * r);
-    if (x === 1 && y === 0) return Math.max(0.001, 1 + mu * r);
-    if (x === 1 && y === 1) return Math.max(0.001, 1 - r);
-    return 1;
-}
-
-function removeVig(o1, oX, o2) {
-    const p1 = 1 / o1, pX = 1 / oX, p2 = 1 / o2;
-    const margin = p1 + pX + p2;
-    return { real1: p1 / margin, realX: pX / margin, real2: p2 / margin };
-}
-
-function removeVigBinary(oddA, oddB) {
-    const pa = 1 / oddA;
-    const pb = 1 / oddB;
-    const m = pa + pb;
-    return { a: pa / m, b: pb / m };
-}
-
-function softplus(x) {
-    return Math.log(1 + Math.exp(Math.max(-30, Math.min(30, x))));
-}
-
-function sigmoid(x) {
-    return 1 / (1 + Math.exp(-clamp(x, -30, 30)));
-}
-
-function chooseOddsBand(odd) {
-    if (!Number.isFinite(odd)) return 'none';
-    if (odd < 1.80) return 'favorite';
-    if (odd < 3.20) return 'medium';
-    return 'zebra';
-}
-
-function requiredEdgeForOdds(odd) {
-    const band = chooseOddsBand(odd);
-    if (band === 'favorite') return CONFIG.edgeThresholds.favorite;
-    if (band === 'medium') return CONFIG.edgeThresholds.medium;
-    if (band === 'zebra') return CONFIG.edgeThresholds.zebra;
-    return 0.04;
-}
-
-function buildSequentialElo(matches, profile, startRatings = null) {
-    const ratings = {};
-    const snapshots = [];
-    const base = 1500;
-
-    const homeAdv = CONFIG.eloHomeAdvantage;
-
-    const initTeam = (team) => {
-        if (ratings[team] === undefined) ratings[team] = startRatings && startRatings[team] !== undefined ? startRatings[team] : base;
+    // MATEMÁTICA INSTITUCIONAL V7.1
+    const CONFIG = {
+        shrinkage: 0.25,          // Reduzido para dar mais peso ao modelo real vs média da liga
+        timeDecayLambda: 0.003,   // Ajustado para DIAS REAIS (e não index de jogo). 0.003 = meia vida de ~230 dias.
+        eloKFactor: 25,           // Elasticidade do rating Elo.
+        eloHomeAdvantage: 60,     // Pontos extras pro mandante no cálculo Elo.
+        matrixLimit: 9,          
+        visualLimit: 5,
+        eloCarryOver: 0.20        // Regressão à média (1500) em caso de virada de temporada (> 60 dias sem jogar)
     };
 
-    for (const match of matches) {
-        initTeam(match.homeTeam);
-        initTeam(match.awayTeam);
+    let csvMatches = [];
+    let uniqueTeams = [];
+    let teamEloRatings = {};
+    let teamLastPlayed = {};
+    let leagueAverages = { homeAvg: 1.40, awayAvg: 1.15 };
+    let globalLatestDate = new Date(2000, 0, 1);
 
-        const eloH = ratings[match.homeTeam] + homeAdv;
-        const eloA = ratings[match.awayTeam];
-        match.preEloHome = ratings[match.homeTeam];
-        match.preEloAway = ratings[match.awayTeam];
-        match.preEloDiffNorm = (eloH - eloA) / 400;
+    window.addEventListener('DOMContentLoaded', () => { fetchAndParseCSV(); });
 
-        snapshots.push({ date: match.date, home: match.homeTeam, away: match.awayTeam, eloH, eloA });
-
-        const probH = 1 / (1 + Math.pow(10, (eloA - eloH) / 400));
-        const probA = 1 - probH;
-        const actualH = match.homeGoals > match.awayGoals ? 1 : (match.homeGoals === match.awayGoals ? 0.5 : 0);
-        const actualA = 1 - actualH;
-
-        const gd = Math.abs(match.homeGoals - match.awayGoals);
-        const mult = gd <= 1 ? 1 : (gd === 2 ? 1.35 : 1.60);
-        ratings[match.homeTeam] += CONFIG.eloKFactor * mult * (actualH - probH);
-        ratings[match.awayTeam] += CONFIG.eloKFactor * mult * (actualA - probA);
+    function toggleUIState(isLoading) {
+        const btnLoad = document.getElementById('btnLoadCSV');
+        document.getElementById('matchPanel').classList.toggle('hidden', isLoading);
+        document.getElementById('dashboard').classList.add('hidden');
+        document.getElementById('loading').classList.toggle('hidden', !isLoading);
+        btnLoad.disabled = isLoading;
     }
 
-    return { ratings, snapshots };
-}
+    // Processamento de Dados Brutos e Datas Reais
+    function parseCSVText(text) {
+        const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+        if (lines.length === 0) return [];
+        const headers = lines[0].split(',').map(h => h.replace(/['"]+/g, '').trim().toLowerCase());
+        
+        let hIdx = headers.indexOf('hometeam'); if (hIdx === -1) hIdx = headers.indexOf('home');
+        let aIdx = headers.indexOf('awayteam'); if (aIdx === -1) aIdx = headers.indexOf('away');
+        let hgIdx = headers.indexOf('fthg'); if (hgIdx === -1) hgIdx = headers.indexOf('hg');
+        let agIdx = headers.indexOf('ftag'); if (agIdx === -1) agIdx = headers.indexOf('ag');
+        
+        // Dados para xG Sintético (Chutes no alvo)
+        let hstIdx = headers.indexOf('hst');
+        let astIdx = headers.indexOf('ast');
 
-function zeroCenterMap(obj) {
-    const keys = Object.keys(obj);
-    if (!keys.length) return;
-    const mean = keys.reduce((s, k) => s + obj[k], 0) / keys.length;
-    keys.forEach(k => obj[k] -= mean);
-}
+        let dateIdx = headers.indexOf('date');
 
-function initTeamParams(teams) {
-    const attack = {}, defense = {};
-    teams.forEach(t => { attack[t] = 0; defense[t] = 0; });
-    return { attack, defense };
-}
+        if (hIdx === -1 || aIdx === -1 || hgIdx === -1 || agIdx === -1 || dateIdx === -1) throw new Error('Colunas CSV obrigatórias ausentes (Date, Home, Away, HG, AG).');
 
-function teamGoalBase(matches, selector) {
-    const vals = matches.map(selector);
-    const avg = vals.length ? vals.reduce((a, b) => a + b, 0) / vals.length : 1.25;
-    return Math.log(Math.max(avg, 0.2));
-}
+        const parsed = [];
+        for (let i = 1; i < lines.length; i++) {
+            const cols = lines[i].split(',').map(c => c.replace(/['"]+/g, '').trim());
+            if (cols[hIdx] && cols[aIdx] && cols[dateIdx]) {
+                
+                // Parse Date DD/MM/YYYY ou DD/MM/YY
+                let dateParts = cols[dateIdx].split('/');
+                if(dateParts.length === 3) {
+                    let year = parseInt(dateParts[2]);
+                    if (year < 100) year += 2000;
+                    let dObj = new Date(year, parseInt(dateParts[1])-1, parseInt(dateParts[0]));
+                    
+                    // Parse xG Sintético
+                    let fthg = parseFloat(cols[hgIdx]) || 0;
+                    let ftag = parseFloat(cols[agIdx]) || 0;
+                    let hst = hstIdx !== -1 ? parseInt(cols[hstIdx]) : null;
+                    let ast = astIdx !== -1 ? parseInt(cols[astIdx]) : null;
 
-function buildTrainingFeatures(matches) {
-    const { ratings } = buildSequentialElo(matches);
-    return matches.map(m => ({
-        ...m,
-        preEloDiffNorm: (m.preEloHome + CONFIG.eloHomeAdvantage - m.preEloAway) / 400
-    }));
-}
+                    // Criação do xG Sintético: Combina gols com volume de chutes no alvo (Se existir)
+                    let home_xG = (hst !== null && !isNaN(hst)) ? (fthg * 0.6 + hst * 0.15) : fthg;
+                    let away_xG = (ast !== null && !isNaN(ast)) ? (ftag * 0.6 + ast * 0.15) : ftag;
 
-function trainAttackDefenseModel(matches, teams, profile) {
-    const feats = buildTrainingFeatures(matches);
-    const { attack, defense } = initTeamParams(teams);
-
-    const baseHome = teamGoalBase(matches, m => m.homeGoals);
-    const baseAway = teamGoalBase(matches, m => m.awayGoals);
-
-    let homeAdv = profile.homeBias;
-    let eloCoef = 0.08;
-    let rho = -0.05;
-
-    const lr = profile.learningRate || CONFIG.learningRate;
-    const reg = profile.regularization || CONFIG.regularization;
-
-    for (let epoch = 0; epoch < CONFIG.gdEpochs; epoch++) {
-        const epochLr = lr * (1 - (epoch / CONFIG.gdEpochs) * 0.55);
-
-        for (const m of feats) {
-            const eloFeat = clamp(m.preEloDiffNorm || 0, -2.5, 2.5);
-            const linHome = clamp(baseHome + attack[m.homeTeam] + defense[m.awayTeam] + homeAdv + eloCoef * eloFeat, -4.0, 4.0);
-            const linAway = clamp(baseAway + attack[m.awayTeam] + defense[m.homeTeam] - (homeAdv * 0.18) - (eloCoef * eloFeat * 0.62), -4.0, 4.0);
-
-            const lambda = Math.exp(linHome);
-            const mu = Math.exp(linAway);
-
-            const errHome = lambda - m.homeGoals;
-            const errAway = mu - m.awayGoals;
-
-            attack[m.homeTeam] -= epochLr * (errHome + reg * attack[m.homeTeam]);
-            defense[m.awayTeam] -= epochLr * (errHome + reg * defense[m.awayTeam]);
-            attack[m.awayTeam] -= epochLr * (errAway + reg * attack[m.awayTeam]);
-            defense[m.homeTeam] -= epochLr * (errAway + reg * defense[m.homeTeam]);
-
-            homeAdv -= epochLr * (errHome - 0.18 * errAway + reg * homeAdv);
-            eloCoef -= epochLr * ((errHome - 0.62 * errAway) * eloFeat + reg * eloCoef * 0.35);
-        }
-
-        zeroCenterMap(attack);
-        zeroCenterMap(defense);
-    }
-
-    const rhoFit = estimateDixonColesRho(feats, { attack, defense, baseHome, baseAway, homeAdv, eloCoef }, profile);
-    return {
-        attack,
-        defense,
-        baseHome,
-        baseAway,
-        homeAdv,
-        eloCoef,
-        rho: rhoFit,
-        teams: [...teams],
-        profile
-    };
-}
-
-function estimateDixonColesRho(matches, model, profile) {
-    let bestRho = -0.05;
-    let bestLL = -Infinity;
-    for (let rho = -CONFIG.dixonColesRange; rho <= CONFIG.dixonColesRange + 1e-9; rho += CONFIG.dixonColesStep) {
-        let ll = 0;
-        for (const m of matches) {
-            const pred = predictRawGoalsInternal(m.homeTeam, m.awayTeam, model, m.preEloDiffNorm || 0, rho);
-            const lambda = pred.lambda;
-            const mu = pred.mu;
-            const p = Math.max(1e-12, poissonProb(m.homeGoals, lambda) * poissonProb(m.awayGoals, mu) * dixonColesTau(m.homeGoals, m.awayGoals, lambda, mu, rho));
-            ll += Math.log(p);
-        }
-        if (ll > bestLL) {
-            bestLL = ll;
-            bestRho = rho;
-        }
-    }
-    return clamp(bestRho, -0.2, 0.2);
-}
-
-function predictRawGoalsInternal(homeTeam, awayTeam, model, eloDiffNorm, overrideRho = null) {
-    const aH = model.attack[homeTeam] || 0;
-    const dA = model.defense[awayTeam] || 0;
-    const aA = model.attack[awayTeam] || 0;
-    const dH = model.defense[homeTeam] || 0;
-
-    const linHome = clamp(model.baseHome + aH + dA + model.homeAdv + model.eloCoef * eloDiffNorm, -4.0, 4.0);
-    const linAway = clamp(model.baseAway + aA + dH - (model.homeAdv * 0.18) - (model.eloCoef * eloDiffNorm * 0.62), -4.0, 4.0);
-
-    return {
-        lambda: Math.max(0.2, Math.min(5.5, Math.exp(linHome))),
-        mu: Math.max(0.2, Math.min(5.0, Math.exp(linAway))),
-        rho: overrideRho !== null ? overrideRho : model.rho
-    };
-}
-
-function buildGoalMatrix(lambda, mu, rho, limit) {
-    const matrix = [];
-    let total = 0;
-
-    for (let x = 0; x <= limit; x++) {
-        matrix[x] = [];
-        for (let y = 0; y <= limit; y++) {
-            const p = poissonProb(x, lambda) * poissonProb(y, mu) * dixonColesTau(x, y, lambda, mu, rho);
-            matrix[x][y] = p;
-            total += p;
-        }
-    }
-
-    for (let x = 0; x <= limit; x++) {
-        for (let y = 0; y <= limit; y++) {
-            matrix[x][y] = matrix[x][y] / total;
-        }
-    }
-    return matrix;
-}
-
-function flattenMatrixStats(matrix) {
-    let pHome = 0, pDraw = 0, pAway = 0, pUnder = 0, pBTTS = 0;
-    const limit = matrix.length - 1;
-    for (let x = 0; x <= limit; x++) {
-        for (let y = 0; y <= limit; y++) {
-            const p = matrix[x][y];
-            if (x > y) pHome += p; else if (x === y) pDraw += p; else pAway += p;
-            if (x + y <= 2) pUnder += p;
-            if (x > 0 && y > 0) pBTTS += p;
-        }
-    }
-    const sum = pHome + pDraw + pAway;
-    pHome /= sum; pDraw /= sum; pAway /= sum;
-    return {
-        home: pHome,
-        draw: pDraw,
-        away: pAway,
-        over25: 1 - pUnder,
-        under25: pUnder,
-        btts: pBTTS
-    };
-}
-
-function fitPlatt(scores, labels) {
-    let a = 0, b = 1;
-    const lr = 0.04;
-    for (let iter = 0; iter < 400; iter++) {
-        let ga = 0, gb = 0;
-        for (let i = 0; i < scores.length; i++) {
-            const x = scores[i];
-            const y = labels[i];
-            const p = sigmoid(a * x + b);
-            const e = p - y;
-            ga += e * x;
-            gb += e;
-        }
-        a -= lr * ga / Math.max(1, scores.length);
-        b -= lr * gb / Math.max(1, scores.length);
-    }
-    return { method: 'platt', a, b };
-}
-
-function fitIsotonic(scores, labels) {
-    const items = scores.map((s, i) => ({ s: clamp(s, 0, 1), y: labels[i] ? 1 : 0 }));
-    items.sort((a, b) => a.s - b.s);
-
-    const blocks = [];
-    for (const item of items) {
-        blocks.push({ start: item.s, end: item.s, sumY: item.y, n: 1, value: item.y });
-        while (blocks.length >= 2) {
-            const b2 = blocks[blocks.length - 1];
-            const b1 = blocks[blocks.length - 2];
-            if (b1.value <= b2.value) break;
-            const merged = {
-                start: b1.start,
-                end: b2.end,
-                sumY: b1.sumY + b2.sumY,
-                n: b1.n + b2.n
-            };
-            merged.value = merged.sumY / merged.n;
-            blocks.splice(blocks.length - 2, 2, merged);
-        }
-    }
-
-    return { method: 'isotonic', blocks };
-}
-
-function predictIsotonic(model, x) {
-    if (!model || !model.blocks || !model.blocks.length) return x;
-    const v = clamp(x, 0, 1);
-    for (const b of model.blocks) {
-        if (v >= b.start && v <= b.end) return clamp(b.value, 0.001, 0.999);
-    }
-    if (v < model.blocks[0].start) return clamp(model.blocks[0].value, 0.001, 0.999);
-    return clamp(model.blocks[model.blocks.length - 1].value, 0.001, 0.999);
-}
-
-function fitBinaryCalibrator(scores, labels) {
-    if (!scores.length || new Set(labels).size < 2) return { method: 'identity' };
-    const spread = Math.max(...scores) - Math.min(...scores);
-    if (scores.length < 20 || spread < 0.02) return fitPlatt(scores, labels);
-    return fitIsotonic(scores, labels);
-}
-
-function applyCalibrator(model, score) {
-    if (!model || model.method === 'identity') return clamp(score, 0.0001, 0.9999);
-    if (model.method === 'platt') {
-        return clamp(sigmoid(model.a * score + model.b), 0.0001, 0.9999);
-    }
-    if (model.method === 'isotonic') {
-        return predictIsotonic(model, score);
-    }
-    return clamp(score, 0.0001, 0.9999);
-}
-
-function fitCalibrationSet(matches, model) {
-    const scoreHome = [], labelHome = [];
-    const scoreDraw = [], labelDraw = [];
-    const scoreAway = [], labelAway = [];
-    const scoreOver = [], labelOver = [];
-    const scoreBTTS = [], labelBTTS = [];
-
-    for (const m of matches) {
-        const pred = predictMatchInternals(m.homeTeam, m.awayTeam, model, {
-            eloDiffNorm: m.preEloDiffNorm || 0,
-            odds: null
-        });
-
-        scoreHome.push(pred.probs.home); labelHome.push(m.homeGoals > m.awayGoals ? 1 : 0);
-        scoreDraw.push(pred.probs.draw); labelDraw.push(m.homeGoals === m.awayGoals ? 1 : 0);
-        scoreAway.push(pred.probs.away); labelAway.push(m.homeGoals < m.awayGoals ? 1 : 0);
-        scoreOver.push(pred.probs.over25); labelOver.push((m.homeGoals + m.awayGoals) > 2.5 ? 1 : 0);
-        scoreBTTS.push(pred.probs.btts); labelBTTS.push((m.homeGoals > 0 && m.awayGoals > 0) ? 1 : 0);
-    }
-
-    return {
-        home: fitBinaryCalibrator(scoreHome, labelHome),
-        draw: fitBinaryCalibrator(scoreDraw, labelDraw),
-        away: fitBinaryCalibrator(scoreAway, labelAway),
-        over25: fitBinaryCalibrator(scoreOver, labelOver),
-        btts: fitBinaryCalibrator(scoreBTTS, labelBTTS)
-    };
-}
-
-function reNormalizeThree(pHome, pDraw, pAway) {
-    const s = Math.max(1e-9, pHome + pDraw + pAway);
-    return { home: pHome / s, draw: pDraw / s, away: pAway / s };
-}
-
-function predictMatchInternals(homeTeam, awayTeam, model, options = {}) {
-    const eloDiffNorm = options.eloDiffNorm !== undefined ? options.eloDiffNorm : 0;
-    const raw = predictRawGoalsInternal(homeTeam, awayTeam, model, eloDiffNorm);
-    const matrix = buildGoalMatrix(raw.lambda, raw.mu, raw.rho, CONFIG.matrixLimit);
-    const probs = flattenMatrixStats(matrix);
-    return { raw, matrix, probs };
-}
-
-function estimateOddsFeatureRisk(currentOdds, openOdds, altOdds, probs, uncertainty, edgeBand) {
-    const marketHome = safeNumber(currentOdds.home, null);
-    const marketDraw = safeNumber(currentOdds.draw, null);
-    const marketAway = safeNumber(currentOdds.away, null);
-    const openHome = safeNumber(openOdds.home, null);
-    const openDraw = safeNumber(openOdds.draw, null);
-    const openAway = safeNumber(openOdds.away, null);
-    const altHome = safeNumber(altOdds.home, null);
-    const altDraw = safeNumber(altOdds.draw, null);
-    const altAway = safeNumber(altOdds.away, null);
-
-    let marketGap = 0;
-    const marketOdds = [marketHome, marketDraw, marketAway].filter(v => Number.isFinite(v) && v > 1);
-    if (marketOdds.length === 3) {
-        const implied = removeVig(marketHome, marketDraw, marketAway);
-        marketGap = (
-            Math.abs(probs.home - implied.real1) +
-            Math.abs(probs.draw - implied.realX) +
-            Math.abs(probs.away - implied.real2)
-        ) / 3;
-    }
-
-    let lineMove = 0;
-    if (Number.isFinite(openHome) && Number.isFinite(marketHome)) lineMove += Math.abs(Math.log(marketHome / openHome));
-    if (Number.isFinite(openDraw) && Number.isFinite(marketDraw)) lineMove += Math.abs(Math.log(marketDraw / openDraw));
-    if (Number.isFinite(openAway) && Number.isFinite(marketAway)) lineMove += Math.abs(Math.log(marketAway / openAway));
-    lineMove = lineMove / 3;
-
-    let bookDiff = 0;
-    if (Number.isFinite(altHome) && Number.isFinite(marketHome)) bookDiff += Math.abs(Math.log(altHome / marketHome));
-    if (Number.isFinite(altDraw) && Number.isFinite(marketDraw)) bookDiff += Math.abs(Math.log(altDraw / marketDraw));
-    if (Number.isFinite(altAway) && Number.isFinite(marketAway)) bookDiff += Math.abs(Math.log(altAway / marketAway));
-    bookDiff = bookDiff / 3;
-
-    const edgePenalty = clamp(Math.max(0, edgeBand - 0.02) * 8, 0, 1);
-    const score = 100 * clamp(
-        0.30 * marketGap +
-        0.22 * lineMove +
-        0.22 * bookDiff +
-        0.20 * uncertainty +
-        0.06 * edgePenalty,
-        0,
-        1
-    );
-
-    return {
-        score,
-        marketGap,
-        lineMove,
-        bookDiff
-    };
-}
-
-function calcEntropyBinary(p) {
-    const q = clamp(1 - p, 1e-9, 1 - 1e-9);
-    const pp = clamp(p, 1e-9, 1 - 1e-9);
-    return - (pp * Math.log(pp) + q * Math.log(q)) / Math.log(2);
-}
-
-function calcEntropy3(p1, p2, p3) {
-    const arr = [p1, p2, p3].map(p => clamp(p, 1e-9, 1 - 1e-9));
-    const s = arr.reduce((a, b) => a + b, 0);
-    const probs = arr.map(p => p / s);
-    return -probs.reduce((acc, p) => acc + p * Math.log(p), 0) / Math.log(3);
-}
-
-function getCurrentOddsObject() {
-    return {
-        home: safeNumber(document.getElementById('oddHome').value, null),
-        draw: safeNumber(document.getElementById('oddDraw').value, null),
-        away: safeNumber(document.getElementById('oddAway').value, null),
-        over25: safeNumber(document.getElementById('oddOver').value, null),
-        btts: safeNumber(document.getElementById('oddBTTS').value, null)
-    };
-}
-
-function getOptionalOpenOdds() {
-    return {
-        home: safeNumber(document.getElementById('openOddHome').value, null),
-        draw: safeNumber(document.getElementById('openOddDraw').value, null),
-        away: safeNumber(document.getElementById('openOddAway').value, null)
-    };
-}
-
-function getOptionalAltOdds() {
-    return {
-        home: safeNumber(document.getElementById('altOddHome').value, null),
-        draw: safeNumber(document.getElementById('altOddDraw').value, null),
-        away: safeNumber(document.getElementById('altOddAway').value, null)
-    };
-}
-
-function calcStakeQuarterKelly(prob, odd) {
-    const b = odd - 1;
-    if (!(b > 0)) return 0;
-    const q = 1 - prob;
-    const kelly = ((b * prob) - q) / b;
-    return Math.max(0, kelly * 0.25 * 100);
-}
-
-function evaluateBet(prob, odd, actual, marketBand) {
-    const edge = prob * odd - 1;
-    const threshold = requiredEdgeForOdds(odd);
-    const shouldBet = edge > threshold;
-    const profit = shouldBet ? (actual ? (odd - 1) : -1) : 0;
-    return { edge, threshold, shouldBet, profit };
-}
-
-function evaluateSet(testMatches, model, calibrators, initialEloState) {
-    const workingElo = Object.assign({}, initialEloState || {});
-    let total = 0;
-    const metrics = {
-        home: { ll: 0, brier: 0, bets: 0, stake: 0, profit: 0, hits: 0 },
-        draw: { ll: 0, brier: 0, bets: 0, stake: 0, profit: 0, hits: 0 },
-        away: { ll: 0, brier: 0, bets: 0, stake: 0, profit: 0, hits: 0 },
-        over25: { ll: 0, brier: 0, bets: 0, stake: 0, profit: 0, hits: 0 },
-        btts: { ll: 0, brier: 0, bets: 0, stake: 0, profit: 0, hits: 0 }
-    };
-
-    for (const m of testMatches) {
-        if (workingElo[m.homeTeam] === undefined) workingElo[m.homeTeam] = 1500;
-        if (workingElo[m.awayTeam] === undefined) workingElo[m.awayTeam] = 1500;
-
-        const eloH = workingElo[m.homeTeam] + CONFIG.eloHomeAdvantage;
-        const eloA = workingElo[m.awayTeam];
-        const eloDiffNorm = (eloH - eloA) / 400;
-
-        const pred = predictMatchInternals(m.homeTeam, m.awayTeam, model, { eloDiffNorm });
-        const probs = {
-            home: applyCalibrator(calibrators.home, pred.probs.home),
-            draw: applyCalibrator(calibrators.draw, pred.probs.draw),
-            away: applyCalibrator(calibrators.away, pred.probs.away),
-            over25: applyCalibrator(calibrators.over25, pred.probs.over25),
-            btts: applyCalibrator(calibrators.btts, pred.probs.btts)
-        };
-        const tri = reNormalizeThree(probs.home, probs.draw, probs.away);
-        probs.home = tri.home; probs.draw = tri.draw; probs.away = tri.away;
-
-        const yH = m.homeGoals > m.awayGoals ? 1 : 0;
-        const yD = m.homeGoals === m.awayGoals ? 1 : 0;
-        const yA = m.homeGoals < m.awayGoals ? 1 : 0;
-        const yO = (m.homeGoals + m.awayGoals) > 2.5 ? 1 : 0;
-        const yB = (m.homeGoals > 0 && m.awayGoals > 0) ? 1 : 0;
-
-        const outcomes = [
-            ['home', probs.home, yH, m.odds.home],
-            ['draw', probs.draw, yD, m.odds.draw],
-            ['away', probs.away, yA, m.odds.away],
-            ['over25', probs.over25, yO, m.odds.over25],
-            ['btts', probs.btts, yB, m.odds.btts]
-        ];
-
-        for (const [key, p, y, odd] of outcomes) {
-            if (!Number.isFinite(p) || !Number.isFinite(odd) || odd <= 1) continue;
-            const mtr = metrics[key];
-            mtr.ll += -Math.log(Math.max(1e-12, y ? p : (1 - p)));
-            mtr.brier += Math.pow(p - y, 2);
-            const band = chooseOddsBand(odd);
-            const edge = p * odd - 1;
-            const threshold = requiredEdgeForOdds(odd);
-            if (edge > threshold) {
-                const stake = Math.min(calcStakeQuarterKelly(p, odd), 4.0);
-                mtr.bets += 1;
-                mtr.stake += stake;
-                const profit = y ? ((odd - 1) * stake / 100) : -(stake / 100);
-                mtr.profit += profit;
-                if (y) mtr.hits += 1;
+                    parsed.push({
+                        HomeTeam: cols[hIdx], 
+                        AwayTeam: cols[aIdx],
+                        FTHG: fthg, 
+                        FTAG: ftag,
+                        HXG: home_xG,
+                        AXG: away_xG,
+                        DateObj: dObj
+                    });
+                }
             }
         }
-
-        const actualH = yH;
-        const actualA = yA;
-        const gd = Math.abs(m.homeGoals - m.awayGoals);
-        const mult = gd <= 1 ? 1 : (gd === 2 ? 1.35 : 1.60);
-        const probH = 1 / (1 + Math.pow(10, ((workingElo[m.awayTeam]) - (workingElo[m.homeTeam] + CONFIG.eloHomeAdvantage)) / 400));
-        const actualScoreH = m.homeGoals > m.awayGoals ? 1 : (m.homeGoals === m.awayGoals ? 0.5 : 0);
-        const actualScoreA = 1 - actualScoreH;
-        workingElo[m.homeTeam] += CONFIG.eloKFactor * mult * (actualScoreH - probH);
-        workingElo[m.awayTeam] += CONFIG.eloKFactor * mult * (actualScoreA - (1 - probH));
-
-        total += 1;
+        
+        // CRÍTICO: ORDENAR POR DATA CRESCENTE (Garante que a linha do tempo do Elo e do EMA sejam perfeitas)
+        parsed.sort((a, b) => a.DateObj - b.DateObj);
+        return parsed;
     }
 
-    Object.keys(metrics).forEach(k => {
-        metrics[k].logLoss = metrics[k].ll / Math.max(1, total);
-        metrics[k].brier = metrics[k].brier / Math.max(1, total);
-        metrics[k].roi = metrics[k].stake > 0 ? (metrics[k].profit / (metrics[k].stake / 100)) : 0;
-    });
-
-    return metrics;
-}
-
-function makeFoldRanges(n) {
-    const minTrain = Math.max(20, Math.floor(n * 0.55));
-    const fold = Math.max(8, Math.floor(n * 0.10));
-    const ranges = [];
-    for (let start = minTrain; start + fold * 2 < n; start += fold) {
-        ranges.push({
-            trainEnd: start,
-            valEnd: Math.min(start + fold, n),
-            testEnd: Math.min(start + fold * 2, n)
-        });
-    }
-    return ranges;
-}
-
-function aggregateBacktestResults(results) {
-    const markets = ['home', 'draw', 'away', 'over25', 'btts'];
-    const out = {};
-    markets.forEach(m => {
-        out[m] = { logLoss: 0, brier: 0, roi: 0, bets: 0, hits: 0, folds: 0 };
-    });
-
-    for (const fold of results) {
-        for (const m of markets) {
-            out[m].logLoss += fold[m].logLoss;
-            out[m].brier += fold[m].brier;
-            out[m].roi += fold[m].roi;
-            out[m].bets += fold[m].bets;
-            out[m].hits += fold[m].hits;
-            out[m].folds += 1;
-        }
-    }
-
-    markets.forEach(m => {
-        if (out[m].folds > 0) {
-            out[m].logLoss /= out[m].folds;
-            out[m].brier /= out[m].folds;
-            out[m].roi /= out[m].folds;
-        }
-    });
-
-    return out;
-}
-
-function runWalkForwardBacktest(matches, modelBuilderProfile) {
-    const seasonGroups = groupBySeason(matches);
-    const seasonKeys = Object.keys(seasonGroups).sort();
-    const perSeason = {};
-
-    for (const seasonKey of seasonKeys) {
-        const seasonMatches = seasonGroups[seasonKey];
-        if (seasonMatches.length < (modelBuilderProfile.minMatches || CONFIG.minSeasonMatches)) continue;
-
-        const folds = makeFoldRanges(seasonMatches.length);
-        const foldResults = [];
-
-        for (const fold of folds) {
-            const train = seasonMatches.slice(0, fold.trainEnd);
-            const val = seasonMatches.slice(fold.trainEnd, fold.valEnd);
-            const test = seasonMatches.slice(fold.valEnd, fold.testEnd);
-            if (train.length < 20 || val.length < 6 || test.length < 6) continue;
-
-            const teams = Array.from(new Set(train.flatMap(m => [m.homeTeam, m.awayTeam])));
-            const model = trainAttackDefenseModel(train, teams, modelBuilderProfile);
-
-            const trainElo = buildSequentialElo(train);
-            const calibration = fitCalibrationSet(val, model);
-            const metrics = evaluateSet(test, model, calibration, trainElo.ratings);
-            foldResults.push(metrics);
-        }
-
-        if (foldResults.length) {
-            perSeason[seasonKey] = aggregateBacktestResults(foldResults);
-        }
-    }
-
-    return perSeason;
-}
-
-function summarizeBacktest(perSeason) {
-    const markets = ['home', 'draw', 'away', 'over25', 'btts'];
-    const summary = {};
-    markets.forEach(m => {
-        summary[m] = { logLoss: 0, brier: 0, roi: 0, bets: 0, hits: 0, seasons: 0 };
-    });
-
-    Object.values(perSeason).forEach(season => {
-        markets.forEach(m => {
-            summary[m].logLoss += season[m].logLoss;
-            summary[m].brier += season[m].brier;
-            summary[m].roi += season[m].roi;
-            summary[m].bets += season[m].bets;
-            summary[m].hits += season[m].hits;
-            summary[m].seasons += 1;
-        });
-    });
-
-    markets.forEach(m => {
-        if (summary[m].seasons > 0) {
-            summary[m].logLoss /= summary[m].seasons;
-            summary[m].brier /= summary[m].seasons;
-            summary[m].roi /= summary[m].seasons;
-        }
-    });
-
-    return summary;
-}
-
-function buildProductionPipeline(matches, leagueCode) {
-    const profile = getLeagueProfile(leagueCode);
-    const seasonGroups = groupBySeason(matches);
-    const seasons = Object.keys(seasonGroups).sort();
-
-    const combinedTrain = [];
-    const combinedVal = [];
-    const combinedTest = [];
-
-    seasons.forEach(s => {
-        const arr = seasonGroups[s];
-        const n = arr.length;
-        if (n < 12) return;
-        const trainEnd = Math.max(6, Math.floor(n * CONFIG.trainRatio));
-        const valEnd = Math.max(trainEnd + 3, Math.floor(n * (CONFIG.trainRatio + CONFIG.valRatio)));
-        combinedTrain.push(...arr.slice(0, trainEnd));
-        combinedVal.push(...arr.slice(trainEnd, valEnd));
-        combinedTest.push(...arr.slice(valEnd));
-    });
-
-    const trainBase = combinedTrain.length ? combinedTrain : matches.slice(0, Math.max(10, Math.floor(matches.length * 0.7)));
-    const valBase = combinedVal.length ? combinedVal : matches.slice(Math.max(10, Math.floor(matches.length * 0.7)), Math.max(12, Math.floor(matches.length * 0.85)));
-
-    const teams = Array.from(new Set(matches.flatMap(m => [m.homeTeam, m.awayTeam])));
-    const model = trainAttackDefenseModel(trainBase, teams, profile);
-    const calibration = fitCalibrationSet(valBase.length ? valBase : trainBase.slice(-Math.max(10, Math.floor(trainBase.length * 0.2))), model);
-    const backtest = runWalkForwardBacktest(matches, profile);
-    const summary = summarizeBacktest(backtest);
-
-    return { model, calibration, backtest, summary, profile };
-}
-
-function processRawCSV(rawText) {
-    try {
-        rawMatches = parseCSVText(rawText);
-        if (!rawMatches.length) throw new Error('Não encontrei linhas válidas com data, times e placar.');
-
+    function processRawCSV(rawText) {
+        csvMatches = parseCSVText(rawText);
         const teamSet = new Set();
         let thg = 0, tag = 0;
-        const seasonSelected = document.getElementById('season').value;
-        const leagueSelected = document.getElementById('league').value;
-        currentSeasonKey = seasonSelected;
 
-        csvMatches = rawMatches.filter(m => {
-            teamSet.add(m.homeTeam); teamSet.add(m.awayTeam);
-            thg += m.homeGoals; tag += m.awayGoals;
-            return true;
+        if (csvMatches.length === 0) return alert("Nenhum dado válido encontrado.");
+        
+        globalLatestDate = csvMatches[csvMatches.length - 1].DateObj;
+
+        // NÃO ZERAR O ELO SE FOR UMA INJEÇÃO CONTÍNUA (Memória)
+        // Se for primeiro load, inicia tudo vazio.
+        teamEloRatings = {};
+        teamLastPlayed = {};
+
+        csvMatches.forEach(m => {
+            teamSet.add(m.HomeTeam); teamSet.add(m.AwayTeam);
+            
+            // Inicialização (Cold Start) ou Carry Over
+            [m.HomeTeam, m.AwayTeam].forEach(team => {
+                if (!teamEloRatings[team]) {
+                    teamEloRatings[team] = 1500;
+                } else if (teamLastPlayed[team]) {
+                    // Regressão à média se passou mais de 60 dias (Fim de Temporada)
+                    const daysSinceLastMatch = (m.DateObj - teamLastPlayed[team]) / (1000 * 3600 * 24);
+                    if (daysSinceLastMatch > 60) {
+                        const differenceFromMean = 1500 - teamEloRatings[team];
+                        teamEloRatings[team] += differenceFromMean * CONFIG.eloCarryOver;
+                    }
+                }
+                teamLastPlayed[team] = m.DateObj;
+            });
+
+            thg += m.HXG; tag += m.AXG;
+
+            // CÁLCULO ELO DINÂMICO
+            const eloH = teamEloRatings[m.HomeTeam] + CONFIG.eloHomeAdvantage;
+            const eloA = teamEloRatings[m.AwayTeam];
+            const probH = 1 / (1 + Math.pow(10, (eloA - eloH) / 400));
+            const probA = 1 - probH;
+            
+            let actualH = m.FTHG > m.FTAG ? 1 : (m.FTHG === m.FTAG ? 0.5 : 0);
+            let actualA = 1 - actualH;
+            
+            const goalDiff = Math.abs(m.FTHG - m.FTAG);
+            const kMultiplier = goalDiff <= 1 ? 1 : (goalDiff === 2 ? 1.5 : 1.75);
+            
+            teamEloRatings[m.HomeTeam] += CONFIG.eloKFactor * kMultiplier * (actualH - probH);
+            teamEloRatings[m.AwayTeam] += CONFIG.eloKFactor * kMultiplier * (actualA - probA);
         });
 
         uniqueTeams = Array.from(teamSet).sort();
-        leagueAverages.homeAvg = thg / Math.max(1, csvMatches.length);
-        leagueAverages.awayAvg = tag / Math.max(1, csvMatches.length);
-
-        const pipeline = buildProductionPipeline(csvMatches, leagueSelected);
-        currentModel = pipeline.model;
-        calibrationModels = pipeline.calibration;
-        backtestSummary = pipeline.summary;
-        teamEloRatings = buildSequentialElo(csvMatches).ratings;
+        leagueAverages.homeAvg = thg / csvMatches.length;
+        leagueAverages.awayAvg = tag / csvMatches.length;
 
         populateDropdowns();
-        renderBacktestSummary();
-        toggleUIState(false);
-        document.getElementById('dashboard').classList.remove('hidden');
-    } catch (err) {
-        alert(err.message || 'Falha ao processar CSV.');
         toggleUIState(false);
     }
-}
 
-function populateDropdowns() {
-    const hSel = document.getElementById('homeTeam');
-    const aSel = document.getElementById('awayTeam');
-    hSel.innerHTML = ''; aSel.innerHTML = '';
-    uniqueTeams.forEach(t => {
-        const opt = `<option value="${t}">${t}</option>`;
-        hSel.insertAdjacentHTML('beforeend', opt);
-        aSel.insertAdjacentHTML('beforeend', opt);
-    });
-    if (aSel.options.length > 1) aSel.selectedIndex = 1;
-    updateEloBadges();
-    hSel.onchange = updateEloBadges;
-    aSel.onchange = updateEloBadges;
-}
-
-function updateEloBadges() {
-    const h = document.getElementById('homeTeam').value;
-    const a = document.getElementById('awayTeam').value;
-    document.getElementById('homeEloBadge').innerText = Math.round(teamEloRatings[h] || 1500);
-    document.getElementById('awayEloBadge').innerText = Math.round(teamEloRatings[a] || 1500);
-}
-
-async function fetchAndParseCSV() {
-    toggleUIState(true);
-    const s = document.getElementById('season').value;
-    const l = document.getElementById('league').value;
-    const url = l === "BR" ? `https://www.football-data.co.uk/new/BRA.csv` : `https://www.football-data.co.uk/mmz4281/${s}/${l}.csv`;
-    try {
-        const res = await fetch(`/api/fetch-football?url=${encodeURIComponent(url)}`);
-        if (!res.ok) throw new Error('Falha na API de coleta.');
-        processRawCSV(await res.text());
-    } catch (err) {
-        alert('Falha na API. Carregue o arquivo localmente ou verifique o servidor.');
-        toggleUIState(false);
+    function populateDropdowns() {
+        const hSel = document.getElementById('homeTeam');
+        const aSel = document.getElementById('awayTeam');
+        hSel.innerHTML = ''; aSel.innerHTML = '';
+        uniqueTeams.forEach(t => {
+            const opt = `<option value="${t}">${t}</option>`;
+            hSel.insertAdjacentHTML('beforeend', opt);
+            aSel.insertAdjacentHTML('beforeend', opt);
+        });
+        if (aSel.options.length > 1) aSel.selectedIndex = 1;
+        updateEloBadges();
+        
+        hSel.addEventListener('change', updateEloBadges);
+        aSel.addEventListener('change', updateEloBadges);
     }
-}
 
-function handleFileUpload(e) {
-    const f = e.target.files[0];
-    if (!f) return;
-    toggleUIState(true);
-    const r = new FileReader();
-    r.onload = ev => {
+    function updateEloBadges() {
+        const h = document.getElementById('homeTeam').value;
+        const a = document.getElementById('awayTeam').value;
+        document.getElementById('homeEloBadge').innerText = Math.round(teamEloRatings[h]);
+        document.getElementById('awayEloBadge').innerText = Math.round(teamEloRatings[a]);
+    }
+
+    async function fetchAndParseCSV() {
+        toggleUIState(true);
+        const s = document.getElementById('season').value;
+        const l = document.getElementById('league').value;
+        const url = l === "BR" ? `https://www.football-data.co.uk/new/BRA.csv` : `https://www.football-data.co.uk/mmz4281/${s}/${l}.csv`;
         try {
-            processRawCSV(ev.target.result);
-        } catch (err) {
-            alert(err.message || 'Erro ao ler arquivo.');
+            const res = await fetch(`/api/fetch-football?url=${encodeURIComponent(url)}`);
+            if (!res.ok) throw new Error();
+            processRawCSV(await res.text());
+        } catch {
+            alert('Falha na API. Carregue o arquivo localmente ou verifique o servidor Vercel.');
             toggleUIState(false);
         }
-    };
-    e.target.value = '';
-    r.readAsText(f);
-}
-
-function renderBacktestSummary() {
-    const container = document.getElementById('backtestContainer');
-    if (!backtestSummary) {
-        container.innerHTML = `<div class="text-slate-500 text-xs uppercase tracking-wider">Sem backtest disponível.</div>`;
-        return;
     }
 
-    const labels = {
-        home: 'Casa',
-        draw: 'Empate',
-        away: 'Fora',
-        over25: 'Over 2.5',
-        btts: 'BTTS'
-    };
-
-    const cards = Object.keys(labels).map(key => {
-        const m = backtestSummary[key];
-        return `
-            <div class="glass-card rounded-2xl p-3">
-                <div class="flex justify-between items-center">
-                    <p class="text-xs uppercase tracking-wider text-slate-300 font-bold">${labels[key]}</p>
-                    <span class="text-[10px] text-slate-500">${m.bets} bets</span>
-                </div>
-                <div class="mt-2 grid grid-cols-3 gap-2 text-[11px] font-mono-data">
-                    <div><span class="text-slate-500">LL</span><div class="text-white">${m.logLoss.toFixed(3)}</div></div>
-                    <div><span class="text-slate-500">Brier</span><div class="text-white">${m.brier.toFixed(3)}</div></div>
-                    <div><span class="text-slate-500">ROI</span><div class="text-white">${m.roi.toFixed(1)}%</div></div>
-                </div>
-            </div>`;
-    }).join('');
-
-    container.innerHTML = cards;
-}
-
-function renderRiskBox(risk, modelName, recommendations) {
-    const container = document.getElementById('riskAlertContainer');
-    const cls = risk < CONFIG.riskThresholds.low ? 'risk-low' : (risk < CONFIG.riskThresholds.mid ? 'risk-mid' : 'risk-high');
-    const tone = risk < CONFIG.riskThresholds.low ? 'Baixo risco' : (risk < CONFIG.riskThresholds.mid ? 'Risco moderado' : 'Risco alto');
-
-    container.innerHTML = `
-        <div class="glass-panel rounded-3xl p-5 mb-6 ${cls}">
-            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-                <div>
-                    <h3 class="font-black uppercase text-sm tracking-widest text-white">Score de risco</h3>
-                    <p class="text-xs text-slate-300 mt-1">${tone} · ${modelName}</p>
-                </div>
-                <div class="text-right">
-                    <div class="text-3xl font-black font-mono-data text-white">${risk.toFixed(0)}</div>
-                    <div class="text-[10px] uppercase tracking-wider text-slate-300">0 a 100</div>
-                </div>
-            </div>
-            <div class="mt-3 text-xs text-slate-300 leading-relaxed">
-                ${recommendations}
-            </div>
-        </div>`;
-}
-
-function renderMarketCard(m, ev, fair, isValue, isSelected, riskPenalty) {
-    const cardClass = isSelected ? 'value-bet-active' : 'glass-card opacity-85';
-    return `
-        <div class="p-4 rounded-2xl flex flex-col justify-between ${cardClass}">
-            <h3 class="font-bold text-white text-xs border-b border-slate-800 pb-1.5 uppercase">${m.name}</h3>
-            <div class="space-y-1 font-mono-data text-[11px] text-slate-400 mt-2">
-                <div class="flex justify-between"><span>Real:</span><span class="text-blue-400">${fair.toFixed(2)}</span></div>
-                <div class="flex justify-between"><span>Odd:</span><span class="text-white">${m.odd.toFixed(2)}</span></div>
-            </div>
-            <div class="mt-2 pt-2 border-t border-slate-800 flex flex-col gap-1">
-                <span class="font-bold text-xs ${ev > 0 ? 'text-emerald-400' : 'text-slate-500'}">EV: ${(ev * 100).toFixed(1)}%</span>
-                <span class="text-[10px] uppercase tracking-wider text-slate-500">Filtro faixa: ${m.band}</span>
-                <span class="text-[10px] uppercase tracking-wider ${riskPenalty > 0.6 ? 'text-red-400' : 'text-slate-500'}">Penalidade risco: ${(riskPenalty * 100).toFixed(0)}%</span>
-            </div>
-        </div>`;
-}
-
-function calculateModel() {
-    if (!currentModel || !calibrationModels) return alert('Carregue o CSV antes de calcular.');
-
-    const homeTeam = document.getElementById('homeTeam').value;
-    const awayTeam = document.getElementById('awayTeam').value;
-    if (!homeTeam || !awayTeam) return alert('Selecione times válidos.');
-    if (homeTeam === awayTeam) return alert('Selecione times diferentes.');
-
-    const odds = getCurrentOddsObject();
-    if (![odds.home, odds.draw, odds.away, odds.over25, odds.btts].every(v => Number.isFinite(v) && v > 1)) {
-        return alert('Preencha odds válidas maiores que 1.00.');
+    function handleFileUpload(e) {
+        const f = e.target.files[0]; if (!f) return;
+        toggleUIState(true);
+        const r = new FileReader();
+        r.onload = ev => { try { processRawCSV(ev.target.result); } catch (err) { alert(err.message); toggleUIState(false); } };
+        e.target.value = ''; r.readAsText(f);
     }
 
-    const openOdds = getOptionalOpenOdds();
-    const altOdds = getOptionalAltOdds();
+    // ==========================================
+    // NÚCLEO MATEMÁTICO E DETECÇÃO DE TRAPS
+    // ==========================================
+    function getFactorial(n) { return n <= 1 ? 1 : n * getFactorial(n - 1); }
+    function poissonProb(k, lambda) { return (Math.pow(lambda, k) * Math.exp(-lambda)) / getFactorial(k); }
+    
+    // Rho otimizado levemente negativo para compensar a superestimação de empates no Poisson tradicional
+    function dixonColes(x, y, L, M, rho = -0.05) {
+        if (x===0 && y===0) return Math.max(0, 1 - L*M*rho);
+        if (x===0 && y===1) return Math.max(0, 1 + L*rho);
+        if (x===1 && y===0) return Math.max(0, 1 + M*rho);
+        if (x===1 && y===1) return Math.max(0, 1 - rho);
+        return 1;
+    }
 
-    const eloH = (teamEloRatings[homeTeam] || 1500) + CONFIG.eloHomeAdvantage;
-    const eloA = (teamEloRatings[awayTeam] || 1500);
-    const eloDiffNorm = (eloH - eloA) / 400;
+    function removeVig(o1, oX, o2) {
+        const p1 = 1/o1, pX = 1/oX, p2 = 1/o2;
+        const margin = p1 + pX + p2;
+        return { real1: p1/margin, realX: pX/margin, real2: p2/margin };
+    }
 
-    const pred = predictMatchInternals(homeTeam, awayTeam, currentModel, { eloDiffNorm });
-    const probsRaw = pred.probs;
+    function calculateModel() {
+        const homeTeam = document.getElementById('homeTeam').value;
+        const awayTeam = document.getElementById('awayTeam').value;
+        if (homeTeam === awayTeam) return alert('Selecione times diferentes.');
 
-    let pHome = applyCalibrator(calibrationModels.home, probsRaw.home);
-    let pDraw = applyCalibrator(calibrationModels.draw, probsRaw.draw);
-    let pAway = applyCalibrator(calibrationModels.away, probsRaw.away);
-    const tri = reNormalizeThree(pHome, pDraw, pAway);
-    pHome = tri.home; pDraw = tri.draw; pAway = tri.away;
+        // 1. ANÁLISE TEMPORAL (Baseada em DIAS reais) e xG SINTÉTICO
+        let wHomeScored = 0, wHomeConceded = 0, weightHomeSum = 0;
+        let wAwayScored = 0, wAwayConceded = 0, weightAwaySum = 0;
 
-    const pOver = applyCalibrator(calibrationModels.over25, probsRaw.over25);
-    const pBTTS = applyCalibrator(calibrationModels.btts, probsRaw.btts);
+        const homeGames = csvMatches.filter(m => m.HomeTeam === homeTeam);
+        const awayGames = csvMatches.filter(m => m.AwayTeam === awayTeam);
 
-    const pUnder = 1 - pOver;
-    const market1X2 = removeVig(odds.home, odds.draw, odds.away);
+        homeGames.forEach(m => {
+            const daysAgo = (globalLatestDate - m.DateObj) / (1000 * 3600 * 24);
+            const weight = Math.exp(-CONFIG.timeDecayLambda * daysAgo);
+            wHomeScored += m.HXG * weight; wHomeConceded += m.AXG * weight; weightHomeSum += weight;
+        });
+        awayGames.forEach(m => {
+            const daysAgo = (globalLatestDate - m.DateObj) / (1000 * 3600 * 24);
+            const weight = Math.exp(-CONFIG.timeDecayLambda * daysAgo);
+            wAwayScored += m.AXG * weight; wAwayConceded += m.HXG * weight; weightAwaySum += weight;
+        });
 
-    const modelEntropy = calcEntropy3(pHome, pDraw, pAway);
-    const overEntropy = calcEntropyBinary(pOver);
-    const riskInfo = estimateOddsFeatureRisk(odds, openOdds, altOdds, { home: pHome, draw: pDraw, away: pAway }, (modelEntropy * 0.65 + overEntropy * 0.35), 0.04);
+        const hScoredAvg = weightHomeSum > 0 ? (wHomeScored / weightHomeSum) : leagueAverages.homeAvg;
+        const hConcededAvg = weightHomeSum > 0 ? (wHomeConceded / weightHomeSum) : leagueAverages.awayAvg;
+        const aScoredAvg = weightAwaySum > 0 ? (wAwayScored / weightAwaySum) : leagueAverages.awayAvg;
+        const aConcededAvg = weightAwaySum > 0 ? (wAwayConceded / weightAwaySum) : leagueAverages.homeAvg;
 
-    const disagreement1X2 = (
-        Math.abs(pHome - market1X2.real1) +
-        Math.abs(pDraw - market1X2.realX) +
-        Math.abs(pAway - market1X2.real2)
-    ) / 3;
+        let lambda = (hScoredAvg / leagueAverages.homeAvg) * (aConcededAvg / leagueAverages.homeAvg) * leagueAverages.homeAvg;
+        let mu = (aScoredAvg / leagueAverages.awayAvg) * (hConcededAvg / leagueAverages.awayAvg) * leagueAverages.awayAvg;
 
-    const markets = [
-        { id: 'Casa', name: `Vitória - ${homeTeam}`, prob: pHome, odd: odds.home },
-        { id: 'Empate', name: `Empate (X)`, prob: pDraw, odd: odds.draw },
-        { id: 'Fora', name: `Vitória - ${awayTeam}`, prob: pAway, odd: odds.away },
-        { id: 'Over', name: `Mais de 2.5 Gols`, prob: pOver, odd: odds.over25 },
-        { id: 'BTTS', name: `Ambas Marcam (Sim)`, prob: pBTTS, odd: odds.btts }
-    ];
+        // 2. FILTRO ELO RATING (Intervenção Forçada)
+        const eloDiff = (teamEloRatings[awayTeam]) - (teamEloRatings[homeTeam] + CONFIG.eloHomeAdvantage);
+        // Ajuste mais suave do impacto Elo no xG
+        if (eloDiff > 150) { lambda *= 0.88; mu *= 1.15; } 
+        else if (eloDiff < -150) { lambda *= 1.15; mu *= 0.88; } 
 
-    let bestMarket = null;
-    let bestEV = -Infinity;
-    const mainC = document.getElementById('marketCards');
-    const goalC = document.getElementById('goalCards');
-    mainC.innerHTML = ''; goalC.innerHTML = '';
+        lambda = (lambda * (1 - CONFIG.shrinkage)) + (leagueAverages.homeAvg * CONFIG.shrinkage);
+        mu = (mu * (1 - CONFIG.shrinkage)) + (leagueAverages.awayAvg * CONFIG.shrinkage);
+        
+        lambda = Math.max(0.2, lambda); mu = Math.max(0.2, mu);
 
-    markets.forEach((m, idx) => {
-        const fair = 1 / Math.max(m.prob, 1e-9);
-        const ev = m.prob * m.odd - 1;
-        const band = chooseOddsBand(m.odd);
-        const threshold = requiredEdgeForOdds(m.odd);
-        const bandPenalty = riskInfo.score / 100;
-        const isValue = ev > threshold && riskInfo.score < 65;
-        const selectForBet = isValue && ev > bestEV;
-
-        if (selectForBet) {
-            bestEV = ev;
-            bestMarket = { ...m, ev, fair, threshold, band };
+        // 3. CONSTRUÇÃO DA MATRIZ BIVARIADA
+        let matrix = [], pHome = 0, pDraw = 0, pAway = 0, pUnder = 0, pBTTS = 0, totalMatrix = 0;
+        for (let x = 0; x <= CONFIG.matrixLimit; x++) {
+            matrix[x] = [];
+            for (let y = 0; y <= CONFIG.matrixLimit; y++) {
+                const p = poissonProb(x, lambda) * poissonProb(y, mu) * dixonColes(x, y, lambda, mu);
+                matrix[x][y] = p; totalMatrix += p;
+            }
         }
 
-        const html = renderMarketCard(
-            { ...m, name: m.name, band },
-            ev,
-            fair,
-            isValue,
-            selectForBet,
-            bandPenalty
-        );
-
-        idx < 3 ? mainC.insertAdjacentHTML('beforeend', html) : goalC.insertAdjacentHTML('beforeend', html);
-    });
-
-    document.getElementById('homeXG').innerText = pred.raw.lambda.toFixed(2);
-    document.getElementById('awayXG').innerText = pred.raw.mu.toFixed(2);
-    document.getElementById('homeLabel').innerText = homeTeam;
-    document.getElementById('awayLabel').innerText = awayTeam;
-    document.getElementById('homeBar').style.width = `${Math.min(pred.raw.lambda * 25, 100)}%`;
-    document.getElementById('awayBar').style.width = `${Math.min(pred.raw.mu * 25, 100)}%`;
-
-    const recommendations = `
-        <div class="space-y-2">
-            <p><span class="text-slate-400">Discrepância modelo x mercado:</span> <span class="text-white font-bold">${(disagreement1X2 * 100).toFixed(1)}%</span></p>
-            <p><span class="text-slate-400">Movimento da linha:</span> <span class="text-white font-bold">${(riskInfo.lineMove * 100).toFixed(1)}%</span></p>
-            <p><span class="text-slate-400">Diferença entre books:</span> <span class="text-white font-bold">${(riskInfo.bookDiff * 100).toFixed(1)}%</span></p>
-            <p class="mt-2 text-slate-300">Use o risco para decidir tamanho de stake, não para cancelar cegamente o jogo. Quando o score sobe, o edge precisa ser bem maior para justificar entrada.</p>
-        </div>`;
-
-    renderRiskBox(riskInfo.score, `${getLeagueProfile(document.getElementById('league').value).name}`, recommendations);
-
-    const alertBox = document.getElementById('reportContainer');
-    if (bestMarket) {
-        const stake = Math.min(calcStakeQuarterKelly(bestMarket.prob, bestMarket.odd), 4.0);
-        alertBox.innerHTML = `
-            <div class="p-4 rounded-2xl bg-emerald-950/10 border border-emerald-500/20 space-y-3">
-                <p class="text-emerald-400 font-bold text-xs uppercase tracking-wider">Entrada +EV aprovada</p>
-                <div class="bg-slate-950/80 border border-slate-900 rounded-xl p-3 text-center">
-                    <p class="text-xs text-slate-400 font-bold uppercase">${bestMarket.name}</p>
-                    <p class="text-xl font-mono-data font-black text-emerald-400 mt-1">@ ${bestMarket.odd.toFixed(2)}</p>
-                </div>
-                <div class="flex justify-between text-xs font-mono-data text-slate-400">
-                    <span>Gestão Quarter-Kelly:</span>
-                    <strong class="text-white">${stake.toFixed(2)}% Banca</strong>
-                </div>
-                <div class="text-[10px] uppercase tracking-wider text-slate-500">Faixa ${bestMarket.band} · Edge ${(bestMarket.ev * 100).toFixed(1)}%</div>
-            </div>`;
-    } else {
-        alertBox.innerHTML = `
-            <div class="p-4 rounded-2xl bg-slate-900/40 border border-slate-800 text-center text-slate-400 text-xs py-8 uppercase tracking-wider">
-                Nenhum valor forte encontrado. O filtro de risco e faixa de odd bloqueou a entrada.
-            </div>`;
-    }
-
-    const marketsForMatrix = [];
-    let matrix = pred.matrix;
-    let pHome = 0, pDraw = 0, pAway = 0, pUnder = 0, pBTTS = 0;
-    for (let x = 0; x <= CONFIG.matrixLimit; x++) {
-        for (let y = 0; y <= CONFIG.matrixLimit; y++) {
-            const p = matrix[x][y];
-            if (x > y) pHome += p; else if (x === y) pDraw += p; else pAway += p;
-            if (x + y <= 2) pUnder += p;
-            if (x > 0 && y > 0) pBTTS += p;
+        for (let x=0; x<=CONFIG.matrixLimit; x++) {
+            for (let y=0; y<=CONFIG.matrixLimit; y++) {
+                matrix[x][y] /= totalMatrix;
+                let p = matrix[x][y];
+                if (x > y) pHome += p; else if (x === y) pDraw += p; else pAway += p;
+                if ((x+y) < 2.5) pUnder += p;
+                if (x>0 && y>0) pBTTS += p;
+            }
         }
-    }
-    const sum = pHome + pDraw + pAway;
-    pHome /= sum; pDraw /= sum; pAway /= sum;
-    const pOver = 1 - pUnder;
+        
+        const sum = pHome + pDraw + pAway; pHome /= sum; pDraw /= sum; pAway /= sum;
+        let pOver = 1 - pUnder;
 
-    const marketsDetailed = [
-        { name: `Vitória - ${homeTeam}`, prob: pHome, odd: odds.home },
-        { name: `Empate (X)`, prob: pDraw, odd: odds.draw },
-        { name: `Vitória - ${awayTeam}`, prob: pAway, odd: odds.away },
-        { name: `Mais de 2.5 Gols`, prob: pOver, odd: odds.over25 },
-        { name: `Ambas Marcam (Sim)`, prob: pBTTS, odd: odds.btts }
-    ];
+        // 4. LEITURA DE MERCADO E DETECÇÃO DE INFORMAÇÃO ASSIMÉTRICA
+        const odds = {
+            h: parseFloat(document.getElementById('oddHome').value),
+            d: parseFloat(document.getElementById('oddDraw').value),
+            a: parseFloat(document.getElementById('oddAway').value),
+            o: parseFloat(document.getElementById('oddOver').value),
+            b: parseFloat(document.getElementById('oddBTTS').value)
+        };
 
-    const meanRisk = riskInfo.score / 100;
-    const bestFiltered = marketsDetailed
-        .map((m, idx) => ({
-            ...m,
-            ev: m.prob * m.odd - 1,
-            fair: 1 / Math.max(m.prob, 1e-9),
-            band: chooseOddsBand(m.odd)
-        }))
-        .filter(m => m.ev > requiredEdgeForOdds(m.odd) && riskInfo.score < 65)
-        .sort((a, b) => b.ev - a.ev);
+        const trueMarket = removeVig(odds.h, odds.d, odds.a);
+        
+        let trapDetected = false;
+        let trapMessage = "";
 
-    const historySnapshot = {
-        ts: new Date().toISOString(),
-        league: document.getElementById('league').value,
-        season: document.getElementById('season').value,
-        homeTeam, awayTeam,
-        probs: { home: pHome, draw: pDraw, away: pAway, over25: pOver, btts: pBTTS },
-        odds,
-        openOdds,
-        altOdds,
-        riskScore: riskInfo.score,
-        recommendation: bestFiltered[0] ? bestFiltered[0].name : 'NO_BET'
-    };
-    latestPredictionSnapshot = historySnapshot;
-    storePredictionSnapshot(historySnapshot);
-
-    renderMatrix(matrix);
-    document.getElementById('dashboard').classList.remove('hidden');
-}
-
-function renderMatrix(matrix) {
-    const head = document.getElementById('matrixHead');
-    const body = document.getElementById('matrixBody');
-    head.innerHTML = '<th class="p-2 text-slate-500 border-b border-slate-800">C\\F</th>';
-    for (let i = 0; i <= CONFIG.visualLimit; i++) head.insertAdjacentHTML('beforeend', `<th class="p-2 text-slate-400 text-xs border-b border-slate-800">${i}</th>`);
-    body.innerHTML = '';
-    for (let x = 0; x <= CONFIG.visualLimit; x++) {
-        let row = `<tr><th class="bg-slate-950/40 text-blue-400 p-2 text-xs border-r border-slate-800">${x}</th>`;
-        for (let y = 0; y <= CONFIG.visualLimit; y++) {
-            row += `<td class="text-xs p-2 ${x===y?'bg-slate-900/60 font-bold':(x>y?'text-blue-400/80':'text-purple-400/80')}">${(matrix[x][y]*100).toFixed(1)}%</td>`;
+        // Nova Lógica: Se o mercado difere MASSIVAMENTE do modelo, assumimos que O MERCADO ESTÁ CERTO e nosso modelo desconhece uma variável crítica (lesão, campo neutro, clima).
+        if (Math.abs(pHome - trueMarket.real1) > 0.25 || Math.abs(pAway - trueMarket.real2) > 0.25) {
+            trapDetected = true;
+            trapMessage = "⚠️ INFORMAÇÃO ASSIMÉTRICA: A linha de fechamento/atual do mercado divergiu brutalmente (>25%) das estatísticas puras. O mercado absorveu uma informação externa crítica (desfalque do astro, time misto, clima extremo). Operação abortada por segurança.";
+        } else if (pHome > pAway && trueMarket.real2 > trueMarket.real1 * 1.05) {
+            trapDetected = true;
+            trapMessage = "⚠️ INVERSÃO DE FAVORITISMO SÚBITA: Dados apontam o mandante como favorito, mas o dinheiro dos sindicatos (Smart Money) empurrou a odd do visitante para baixo.";
         }
-        body.insertAdjacentHTML('beforeend', row + '</tr>');
+
+        // RENDERIZAÇÃO UI
+        document.getElementById('homeXG').innerText = lambda.toFixed(2);
+        document.getElementById('awayXG').innerText = mu.toFixed(2);
+        document.getElementById('homeLabel').innerText = homeTeam;
+        document.getElementById('awayLabel').innerText = awayTeam;
+        document.getElementById('homeBar').style.width = `${Math.min(lambda*25, 100)}%`;
+        document.getElementById('awayBar').style.width = `${Math.min(mu*25, 100)}%`;
+
+        const alertBox = document.getElementById('trapAlertContainer');
+        if (trapDetected) {
+            alertBox.innerHTML = `
+                <div class="glass-panel border-red-500/50 bg-red-950/20 rounded-3xl p-5 mb-6 shadow-[0_0_15px_rgba(239,68,68,0.1)]">
+                    <h3 class="text-red-400 font-black uppercase text-sm mb-2 flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                        MERCADO REAGINDO A FATORES EXTERNOS
+                    </h3>
+                    <p class="text-slate-300 text-xs font-mono-data leading-relaxed">${trapMessage}</p>
+                    <p class="text-[10px] text-red-400/80 mt-2 font-bold uppercase">Aposte no mercado, não contra o fluxo primário. Fique de fora.</p>
+                </div>`;
+        } else {
+            alertBox.innerHTML = `<div class="glass-panel border-emerald-500/20 bg-emerald-950/10 rounded-3xl p-3 mb-6 text-center text-emerald-500 text-[10px] font-bold uppercase tracking-widest">Modelagem em sintonia com a liquidez do mercado. Green Light.</div>`;
+        }
+
+        const markets = [
+            { id: 'Casa', name: `Vitória - ${homeTeam}`, prob: pHome, odd: odds.h },
+            { id: 'Empate', name: `Empate (X)`, prob: pDraw, odd: odds.d },
+            { id: 'Fora', name: `Vitória - ${awayTeam}`, prob: pAway, odd: odds.a },
+            { id: 'Over', name: `Mais de 2.5 Golos`, prob: pOver, odd: odds.o },
+            { id: 'BTTS', name: `Ambas Marcam (Sim)`, prob: pBTTS, odd: odds.b }
+        ];
+
+        let bestMarket = null, maxEV = -Infinity;
+        const mainC = document.getElementById('marketCards'), goalC = document.getElementById('goalCards');
+        mainC.innerHTML = ''; goalC.innerHTML = '';
+
+        markets.forEach((m, idx) => {
+            const ev = (m.prob * m.odd) - 1;
+            const fair = 1 / m.prob;
+            const isValue = ev > 0.03 && !trapDetected; 
+
+            let stake = 0;
+            if (isValue && m.odd > 1) {
+                // Critério de Kelly Fracionado Teórico
+                const b = m.odd - 1;
+                // Dividimos a Kelly por 4 (Quarter-Kelly) para proteção de variância
+                stake = Math.min((((b * m.prob) - (1 - m.prob)) / b) * 0.25 * 100, 3.5); // Teto de 3.5%
+            }
+
+            if (isValue && ev > maxEV) { maxEV = ev; bestMarket = { ...m, ev, stake }; }
+
+            const cardClass = trapDetected ? (ev > 0 ? 'trap-active' : 'glass-card opacity-50') : (isValue ? 'value-bet-active' : 'glass-card opacity-80');
+
+            const html = `
+                <div class="p-4 rounded-2xl flex flex-col justify-between ${cardClass}">
+                    <h3 class="font-bold text-white text-xs border-b border-slate-800 pb-1.5 uppercase">${m.name}</h3>
+                    <div class="space-y-1 font-mono-data text-[11px] text-slate-400 mt-2">
+                        <div class="flex justify-between"><span>Real:</span><span class="text-blue-400">${fair.toFixed(2)}</span></div>
+                        <div class="flex justify-between"><span>Odd:</span><span class="text-white">${m.odd.toFixed(2)}</span></div>
+                    </div>
+                    <div class="mt-2 pt-2 border-t border-slate-800 flex justify-between">
+                        <span class="font-bold text-xs ${ev > 0 ? (trapDetected ? 'text-red-400' : 'text-emerald-400') : 'text-slate-500'}">EV: ${(ev*100).toFixed(1)}%</span>
+                    </div>
+                </div>`;
+            idx < 3 ? mainC.insertAdjacentHTML('beforeend', html) : goalC.insertAdjacentHTML('beforeend', html);
+        });
+
+        const report = document.getElementById('reportContainer');
+        if (trapDetected) {
+            report.innerHTML = `<div class="p-4 rounded-2xl bg-red-950/20 border border-red-500/30 text-center py-8"><p class="text-red-400 font-bold text-xs uppercase tracking-widest">NO BET: PROTEÇÃO DE CAPITAL ATIVADA</p></div>`;
+        } else if (bestMarket) {
+            report.innerHTML = `
+                <div class="p-4 rounded-2xl bg-emerald-950/10 border border-emerald-500/20 space-y-3">
+                    <p class="text-emerald-400 font-bold text-xs uppercase tracking-wider">Entrada +EV Aprovada</p>
+                    <div class="bg-slate-950/80 border border-slate-900 rounded-xl p-3 text-center">
+                        <p class="text-xs text-slate-400 font-bold uppercase">${bestMarket.name}</p>
+                        <p class="text-xl font-mono-data font-black text-emerald-400 mt-1">@ ${bestMarket.odd.toFixed(2)}</p>
+                    </div>
+                    <div class="flex justify-between text-xs font-mono-data text-slate-400">
+                        <span>Gestão Q-Kelly:</span>
+                        <strong class="text-white">${bestMarket.stake.toFixed(2)}% Banca</strong>
+                    </div>
+                </div>`;
+        } else {
+            report.innerHTML = `<div class="p-4 rounded-2xl bg-slate-900/40 border border-slate-800 text-center text-slate-500 text-xs py-8 uppercase tracking-wider">Nenhum valor encontrado. Pule o jogo.</div>`;
+        }
+
+        const head = document.getElementById('matrixHead'), body = document.getElementById('matrixBody');
+        head.innerHTML = '<th class="p-2 text-slate-500 border-b border-slate-800">C\\F</th>';
+        for (let i=0; i<=CONFIG.visualLimit; i++) head.insertAdjacentHTML('beforeend', `<th class="p-2 text-slate-400 text-xs border-b border-slate-800">${i}</th>`);
+        body.innerHTML = '';
+        for (let x=0; x<=CONFIG.visualLimit; x++) {
+            let row = `<tr><th class="bg-slate-950/40 text-blue-400 p-2 text-xs border-r border-slate-800">${x}</th>`;
+            for (let y=0; y<=CONFIG.visualLimit; y++) {
+                row += `<td class="text-xs p-2 ${x===y?'bg-slate-900/60 font-bold':(x>y?'text-blue-400/80':'text-purple-400/80')}">${(matrix[x][y]*100).toFixed(1)}%</td>`;
+            }
+            body.insertAdjacentHTML('beforeend', row + '</tr>');
+        }
+        
+        document.getElementById('dashboard').classList.remove('hidden');
     }
-}
 </script>
 </body>
 </html>
