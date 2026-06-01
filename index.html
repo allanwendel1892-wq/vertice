@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>QUANT ENGINE V7.2 – PRO & ANTI-TRAP (ACADEMIC EDITION)</title>
+    <title>QUANT ENGINE V7.3 – ENSEMBLE PRO & ANTI-TRAP</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -30,10 +30,10 @@
     <header class="glass-panel rounded-3xl p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b-4 border-b-emerald-600">
         <div>
             <h1 class="text-3xl font-extrabold text-white font-mono-data">
-                QUANT<span class="text-emerald-400 font-light">ENGINE</span> <span class="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/30 font-bold ml-2 uppercase tracking-widest">V7.2 Academic Calibrated</span>
+                QUANT<span class="text-emerald-400 font-light">ENGINE</span> <span class="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/30 font-bold ml-2 uppercase tracking-widest">V7.3 True Ensemble</span>
             </h1>
             <p class="text-slate-400 text-xs mt-1">
-                Motor Institucional: Regressão xG Contínua + Autocorrelação de Elo + Bayesian Shrinkage Dinâmico.
+                Motor Institucional: Ensemble Ponderado (xG Temporal + Elo) + Correção de Colinearidade + Bayesian Shrinkage.
             </p>
         </div>
     </header>
@@ -187,14 +187,14 @@
 </div>
 
 <script>
-    // MATEMÁTICA INSTITUCIONAL V7.2 (Academic / Quant Edition)
+    // MATEMÁTICA INSTITUCIONAL V7.3 (True Ensemble Edition)
     const CONFIG = {
         timeDecayLambda: 0.003,   
         eloKFactor: 25,           
         matrixLimit: 9,          
         visualLimit: 5,
         eloCarryOver: 0.20,
-        basePriorShrinkage: 5 // Corrigido: Usado para o Laplace Smoothing
+        basePriorShrinkage: 5 
     };
 
     let csvMatches = [];
@@ -237,7 +237,6 @@
 
         const parsed = [];
         
-        // Mantém a extração pura sem calcular heurística fixa (xG será calculado cronologicamente)
         for (let i = 1; i < lines.length; i++) {
             const cols = lines[i].split(',').map(c => c.replace(/['"]+/g, '').trim());
             if (cols[hIdx] && cols[aIdx] && cols[dateIdx]) {
@@ -258,7 +257,7 @@
                         AS: asIdx !== -1 ? parseInt(cols[asIdx]) : null,
                         HC: hcIdx !== -1 ? parseInt(cols[hcIdx]) : null,
                         AC: acIdx !== -1 ? parseInt(cols[acIdx]) : null,
-                        HXG: 0, AXG: 0, // Será preenchido
+                        HXG: 0, AXG: 0,
                         DateObj: dObj
                     });
                 }
@@ -279,20 +278,17 @@
         teamEloRatings = {};
         teamLastPlayed = {};
 
-        // Variáveis de Janela Deslizante (Rolling Window - Fim do Lookahead Bias)
         let rollingH = 0, rollingA = 0, rollingD = 0, rollingMatches = 0;
         let rollingGoals = 0, rollingSoT = 0, rollingShotsOff = 0, rollingCorners = 0;
 
         csvMatches.forEach(m => {
             teamSet.add(m.HomeTeam); teamSet.add(m.AwayTeam);
             
-            // 1. Regressão Dinâmica de xG baseada apenas no passado (Rolling Rates)
-            // Usa 30% e 3% apenas nos primeiros jogos de calibração, depois converge para a realidade matemática da liga
             let wSoT = rollingSoT > 100 ? (rollingGoals / rollingSoT) : 0.30;
             let wOff = rollingShotsOff > 100 ? (rollingGoals / rollingShotsOff) : 0.03;
             let wCor = rollingCorners > 100 ? (rollingGoals / rollingCorners) : 0.02;
 
-            m.HXG = m.FTHG; m.AXG = m.FTAG; // Fallback
+            m.HXG = m.FTHG; m.AXG = m.FTAG; 
             
             if (m.HST !== null && !isNaN(m.HST)) {
                 let offT = (m.HS !== null && !isNaN(m.HS)) ? Math.max(0, m.HS - m.HST) : 0;
@@ -305,7 +301,6 @@
                 m.AXG = (m.FTAG * 0.40) + (m.AST * wSoT * 0.40) + (offT * wOff * 0.10) + (aCor * wCor * 0.10);
             }
 
-            // Carry-Over do Elo
             [m.HomeTeam, m.AwayTeam].forEach(team => {
                 if (!teamEloRatings[team]) {
                     teamEloRatings[team] = 1500;
@@ -319,7 +314,6 @@
                 teamLastPlayed[team] = m.DateObj;
             });
 
-            // 3. Fator Casa Dinâmico sem Lookahead Bias
             let currentHFA = rollingMatches > 20 ? ((rollingH - rollingA) / rollingMatches) * 120 : 60;
             
             const eloH = teamEloRatings[m.HomeTeam] + currentHFA;
@@ -330,17 +324,14 @@
             let actualH = m.FTHG > m.FTAG ? 1 : (m.FTHG === m.FTAG ? 0.5 : 0);
             let actualA = 1 - actualH;
             
-            // 2. Multiplicador Contínuo de Elo (Regra Logarítmica e Diff de Força)
             const goalDiff = Math.abs(m.FTHG - m.FTAG);
             const absEloDiff = Math.abs(eloH - eloA);
             const continuousKMultiplier = Math.log(goalDiff + 1) * (2.2 / ((absEloDiff * 0.001) + 2.2));
-            // Prevenção de K nulo em empates sem gols
             const finalMultiplier = isNaN(continuousKMultiplier) || continuousKMultiplier < 1 ? 1 : continuousKMultiplier;
             
             teamEloRatings[m.HomeTeam] += CONFIG.eloKFactor * finalMultiplier * (actualH - probH);
             teamEloRatings[m.AwayTeam] += CONFIG.eloKFactor * finalMultiplier * (actualA - probA);
 
-            // Atualização dos totais deslizantes após o jogo ter sido calculado
             rollingMatches++;
             rollingH += m.FTHG; rollingA += m.FTAG;
             if (m.FTHG === m.FTAG) rollingD++;
@@ -353,7 +344,6 @@
             }
         });
 
-        // Definição das métricas globais finais para uso nas previsões futuras
         uniqueTeams = Array.from(teamSet).sort();
         dynamicHFA = rollingMatches > 0 ? ((rollingH - rollingA) / rollingMatches) * 120 : 60;
         dynamicRho = 0.24 - (rollingMatches > 0 ? (rollingD / rollingMatches) : 0.24);
@@ -467,15 +457,23 @@
         const aScoredAvg = weightAwaySum > 0 ? (wAwayScored / weightAwaySum) : leagueAverages.awayAvg;
         const aConcededAvg = weightAwaySum > 0 ? (wAwayConceded / weightAwaySum) : leagueAverages.homeAvg;
 
-        let lambda = (hScoredAvg / leagueAverages.homeAvg) * (aConcededAvg / leagueAverages.homeAvg) * leagueAverages.homeAvg;
-        let mu = (aScoredAvg / leagueAverages.awayAvg) * (hConcededAvg / leagueAverages.awayAvg) * leagueAverages.awayAvg;
+        // A. Modelo Puramente xG/Poisson
+        let lambda_xG = (hScoredAvg / leagueAverages.homeAvg) * (aConcededAvg / leagueAverages.homeAvg) * leagueAverages.homeAvg;
+        let mu_xG = (aScoredAvg / leagueAverages.awayAvg) * (hConcededAvg / leagueAverages.awayAvg) * leagueAverages.awayAvg;
 
-        // FILTRO ELO RATING
-        const eloDiff = (teamEloRatings[awayTeam]) - (teamEloRatings[homeTeam] + dynamicHFA);
-        if (eloDiff > 150) { lambda *= 0.88; mu *= 1.15; } 
-        else if (eloDiff < -150) { lambda *= 1.15; mu *= 0.88; } 
+        // B. Modelo Puramente ELO (Correção da Colinearidade)
+        const eloH_adjusted = teamEloRatings[homeTeam] + dynamicHFA;
+        const eloA = teamEloRatings[awayTeam];
+        const eloDiffHome = eloH_adjusted - eloA;
+        
+        let lambda_Elo = leagueAverages.homeAvg * Math.pow(10, eloDiffHome / 400);
+        let mu_Elo = leagueAverages.awayAvg * Math.pow(10, -eloDiffHome / 400);
 
-        // 4. Laplace Smoothing (Shrinkage Dinâmico e Proporcional)
+        // C. O Verdadeiro ENSEMBLE (Média Ponderada: 65% Momento Tático, 35% Histórico de Força)
+        let lambda = (lambda_xG * 0.65) + (lambda_Elo * 0.35);
+        let mu = (mu_xG * 0.65) + (mu_Elo * 0.35);
+
+        // D. Laplace Smoothing (Shrinkage Dinâmico e Proporcional ao Volume)
         let homeShrinkage = CONFIG.basePriorShrinkage / (CONFIG.basePriorShrinkage + weightHomeSum);
         let awayShrinkage = CONFIG.basePriorShrinkage / (CONFIG.basePriorShrinkage + weightAwaySum);
 
@@ -491,9 +489,7 @@
             for (let y = 0; y <= CONFIG.matrixLimit; y++) {
                 let p = poissonProb(x, lambda) * poissonProb(y, mu) * dixonColes(x, y, lambda, mu, dynamicRho);
                 
-                // 5. Game State Modifier (Estímulo Weibull de cenário aberto)
-                // Se o jogo está em 2x2, a probabilidade de um 3x2 ou 3x3 cresce de maneira estrutural 
-                // pela postura dos times (não modelável em Poisson simples)
+                // Game State Modifier (Estímulo Weibull de cenário aberto)
                 if (x >= 2 && y >= 2) {
                     p *= 1.15;
                 }
@@ -545,8 +541,14 @@
         document.getElementById('awayBar').style.width = `${Math.min(mu*25, 100)}%`;
 
         const alertBox = document.getElementById('trapAlertContainer');
+        
+        // Alerta de Cold Start Condicional
+        let coldStartWarning = weightHomeSum < 4 || weightAwaySum < 4 
+            ? `<div class="bg-amber-900/40 border border-amber-500/30 text-amber-400 p-2 text-[10px] text-center uppercase tracking-widest rounded-xl mb-3">⚠️ COLD START: Volume de jogos inferior ao ideal. Variância alta.</div>` 
+            : ``;
+
         if (trapDetected) {
-            alertBox.innerHTML = `
+            alertBox.innerHTML = coldStartWarning + `
                 <div class="glass-panel border-red-500/50 bg-red-950/20 rounded-3xl p-5 mb-6 shadow-[0_0_15px_rgba(239,68,68,0.1)]">
                     <h3 class="text-red-400 font-black uppercase text-sm mb-2 flex items-center gap-2">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
@@ -556,7 +558,7 @@
                     <p class="text-[10px] text-red-400/80 mt-2 font-bold uppercase">Aposte no mercado, não contra o fluxo primário. Fique de fora.</p>
                 </div>`;
         } else {
-            alertBox.innerHTML = `<div class="glass-panel border-emerald-500/20 bg-emerald-950/10 rounded-3xl p-3 mb-6 text-center text-emerald-500 text-[10px] font-bold uppercase tracking-widest">Modelagem em sintonia com a liquidez do mercado. Green Light.</div>`;
+            alertBox.innerHTML = coldStartWarning + `<div class="glass-panel border-emerald-500/20 bg-emerald-950/10 rounded-3xl p-3 mb-6 text-center text-emerald-500 text-[10px] font-bold uppercase tracking-widest">Modelagem em sintonia com a liquidez do mercado. Green Light.</div>`;
         }
 
         const markets = [
