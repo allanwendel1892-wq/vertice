@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>QUANT ENGINE V7.1.1 – ENSEMBLE PRO & ANTI-TRAP (STATISTICAL EDITION)</title>
+    <title>QUANT ENGINE V7.2 – PRO & ANTI-TRAP (ACADEMIC EDITION)</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -30,10 +30,10 @@
     <header class="glass-panel rounded-3xl p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b-4 border-b-emerald-600">
         <div>
             <h1 class="text-3xl font-extrabold text-white font-mono-data">
-                QUANT<span class="text-emerald-400 font-light">ENGINE</span> <span class="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/30 font-bold ml-2 uppercase tracking-widest">V7.1.1 PhD Calibrated</span>
+                QUANT<span class="text-emerald-400 font-light">ENGINE</span> <span class="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/30 font-bold ml-2 uppercase tracking-widest">V7.2 Academic Calibrated</span>
             </h1>
             <p class="text-slate-400 text-xs mt-1">
-                Motor Híbrido: Poisson Temporal Exato + Elo Carry-Over + xG Dinâmico + Power Method (Vig).
+                Motor Institucional: Regressão xG Contínua + Autocorrelação de Elo + Bayesian Shrinkage Dinâmico.
             </p>
         </div>
     </header>
@@ -127,7 +127,8 @@
     </section>
 
     <section id="dashboard" class="hidden space-y-6">
-        <div id="trapAlertContainer"></div> <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div id="trapAlertContainer"></div> 
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div class="glass-panel rounded-3xl p-6 flex flex-col justify-between space-y-5 relative overflow-hidden">
                 <div class="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
                     <svg class="w-24 h-24 text-blue-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
@@ -186,14 +187,14 @@
 </div>
 
 <script>
-    // MATEMÁTICA INSTITUCIONAL V7.1.1 (PhD Edition)
+    // MATEMÁTICA INSTITUCIONAL V7.2 (Academic / Quant Edition)
     const CONFIG = {
-        shrinkage: 0.25,          
         timeDecayLambda: 0.003,   
         eloKFactor: 25,           
         matrixLimit: 9,          
         visualLimit: 5,
-        eloCarryOver: 0.20        
+        eloCarryOver: 0.20,
+        basePriorShrinkage: 5 // Corrigido: Usado para o Laplace Smoothing
     };
 
     let csvMatches = [];
@@ -203,7 +204,7 @@
     let leagueAverages = { homeAvg: 1.40, awayAvg: 1.15 };
     let globalLatestDate = new Date(2000, 0, 1);
     
-    // Variáveis Dinâmicas de Liga
+    // Variáveis Globais Finais da Liga
     let dynamicHFA = 60;
     let dynamicRho = -0.05;
 
@@ -227,7 +228,6 @@
         let hgIdx = headers.indexOf('fthg'); if (hgIdx === -1) hgIdx = headers.indexOf('hg');
         let agIdx = headers.indexOf('ftag'); if (agIdx === -1) agIdx = headers.indexOf('ag');
         
-        // Coleta robusta para xG Sintético
         let hstIdx = headers.indexOf('hst'); let astIdx = headers.indexOf('ast');
         let hsIdx = headers.indexOf('hs');   let asIdx = headers.indexOf('as');
         let hcIdx = headers.indexOf('hc');   let acIdx = headers.indexOf('ac');
@@ -236,51 +236,29 @@
         if (hIdx === -1 || aIdx === -1 || hgIdx === -1 || agIdx === -1 || dateIdx === -1) throw new Error('Colunas CSV obrigatórias ausentes (Date, Home, Away, HG, AG).');
 
         const parsed = [];
+        
+        // Mantém a extração pura sem calcular heurística fixa (xG será calculado cronologicamente)
         for (let i = 1; i < lines.length; i++) {
             const cols = lines[i].split(',').map(c => c.replace(/['"]+/g, '').trim());
             if (cols[hIdx] && cols[aIdx] && cols[dateIdx]) {
-                
                 let dateParts = cols[dateIdx].split('/');
                 if(dateParts.length === 3) {
                     let year = parseInt(dateParts[2]);
                     if (year < 100) year += 2000;
                     let dObj = new Date(year, parseInt(dateParts[1])-1, parseInt(dateParts[0]));
                     
-                    let fthg = parseFloat(cols[hgIdx]) || 0;
-                    let ftag = parseFloat(cols[agIdx]) || 0;
-                    
-                    let hst = hstIdx !== -1 ? parseInt(cols[hstIdx]) : null;
-                    let ast = astIdx !== -1 ? parseInt(cols[astIdx]) : null;
-                    let hs = hsIdx !== -1 ? parseInt(cols[hsIdx]) : null;
-                    let as = asIdx !== -1 ? parseInt(cols[asIdx]) : null;
-                    let hc = hcIdx !== -1 ? parseInt(cols[hcIdx]) : null;
-                    let ac = acIdx !== -1 ? parseInt(cols[acIdx]) : null;
-
-                    // CORREÇÃO ESTATÍSTICA 1: Fim da Colinearidade (Distribuição balanceada por volume ofensivo)
-                    let home_xG = fthg;
-                    let away_xG = ftag;
-
-                    if (hst !== null && !isNaN(hst)) {
-                        let hst_weight = hst * 0.30;
-                        let hs_weight = (hs !== null && !isNaN(hs)) ? Math.max(0, hs - hst) * 0.03 : 0;
-                        let hc_weight = (hc !== null && !isNaN(hc)) ? hc * 0.02 : 0;
-                        home_xG = (fthg * 0.40) + (hst_weight * 0.40) + (hs_weight * 0.10) + (hc_weight * 0.10);
-                    }
-
-                    if (ast !== null && !isNaN(ast)) {
-                        let ast_weight = ast * 0.30;
-                        let as_weight = (as !== null && !isNaN(as)) ? Math.max(0, as - ast) * 0.03 : 0;
-                        let ac_weight = (ac !== null && !isNaN(ac)) ? ac * 0.02 : 0;
-                        away_xG = (ftag * 0.40) + (ast_weight * 0.40) + (as_weight * 0.10) + (ac_weight * 0.10);
-                    }
-
                     parsed.push({
                         HomeTeam: cols[hIdx], 
                         AwayTeam: cols[aIdx],
-                        FTHG: fthg, 
-                        FTAG: ftag,
-                        HXG: home_xG,
-                        AXG: away_xG,
+                        FTHG: parseFloat(cols[hgIdx]) || 0, 
+                        FTAG: parseFloat(cols[agIdx]) || 0,
+                        HST: hstIdx !== -1 ? parseInt(cols[hstIdx]) : null,
+                        AST: astIdx !== -1 ? parseInt(cols[astIdx]) : null,
+                        HS: hsIdx !== -1 ? parseInt(cols[hsIdx]) : null,
+                        AS: asIdx !== -1 ? parseInt(cols[asIdx]) : null,
+                        HC: hcIdx !== -1 ? parseInt(cols[hcIdx]) : null,
+                        AC: acIdx !== -1 ? parseInt(cols[acIdx]) : null,
+                        HXG: 0, AXG: 0, // Será preenchido
                         DateObj: dObj
                     });
                 }
@@ -294,33 +272,40 @@
     function processRawCSV(rawText) {
         csvMatches = parseCSVText(rawText);
         const teamSet = new Set();
-        let thg = 0, tag = 0;
 
         if (csvMatches.length === 0) return alert("Nenhum dado válido encontrado.");
         globalLatestDate = csvMatches[csvMatches.length - 1].DateObj;
 
-        // CORREÇÃO ESTATÍSTICA 3 (Passo A): Calibração Dinâmica de Parâmetros (HFA e Rho)
-        let totalH = 0, totalA = 0, totalD = 0;
-        csvMatches.forEach(m => {
-            totalH += m.FTHG;
-            totalA += m.FTAG;
-            if (m.FTHG === m.FTAG) totalD++;
-        });
-        let totalM = csvMatches.length || 1;
-        
-        let goalAdvantage = (totalH - totalA) / totalM;
-        dynamicHFA = goalAdvantage * 120; // Adaptação realística da força do mando de campo da liga selecionada
-        
-        let actualDrawRate = totalD / totalM;
-        dynamicRho = (0.24 - actualDrawRate); // Balanceamento de empate relativo à liga
-
-        // Inicialização
         teamEloRatings = {};
         teamLastPlayed = {};
+
+        // Variáveis de Janela Deslizante (Rolling Window - Fim do Lookahead Bias)
+        let rollingH = 0, rollingA = 0, rollingD = 0, rollingMatches = 0;
+        let rollingGoals = 0, rollingSoT = 0, rollingShotsOff = 0, rollingCorners = 0;
 
         csvMatches.forEach(m => {
             teamSet.add(m.HomeTeam); teamSet.add(m.AwayTeam);
             
+            // 1. Regressão Dinâmica de xG baseada apenas no passado (Rolling Rates)
+            // Usa 30% e 3% apenas nos primeiros jogos de calibração, depois converge para a realidade matemática da liga
+            let wSoT = rollingSoT > 100 ? (rollingGoals / rollingSoT) : 0.30;
+            let wOff = rollingShotsOff > 100 ? (rollingGoals / rollingShotsOff) : 0.03;
+            let wCor = rollingCorners > 100 ? (rollingGoals / rollingCorners) : 0.02;
+
+            m.HXG = m.FTHG; m.AXG = m.FTAG; // Fallback
+            
+            if (m.HST !== null && !isNaN(m.HST)) {
+                let offT = (m.HS !== null && !isNaN(m.HS)) ? Math.max(0, m.HS - m.HST) : 0;
+                let hCor = (m.HC !== null && !isNaN(m.HC)) ? m.HC : 0;
+                m.HXG = (m.FTHG * 0.40) + (m.HST * wSoT * 0.40) + (offT * wOff * 0.10) + (hCor * wCor * 0.10);
+            }
+            if (m.AST !== null && !isNaN(m.AST)) {
+                let offT = (m.AS !== null && !isNaN(m.AS)) ? Math.max(0, m.AS - m.AST) : 0;
+                let aCor = (m.AC !== null && !isNaN(m.AC)) ? m.AC : 0;
+                m.AXG = (m.FTAG * 0.40) + (m.AST * wSoT * 0.40) + (offT * wOff * 0.10) + (aCor * wCor * 0.10);
+            }
+
+            // Carry-Over do Elo
             [m.HomeTeam, m.AwayTeam].forEach(team => {
                 if (!teamEloRatings[team]) {
                     teamEloRatings[team] = 1500;
@@ -334,10 +319,10 @@
                 teamLastPlayed[team] = m.DateObj;
             });
 
-            thg += m.HXG; tag += m.AXG;
-
-            // CORREÇÃO ESTATÍSTICA 3 (Passo B): Aplicação do HFA Dinâmico
-            const eloH = teamEloRatings[m.HomeTeam] + dynamicHFA;
+            // 3. Fator Casa Dinâmico sem Lookahead Bias
+            let currentHFA = rollingMatches > 20 ? ((rollingH - rollingA) / rollingMatches) * 120 : 60;
+            
+            const eloH = teamEloRatings[m.HomeTeam] + currentHFA;
             const eloA = teamEloRatings[m.AwayTeam];
             const probH = 1 / (1 + Math.pow(10, (eloA - eloH) / 400));
             const probA = 1 - probH;
@@ -345,16 +330,35 @@
             let actualH = m.FTHG > m.FTAG ? 1 : (m.FTHG === m.FTAG ? 0.5 : 0);
             let actualA = 1 - actualH;
             
+            // 2. Multiplicador Contínuo de Elo (Regra Logarítmica e Diff de Força)
             const goalDiff = Math.abs(m.FTHG - m.FTAG);
-            const kMultiplier = goalDiff <= 1 ? 1 : (goalDiff === 2 ? 1.5 : 1.75);
+            const absEloDiff = Math.abs(eloH - eloA);
+            const continuousKMultiplier = Math.log(goalDiff + 1) * (2.2 / ((absEloDiff * 0.001) + 2.2));
+            // Prevenção de K nulo em empates sem gols
+            const finalMultiplier = isNaN(continuousKMultiplier) || continuousKMultiplier < 1 ? 1 : continuousKMultiplier;
             
-            teamEloRatings[m.HomeTeam] += CONFIG.eloKFactor * kMultiplier * (actualH - probH);
-            teamEloRatings[m.AwayTeam] += CONFIG.eloKFactor * kMultiplier * (actualA - probA);
+            teamEloRatings[m.HomeTeam] += CONFIG.eloKFactor * finalMultiplier * (actualH - probH);
+            teamEloRatings[m.AwayTeam] += CONFIG.eloKFactor * finalMultiplier * (actualA - probA);
+
+            // Atualização dos totais deslizantes após o jogo ter sido calculado
+            rollingMatches++;
+            rollingH += m.FTHG; rollingA += m.FTAG;
+            if (m.FTHG === m.FTAG) rollingD++;
+
+            rollingGoals += (m.FTHG + m.FTAG);
+            if (m.HST !== null) { 
+                rollingSoT += (m.HST + m.AST); 
+                rollingShotsOff += (Math.max(0, m.HS - m.HST) + Math.max(0, m.AS - m.AST)); 
+                rollingCorners += (m.HC + m.AC); 
+            }
         });
 
+        // Definição das métricas globais finais para uso nas previsões futuras
         uniqueTeams = Array.from(teamSet).sort();
-        leagueAverages.homeAvg = thg / csvMatches.length;
-        leagueAverages.awayAvg = tag / csvMatches.length;
+        dynamicHFA = rollingMatches > 0 ? ((rollingH - rollingA) / rollingMatches) * 120 : 60;
+        dynamicRho = 0.24 - (rollingMatches > 0 ? (rollingD / rollingMatches) : 0.24);
+        leagueAverages.homeAvg = rollingMatches > 0 ? (rollingH / rollingMatches) : 1.40;
+        leagueAverages.awayAvg = rollingMatches > 0 ? (rollingA / rollingMatches) : 1.15;
 
         populateDropdowns();
         document.getElementById('dixonIndicator').innerText = `Rho: ${dynamicRho.toFixed(3)} | HFA: +${Math.round(dynamicHFA)}`;
@@ -394,7 +398,7 @@
             if (!res.ok) throw new Error();
             processRawCSV(await res.text());
         } catch {
-            alert('Falha na API. Carregue o arquivo localmente ou verifique o servidor Vercel.');
+            alert('Falha na API. Carregue o arquivo localmente ou verifique o servidor.');
             toggleUIState(false);
         }
     }
@@ -421,7 +425,6 @@
         return 1;
     }
 
-    // CORREÇÃO ESTATÍSTICA 2: Power Method para Remoção do VIG (Favorito-Azarão)
     function removeVig(o1, oX, o2) {
         let p1 = 1/o1, pX = 1/oX, p2 = 1/o2;
         let margin = p1 + pX + p2;
@@ -434,11 +437,7 @@
             k = k - (sum - 1) / (Math.pow(p1, k)*Math.log(p1) + Math.pow(pX, k)*Math.log(pX) + Math.pow(p2, k)*Math.log(p2));
         }
 
-        return { 
-            real1: Math.pow(p1, k), 
-            realX: Math.pow(pX, k), 
-            real2: Math.pow(p2, k) 
-        };
+        return { real1: Math.pow(p1, k), realX: Math.pow(pX, k), real2: Math.pow(p2, k) };
     }
 
     function calculateModel() {
@@ -471,13 +470,17 @@
         let lambda = (hScoredAvg / leagueAverages.homeAvg) * (aConcededAvg / leagueAverages.homeAvg) * leagueAverages.homeAvg;
         let mu = (aScoredAvg / leagueAverages.awayAvg) * (hConcededAvg / leagueAverages.awayAvg) * leagueAverages.awayAvg;
 
-        // FILTRO ELO RATING (Intervenção Forçada com HFA Dinâmico)
+        // FILTRO ELO RATING
         const eloDiff = (teamEloRatings[awayTeam]) - (teamEloRatings[homeTeam] + dynamicHFA);
         if (eloDiff > 150) { lambda *= 0.88; mu *= 1.15; } 
         else if (eloDiff < -150) { lambda *= 1.15; mu *= 0.88; } 
 
-        lambda = (lambda * (1 - CONFIG.shrinkage)) + (leagueAverages.homeAvg * CONFIG.shrinkage);
-        mu = (mu * (1 - CONFIG.shrinkage)) + (leagueAverages.awayAvg * CONFIG.shrinkage);
+        // 4. Laplace Smoothing (Shrinkage Dinâmico e Proporcional)
+        let homeShrinkage = CONFIG.basePriorShrinkage / (CONFIG.basePriorShrinkage + weightHomeSum);
+        let awayShrinkage = CONFIG.basePriorShrinkage / (CONFIG.basePriorShrinkage + weightAwaySum);
+
+        lambda = (lambda * (1 - homeShrinkage)) + (leagueAverages.homeAvg * homeShrinkage);
+        mu = (mu * (1 - awayShrinkage)) + (leagueAverages.awayAvg * awayShrinkage);
         
         lambda = Math.max(0.2, lambda); mu = Math.max(0.2, mu);
 
@@ -486,7 +489,15 @@
         for (let x = 0; x <= CONFIG.matrixLimit; x++) {
             matrix[x] = [];
             for (let y = 0; y <= CONFIG.matrixLimit; y++) {
-                const p = poissonProb(x, lambda) * poissonProb(y, mu) * dixonColes(x, y, lambda, mu, dynamicRho);
+                let p = poissonProb(x, lambda) * poissonProb(y, mu) * dixonColes(x, y, lambda, mu, dynamicRho);
+                
+                // 5. Game State Modifier (Estímulo Weibull de cenário aberto)
+                // Se o jogo está em 2x2, a probabilidade de um 3x2 ou 3x3 cresce de maneira estrutural 
+                // pela postura dos times (não modelável em Poisson simples)
+                if (x >= 2 && y >= 2) {
+                    p *= 1.15;
+                }
+                
                 matrix[x][y] = p; totalMatrix += p;
             }
         }
@@ -556,10 +567,8 @@
             { id: 'BTTS', name: `Ambas Marcam (Sim)`, prob: pBTTS, odd: odds.b }
         ];
 
-        // CORREÇÃO ESTATÍSTICA 4: Otimização de Risco e Escolha Exclusiva
         let bestMarket = null, maxEV = -Infinity;
         
-        // Passagem 1: Encontrar o mercado Absoluto de maior valor
         markets.forEach(m => {
             const ev = (m.prob * m.odd) - 1;
             if (ev > 0.03 && !trapDetected && ev > maxEV) { maxEV = ev; }
@@ -568,7 +577,6 @@
         const mainC = document.getElementById('marketCards'), goalC = document.getElementById('goalCards');
         mainC.innerHTML = ''; goalC.innerHTML = '';
 
-        // Passagem 2: Renderizar forçando a indicação única
         markets.forEach((m, idx) => {
             const ev = (m.prob * m.odd) - 1;
             const fair = 1 / m.prob;
@@ -578,7 +586,6 @@
             let stake = 0;
             if (isBestMarket && m.odd > 1) {
                 const b = m.odd - 1;
-                // Fração segura institucional: 1/8 Kelly com teto máximo de 2%
                 stake = Math.min((((b * m.prob) - (1 - m.prob)) / b) * 0.125 * 100, 2.0); 
                 bestMarket = { ...m, ev, stake };
             }
