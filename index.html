@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-PT">
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>QUANT ENGINE V7.5 – CONVERGENCE SCORE</title>
+    <title>QUANT ENGINE V7.7 – GLOBAL EDITION</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -24,6 +24,10 @@
         .custom-scroll::-webkit-scrollbar { width: 6px; }
         .custom-scroll::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.5); border-radius: 10px; }
         .custom-scroll::-webkit-scrollbar-thumb { background: rgba(51, 65, 85, 0.8); border-radius: 10px; }
+        
+        /* Estilo para agrupar as ligas no Select */
+        optgroup { font-weight: 800; color: #94a3b8; background: #020617; }
+        option { font-weight: 500; color: #f8fafc; }
     </style>
 </head>
 
@@ -33,10 +37,10 @@
     <header class="glass-panel rounded-3xl p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b-4 border-b-emerald-600">
         <div>
             <h1 class="text-3xl font-extrabold text-white font-mono-data">
-                QUANT<span class="text-emerald-400 font-light">ENGINE</span> <span class="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/30 font-bold ml-2 uppercase tracking-widest">V7.5 Convergência</span>
+                QUANT<span class="text-emerald-400 font-light">ENGINE</span> <span class="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/30 font-bold ml-2 uppercase tracking-widest">V7.7 Global Edition</span>
             </h1>
             <p class="text-slate-400 text-xs mt-1">
-                Score de Inteligência Cruzada (Ranking Matriz + Força xG + EV Value + Eficiência Clínica)
+                Integração Mundial: Cobertura Completa de Ligas + Score Cruzado c/ Shrinkage Bayesiano Temporal.
             </p>
         </div>
     </header>
@@ -48,25 +52,55 @@
                 <select id="season" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3.5 text-sm text-white focus:outline-none">
                     <option value="2526">2025 / 2026</option>
                     <option value="2425">2024 / 2025</option>
+                    <option value="2324">2023 / 2024</option>
                 </select>
+                <p class="text-[9px] text-slate-500 mt-1">* Apenas para Ligas Europeias (Main)</p>
             </div>
             <div>
                 <label class="block text-[11px] uppercase tracking-wider text-slate-400 font-bold mb-2">Liga / Competição</label>
-                <select id="league" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3.5 text-sm text-white focus:outline-none">
-                    <option value="BR" class="text-emerald-400 font-bold">Brasileirão Série A</option>
-                    <option value="E0">Premier League (Inglaterra)</option>
-                    <option value="I1">Serie A (Itália)</option>
-                    <option value="SP1">La Liga (Espanha)</option>
-                    <option value="F1">Ligue 1 (França)</option>
-                    <option value="P1">Primeira Liga (Portugal)</option>
-                    <option value="N1">Eredivisie (Holanda)</option>
-                    <option value="B1">Pro League (Bélgica)</option>
-                    <option value="T1">Super Lig (Turquia)</option>
-                    <option value="G1">Super League (Grécia)</option>
-                    <option value="E1">Championship (Inglaterra - 2ª Div)</option>
-                    <option value="SP2">La Liga 2 (Espanha - 2ª Div)</option>
-                    <option value="D2">Bundesliga 2 (Alemanha - 2ª Div)</option>
-                    <option value="SC0">Premiership (Escócia)</option>
+                <select id="league" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3 text-sm text-white focus:outline-none custom-scroll">
+                    <optgroup label="EUROPA - MAIN (Com xG Avançado)">
+                        <option value="E0">Premier League (Inglaterra)</option>
+                        <option value="E1">Championship (Inglaterra 2ª)</option>
+                        <option value="E2">League One (Inglaterra 3ª)</option>
+                        <option value="E3">League Two (Inglaterra 4ª)</option>
+                        <option value="EC">National League (Inglaterra 5ª)</option>
+                        <option value="SP1">La Liga (Espanha)</option>
+                        <option value="SP2">La Liga 2 (Espanha 2ª)</option>
+                        <option value="D1">Bundesliga (Alemanha)</option>
+                        <option value="D2">2. Bundesliga (Alemanha 2ª)</option>
+                        <option value="I1">Serie A (Itália)</option>
+                        <option value="I2">Serie B (Itália 2ª)</option>
+                        <option value="F1">Ligue 1 (França)</option>
+                        <option value="F2">Ligue 2 (França 2ª)</option>
+                        <option value="P1">Primeira Liga (Portugal)</option>
+                        <option value="N1">Eredivisie (Países Baixos)</option>
+                        <option value="B1">Pro League (Bélgica)</option>
+                        <option value="T1">Süper Lig (Turquia)</option>
+                        <option value="G1">Super League (Grécia)</option>
+                        <option value="SC0">Premiership (Escócia)</option>
+                        <option value="SC1">Championship (Escócia 2ª)</option>
+                        <option value="SC2">League One (Escócia 3ª)</option>
+                        <option value="SC3">League Two (Escócia 4ª)</option>
+                    </optgroup>
+                    <optgroup label="GLOBAL & PERIFÉRICAS (Sazonal Contínuo)">
+                        <option value="BRA" class="text-emerald-400 font-bold">Brasileirão Série A (Brasil)</option>
+                        <option value="ARG">Primera División (Argentina)</option>
+                        <option value="USA">Major League Soccer (EUA)</option>
+                        <option value="MEX">Liga MX (México)</option>
+                        <option value="JPN">J1 League (Japão)</option>
+                        <option value="CHN">Super League (China)</option>
+                        <option value="SWE">Allsvenskan (Suécia)</option>
+                        <option value="NOR">Eliteserien (Noruega)</option>
+                        <option value="FIN">Veikkausliiga (Finlândia)</option>
+                        <option value="IRL">Premier Division (Irlanda)</option>
+                        <option value="POL">Ekstraklasa (Polónia)</option>
+                        <option value="ROU">Liga 1 (Roménia)</option>
+                        <option value="RUS">Premier League (Rússia)</option>
+                        <option value="SWZ">Super League (Suíça)</option>
+                        <option value="AUT">Bundesliga (Áustria)</option>
+                        <option value="DNK">Superliga (Dinamarca)</option>
+                    </optgroup>
                 </select>
             </div>
             <div class="flex items-end">
@@ -95,7 +129,7 @@
     <section id="matchPanel" class="hidden space-y-6">
         <div class="glass-panel rounded-3xl p-6 grid grid-cols-1 md:grid-cols-2 gap-5">
             <div>
-                <label class="block text-[11px] uppercase tracking-wider text-slate-400 font-bold mb-2">Mandante</label>
+                <label class="block text-[11px] uppercase tracking-wider text-slate-400 font-bold mb-2">Mandante / Equipa Casa</label>
                 <div class="flex gap-2">
                     <select id="homeTeam" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3.5 text-sm text-blue-400 font-bold focus:outline-none"></select>
                     <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 text-xs flex flex-col justify-center items-center min-w-[80px]">
@@ -105,7 +139,7 @@
                 </div>
             </div>
             <div>
-                <label class="block text-[11px] uppercase tracking-wider text-slate-400 font-bold mb-2">Visitante</label>
+                <label class="block text-[11px] uppercase tracking-wider text-slate-400 font-bold mb-2">Visitante / Equipa Fora</label>
                 <div class="flex gap-2">
                     <select id="awayTeam" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3.5 text-sm text-purple-400 font-bold focus:outline-none"></select>
                     <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 text-xs flex flex-col justify-center items-center min-w-[80px]">
@@ -133,7 +167,6 @@
 
     <section id="dashboard" class="hidden space-y-6">
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            
             <div class="lg:col-span-7 space-y-6">
                 <div class="glass-panel rounded-3xl p-6 space-y-6">
                     <div>
@@ -152,7 +185,7 @@
                     </div>
 
                     <div class="overflow-x-auto">
-                        <h2 class="text-xs uppercase tracking-widest font-black text-slate-400 border-b border-slate-800 pb-2 mb-4">Matriz Bivariada (Gols)</h2>
+                        <h2 class="text-xs uppercase tracking-widest font-black text-slate-400 border-b border-slate-800 pb-2 mb-4">Matriz Bivariada (Golos)</h2>
                         <table class="w-full matrix-table">
                             <thead><tr id="matrixHead"></tr></thead>
                             <tbody id="matrixBody"></tbody>
@@ -171,23 +204,25 @@
                     <div class="absolute -top-10 -right-10 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl"></div>
                     <h2 class="text-sm uppercase tracking-widest font-black text-white border-b border-slate-700 pb-3 mb-4">Motor de Inteligência Cruzada</h2>
                     <div id="reportContainer" class="flex-grow custom-scroll overflow-y-auto pr-2 space-y-5">
-                        </div>
+                    </div>
                 </div>
             </div>
-
         </div>
     </section>
 </div>
 
 <script>
-    // MATEMÁTICA INSTITUCIONAL V7.5 (Logic Scoring)
+    // MATEMÁTICA INSTITUCIONAL V7.7 (The Global Edition - Temporal Bayes)
     const CONFIG = { timeDecayLambda: 0.003, eloKFactor: 25, matrixLimit: 7, visualLimit: 5, eloCarryOver: 0.20, basePriorShrinkage: 5 };
     let csvMatches = [], uniqueTeams = [], teamEloRatings = {}, teamLastPlayed = {}, leagueAverages = { homeAvg: 1.40, awayAvg: 1.15 }, globalLatestDate = new Date(2000, 0, 1);
     
-    // TAREFA 2: Variáveis Globais de Rastreio Empírico
+    // Variáveis Globais de Rastreio Empírico
     let expectedZeros = {}; let actualZeros = {};
     
     let dynamicHFA = 60, dynamicRho = -0.05;
+
+    // Lista definitiva das Ligas Globais da API football-data
+    const globalLeagues = ["BRA", "ARG", "USA", "MEX", "JPN", "CHN", "SWE", "NOR", "FIN", "IRL", "POL", "ROU", "RUS", "SWZ", "AUT", "DNK"];
 
     window.addEventListener('DOMContentLoaded', () => { fetchAndParseCSV(); });
 
@@ -210,7 +245,7 @@
         let hstIdx = headers.indexOf('hst'), astIdx = headers.indexOf('ast'), hsIdx = headers.indexOf('hs'), asIdx = headers.indexOf('as');
         let hcIdx = headers.indexOf('hc'), acIdx = headers.indexOf('ac'), dateIdx = headers.indexOf('date');
 
-        if (hIdx === -1 || aIdx === -1 || hgIdx === -1 || agIdx === -1 || dateIdx === -1) throw new Error('CSV Inválido.');
+        if (hIdx === -1 || aIdx === -1 || hgIdx === -1 || agIdx === -1 || dateIdx === -1) throw new Error('CSV Inválido ou Sem Colunas Necessárias.');
 
         const parsed = [];
         for (let i = 1; i < lines.length; i++) {
@@ -238,7 +273,7 @@
         globalLatestDate = csvMatches[csvMatches.length - 1].DateObj;
         
         teamEloRatings = {}; teamLastPlayed = {};
-        expectedZeros = {}; actualZeros = {}; // Reseta os contadores para novos dados
+        expectedZeros = {}; actualZeros = {}; 
         
         let rH = 0, rA = 0, rD = 0, rM = 0, rG = 0, rSoT = 0, rOff = 0, rCor = 0;
 
@@ -247,6 +282,7 @@
             let wSoT = rSoT > 100 ? (rG / rSoT) : 0.30, wOff = rOff > 100 ? (rG / rOff) : 0.03, wCor = rCor > 100 ? (rG / rCor) : 0.02;
             m.HXG = m.FTHG; m.AXG = m.FTAG; 
             
+            // Lógica Fallback de xG: Em ligas globais sem dados de remates, a premissa volta a ser m.FTHG / m.FTAG
             if (m.HST !== null && !isNaN(m.HST)) {
                 m.HXG = (m.FTHG*0.4) + (m.HST*wSoT*0.4) + (Math.max(0, m.HS-m.HST)*wOff*0.1) + ((m.HC||0)*wCor*0.1);
             }
@@ -254,18 +290,17 @@
                 m.AXG = (m.FTAG*0.4) + (m.AST*wSoT*0.4) + (Math.max(0, m.AS-m.AST)*wOff*0.1) + ((m.AC||0)*wCor*0.1);
             }
 
-            // TAREFA 3: Coleta de Dados de Eficiência Clínica
-            // 1. Inicializa o contador para os times se não existir
             if (!expectedZeros[m.HomeTeam]) { expectedZeros[m.HomeTeam] = 0; actualZeros[m.HomeTeam] = 0; }
             if (!expectedZeros[m.AwayTeam]) { expectedZeros[m.AwayTeam] = 0; actualZeros[m.AwayTeam] = 0; }
             
-            // 2. Calcula a probabilidade matemática do time ter feito 0 gols naquele jogo (Poisson P(0) = e^-lambda)
-            expectedZeros[m.HomeTeam] += Math.exp(-m.HXG);
-            expectedZeros[m.AwayTeam] += Math.exp(-m.AXG);
+            const daysAgo = (globalLatestDate - m.DateObj) / 86400000;
+            const weight = Math.exp(-CONFIG.timeDecayLambda * daysAgo);
             
-            // 3. Verifica o que de fato aconteceu (Realidade)
-            if (m.FTHG === 0) actualZeros[m.HomeTeam]++;
-            if (m.FTAG === 0) actualZeros[m.AwayTeam]++;
+            expectedZeros[m.HomeTeam] += Math.exp(-m.HXG) * weight;
+            expectedZeros[m.AwayTeam] += Math.exp(-m.AXG) * weight;
+            
+            if (m.FTHG === 0) actualZeros[m.HomeTeam] += weight;
+            if (m.FTAG === 0) actualZeros[m.AwayTeam] += weight;
 
             [m.HomeTeam, m.AwayTeam].forEach(t => {
                 if (!teamEloRatings[t]) teamEloRatings[t] = 1500;
@@ -307,11 +342,22 @@
 
     async function fetchAndParseCSV() {
         toggleUIState(true);
-        const l = document.getElementById('league').value, s = document.getElementById('season').value;
-        const url = l === "BR" ? `https://www.football-data.co.uk/new/BRA.csv` : `https://www.football-data.co.uk/mmz4281/${s}/${l}.csv`;
-        try { const res = await fetch(`/api/fetch-football?url=${encodeURIComponent(url)}`); if (!res.ok) throw new Error(); processRawCSV(await res.text()); } 
-        catch { alert('Erro API. Use arquivo local.'); toggleUIState(false); }
+        const l = document.getElementById('league').value;
+        const s = document.getElementById('season').value;
+        
+        // Roteamento Inteligente da API (Main Européia vs Global Periférica)
+        const url = globalLeagues.includes(l) 
+            ? `https://www.football-data.co.uk/new/${l}.csv` 
+            : `https://www.football-data.co.uk/mmz4281/${s}/${l}.csv`;
+            
+        try { 
+            const res = await fetch(`/api/fetch-football?url=${encodeURIComponent(url)}`); 
+            if (!res.ok) throw new Error(); 
+            processRawCSV(await res.text()); 
+        } 
+        catch { alert('Erro na API ou liga ainda não começou nesta temporada. Utilize o upload manual.'); toggleUIState(false); }
     }
+    
     function handleFileUpload(e) {
         const f = e.target.files[0]; if (!f) return; toggleUIState(true);
         const r = new FileReader(); r.onload = ev => { try { processRawCSV(ev.target.result); } catch (err) { alert(err.message); toggleUIState(false); } };
@@ -327,13 +373,11 @@
 
     function calculateModel() {
         const homeTeam = document.getElementById('homeTeam').value, awayTeam = document.getElementById('awayTeam').value;
-        if (homeTeam === awayTeam) return alert('Selecione times diferentes.');
+        if (homeTeam === awayTeam) return alert('Selecione equipas diferentes.');
 
-        // TAREFA 4: Extrair a Razão de Eficiência Clínica
-        // > 1.0 significa que o time "zera" mais do que a matemática prevê (Ineficiente / Leão de Treino).
-        // < 1.0 significa que o time "zera" menos do que a matemática prevê (Altamente Eficiente).
-        let ratioHome = (expectedZeros[homeTeam] > 0) ? (actualZeros[homeTeam] / expectedZeros[homeTeam]) : 1.0;
-        let ratioAway = (expectedZeros[awayTeam] > 0) ? (actualZeros[awayTeam] / expectedZeros[awayTeam]) : 1.0;
+        const prior = 1.5;
+        let ratioHome = (actualZeros[homeTeam] + prior) / (expectedZeros[homeTeam] + prior);
+        let ratioAway = (actualZeros[awayTeam] + prior) / (expectedZeros[awayTeam] + prior);
 
         let wHS = 0, wHC = 0, wHSum = 0, wAS = 0, wAC = 0, wASum = 0;
         csvMatches.filter(m => m.HomeTeam === homeTeam).forEach(m => { const w = Math.exp(-CONFIG.timeDecayLambda * ((globalLatestDate - m.DateObj)/86400000)); wHS += m.HXG*w; wHC += m.AXG*w; wHSum += w; });
@@ -371,8 +415,7 @@
         }
         const s = pH+pD+pA; pH/=s; pD/=s; pA/=s; let pO = 1-pU;
 
-        // --- RANKING DE GOLS BIVARIADO (Exceto Empates) ---
-        let hG = [0,0,0,0], aG = [0,0,0,0]; // Indices: 0, 1, 2, 3+
+        let hG = [0,0,0,0], aG = [0,0,0,0]; 
         for(let i=0; i<=CONFIG.matrixLimit; i++) {
             for(let j=0; j<=CONFIG.matrixLimit; j++) {
                 if(i !== j) {
@@ -382,7 +425,6 @@
             }
         }
         
-        // Dados de UI Base
         document.getElementById('homeXG').innerText = lam.toFixed(2); document.getElementById('awayXG').innerText = mu.toFixed(2);
         document.getElementById('homeLabel').innerText = homeTeam; document.getElementById('awayLabel').innerText = awayTeam;
         document.getElementById('homeBar').style.width = `${Math.min(lam*25, 100)}%`; document.getElementById('awayBar').style.width = `${Math.min(mu*25, 100)}%`;
@@ -395,22 +437,18 @@
             BTTS: { prob: pB, odd: parseFloat(document.getElementById('oddBTTS').value), id: 'BTTS', name: 'Ambas Marcam' }
         };
 
-        // --- ALGORITMO DE SCORING CRUZADO ---
         let validMarkets = [];
         Object.values(odds).forEach(m => {
             let ev = (m.prob * m.odd) - 1;
             let score = 0;
             let pMat = false, pXG = false, pEV = false;
-            let pClinica = false; // TAREFA 5: Novo pilar rastreador
+            let pClinica = false;
             
-            // Lógica de Pontuação por Mercado (Máximo 100)
             if(m.id === 'Casa') {
                 if(pH > pA) { score += 20; pMat = true; }
                 if(pH > 0.40) score += 15;
                 if(lam > mu) { score += 20; pXG = true; }
                 if(lam - mu > 0.4) score += 15;
-                
-                // Regras Eficiência Clínica
                 if(ratioHome < 0.95) { score += 10; pClinica = true; } 
                 if(ratioHome > 1.20) score -= 15; 
             } else if(m.id === 'Fora') {
@@ -418,8 +456,6 @@
                 if(pA > 0.40) score += 15;
                 if(mu > lam) { score += 20; pXG = true; }
                 if(mu - lam > 0.4) score += 15;
-                
-                // Regras Eficiência Clínica
                 if(ratioAway < 0.95) { score += 10; pClinica = true; }
                 if(ratioAway > 1.20) score -= 15;
             } else if(m.id === 'Empate') {
@@ -427,16 +463,12 @@
                 if(Math.abs(pH - pA) < 0.15) score += 15;
                 if(Math.abs(lam - mu) < 0.3) { score += 20; pXG = true; }
                 if(lam + mu < 2.5) score += 15;
-                
-                // Regras Eficiência Clínica
                 if(ratioHome > 1.10 && ratioAway > 1.10) { score += 10; pClinica = true; } 
             } else if(m.id === 'Over') {
                 if(pO > 0.5) { score += 20; pMat = true; }
                 if(pO > 0.6) score += 15;
                 if(lam + mu > 2.5) { score += 20; pXG = true; }
                 if(lam + mu > 3.0) score += 15;
-                
-                // Regras Eficiência Clínica
                 if(ratioHome < 1.0 && ratioAway < 1.0) { score += 10; pClinica = true; } 
                 if(ratioHome > 1.25 || ratioAway > 1.25) score -= 15; 
             } else if(m.id === 'BTTS') {
@@ -444,29 +476,24 @@
                 if(pB > 0.6) score += 15;
                 if(lam > 1.0 && mu > 1.0) { score += 20; pXG = true; }
                 if(lam > 1.3 && mu > 1.3) score += 15;
-                
-                // Regras Eficiência Clínica
                 if(ratioHome < 1.05 && ratioAway < 1.05) { score += 10; pClinica = true; }
                 if(ratioHome > 1.20 || ratioAway > 1.20) score -= 20; 
             }
 
-            // Pilar EV
             if(ev > 0.02) { score += 15; pEV = true; }
             if(ev >= 0.02 && ev <= 0.20) { score += 15; } 
             if(ev > 0.30) { score -= 20; } 
 
             m.ev = ev; 
-            m.score = Math.max(0, Math.min(100, score)); // Teto e piso protegidos
-            m.pillars = { m: pMat, x: pXG, e: pEV, c: pClinica }; // Pilar 'c' adicionado
+            m.score = Math.max(0, Math.min(100, score));
+            m.pillars = { m: pMat, x: pXG, e: pEV, c: pClinica };
             
             if(ev > 0) validMarkets.push(m);
         });
 
-        // Ordena pela maior sinergia (Score), e não pelo maior EV cego
         validMarkets.sort((a,b) => b.score - a.score);
         let best = validMarkets.length > 0 ? validMarkets[0] : null;
 
-        // Render Cards Mercado
         const mC = document.getElementById('marketCards'); mC.innerHTML = '';
         Object.values(odds).forEach(m => {
             const isBest = best && m.id === best.id;
@@ -481,13 +508,12 @@
                 </div>`);
         });
 
-        // --- RENDER RELATÓRIO ANALÍTICO ---
         const rep = document.getElementById('reportContainer');
         
         let gHTML = `<div class="bg-slate-900/60 rounded-xl p-4 border border-slate-800">
-            <h3 class="text-[10px] uppercase tracking-widest font-bold text-slate-400 mb-3 text-center">Probabilidade de Gols (Excluindo Empates)</h3>
+            <h3 class="text-[10px] uppercase tracking-widest font-bold text-slate-400 mb-3 text-center">Probabilidade de Golos (Excluindo Empates)</h3>
             <div class="flex justify-between text-xs font-mono-data border-b border-slate-700 pb-2 mb-2 text-slate-500 font-bold">
-                <span class="w-1/4">Gols</span>
+                <span class="w-1/4">Golos</span>
                 <span class="w-1/4 text-center text-blue-400">Casa</span>
                 <span class="w-1/4 text-center text-purple-400">Fora</span>
                 <span class="w-1/4 text-right text-emerald-400">Tendência</span>
@@ -498,22 +524,16 @@
             let ch = (hG[i]*100).toFixed(1), ca = (aG[i]*100).toFixed(1);
             let hlH = hG[i] > aG[i] ? 'text-white font-bold' : 'text-slate-400';
             let hlA = aG[i] > hG[i] ? 'text-white font-bold' : 'text-slate-400';
-            
             let ratioH = hG[i] / lam;
             let ratioA = aG[i] / mu;
             let tendency = "-";
             let tendClass = "text-slate-500";
             
-            if (ratioH > ratioA) {
-                tendency = "CASA";
-                tendClass = "text-blue-400 font-bold";
-            } else if (ratioA > ratioH) {
-                tendency = "FORA";
-                tendClass = "text-purple-400 font-bold";
-            }
+            if (ratioH > ratioA) { tendency = "CASA"; tendClass = "text-blue-400 font-bold"; } 
+            else if (ratioA > ratioH) { tendency = "FORA"; tendClass = "text-purple-400 font-bold"; }
 
             gHTML += `<div class="flex justify-between text-xs font-mono-data py-1">
-                <span class="w-1/4 text-slate-500">${labels[i]} Gol(s)</span>
+                <span class="w-1/4 text-slate-500">${labels[i]} Golo(s)</span>
                 <span class="w-1/4 text-center ${hlH}">${ch}%</span>
                 <span class="w-1/4 text-center ${hlA}">${ca}%</span>
                 <span class="w-1/4 text-right ${tendClass}">${tendency}</span>
@@ -528,7 +548,6 @@
             let fK = ((b * best.prob) - (1 - best.prob)) / b;
             let stake = Math.max(0, Math.min((fK * 0.125 * (best.score / 100)) * 100, 2.5)); 
 
-            // TAREFA 6: Atualizar a Interface do Relatório Analítico (Auditoria Empírica) adicionada aqui
             rep.innerHTML = gHTML + `
                 <div class="bg-slate-900/40 rounded-xl p-4 border border-slate-800 space-y-4 mt-4">
                     <div class="flex justify-between items-center">
@@ -559,7 +578,7 @@
                         <div class="flex items-center justify-between border-t border-slate-800/50 pt-2 mt-2">
                             <div class="flex items-center gap-2">
                                 <span class="${best.pillars.c ? 'text-emerald-400' : 'text-slate-600'}">${best.pillars.c ? '✅' : '❌'}</span>
-                                <span title="Eficiência vs Poisson. <1.0 é ótimo, >1.0 é perigoso">Auditoria Empírica (Risco de Zero Gols)</span>
+                                <span title="Eficiência vs Poisson. <1.0 é ótimo, >1.0 é perigoso">Auditoria Empírica (Risco de Zero Golos)</span>
                             </div>
                             <div class="text-[9px] font-mono-data text-slate-500 bg-slate-900 px-2 py-0.5 rounded">
                                 C: <span class="${ratioHome > 1.1 ? 'text-red-400' : (ratioHome < 0.9 ? 'text-emerald-400' : 'text-white')}">${ratioHome.toFixed(2)}x</span> | 
@@ -567,7 +586,7 @@
                             </div>
                         </div>
 
-                        ${best.ev > 0.30 ? `<div class="mt-2 text-red-400 text-[10px] uppercase font-bold">⚠️ Atenção: EV Absurdo detectado. Reduza a exposição. Possível Trap.</div>` : ''}
+                        ${best.ev > 0.30 ? `<div class="mt-2 text-red-400 text-[10px] uppercase font-bold">⚠️ Atenção: EV Absurdo detetado. Reduza a exposição. Possível Armadilha.</div>` : ''}
                     </div>
 
                     <div class="bg-slate-950 p-3 rounded-lg border border-slate-800 flex justify-between items-center text-xs">
@@ -579,7 +598,6 @@
             rep.innerHTML = gHTML + `<div class="p-6 rounded-2xl bg-slate-900/40 border border-slate-800 text-center text-slate-500 text-xs uppercase tracking-wider mt-4">Nenhum EV Positivo encontrado no jogo. Fique de fora.</div>`;
         }
 
-        // Render Matriz Visual
         const head = document.getElementById('matrixHead'), body = document.getElementById('matrixBody');
         head.innerHTML = '<th class="p-1 text-slate-600 border-b border-slate-800"></th>';
         for (let i=0; i<=CONFIG.visualLimit; i++) head.insertAdjacentHTML('beforeend', `<th class="p-1 text-slate-400 text-[10px] border-b border-slate-800">${i}</th>`);
