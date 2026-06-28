@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>QUANT ENGINE V7.7 – GLOBAL EDITION</title>
+    <title>QUANT ENGINE V8.0 – GLOBAL EDITION (Advanced Math)</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -25,7 +25,6 @@
         .custom-scroll::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.5); border-radius: 10px; }
         .custom-scroll::-webkit-scrollbar-thumb { background: rgba(51, 65, 85, 0.8); border-radius: 10px; }
         
-        /* Estilo para agrupar as ligas no Select */
         optgroup { font-weight: 800; color: #94a3b8; background: #020617; }
         option { font-weight: 500; color: #f8fafc; }
     </style>
@@ -37,10 +36,10 @@
     <header class="glass-panel rounded-3xl p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b-4 border-b-emerald-600">
         <div>
             <h1 class="text-3xl font-extrabold text-white font-mono-data">
-                QUANT<span class="text-emerald-400 font-light">ENGINE</span> <span class="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/30 font-bold ml-2 uppercase tracking-widest">V7.7 Global Edition</span>
+                QUANT<span class="text-emerald-400 font-light">ENGINE</span> <span class="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/30 font-bold ml-2 uppercase tracking-widest">V8.0 Global Edition</span>
             </h1>
             <p class="text-slate-400 text-xs mt-1">
-                Integração Mundial: Cobertura Completa de Ligas + Score Cruzado c/ Shrinkage Bayesiano Temporal.
+                Motor Híbrido: Binomial Negativa (Overdispersion), Shrinkage Dinâmico & Modificador de Fadiga 72h.
             </p>
         </div>
     </header>
@@ -62,44 +61,17 @@
                     <optgroup label="EUROPA - MAIN (Com xG Avançado)">
                         <option value="E0">Premier League (Inglaterra)</option>
                         <option value="E1">Championship (Inglaterra 2ª)</option>
-                        <option value="E2">League One (Inglaterra 3ª)</option>
-                        <option value="E3">League Two (Inglaterra 4ª)</option>
-                        <option value="EC">National League (Inglaterra 5ª)</option>
                         <option value="SP1">La Liga (Espanha)</option>
-                        <option value="SP2">La Liga 2 (Espanha 2ª)</option>
                         <option value="D1">Bundesliga (Alemanha)</option>
-                        <option value="D2">2. Bundesliga (Alemanha 2ª)</option>
                         <option value="I1">Serie A (Itália)</option>
-                        <option value="I2">Serie B (Itália 2ª)</option>
                         <option value="F1">Ligue 1 (França)</option>
-                        <option value="F2">Ligue 2 (França 2ª)</option>
                         <option value="P1">Primeira Liga (Portugal)</option>
                         <option value="N1">Eredivisie (Países Baixos)</option>
-                        <option value="B1">Pro League (Bélgica)</option>
-                        <option value="T1">Süper Lig (Turquia)</option>
-                        <option value="G1">Super League (Grécia)</option>
-                        <option value="SC0">Premiership (Escócia)</option>
-                        <option value="SC1">Championship (Escócia 2ª)</option>
-                        <option value="SC2">League One (Escócia 3ª)</option>
-                        <option value="SC3">League Two (Escócia 4ª)</option>
                     </optgroup>
                     <optgroup label="GLOBAL & PERIFÉRICAS (Sazonal Contínuo)">
                         <option value="BRA" class="text-emerald-400 font-bold">Brasileirão Série A (Brasil)</option>
                         <option value="ARG">Primera División (Argentina)</option>
                         <option value="USA">Major League Soccer (EUA)</option>
-                        <option value="MEX">Liga MX (México)</option>
-                        <option value="JPN">J1 League (Japão)</option>
-                        <option value="CHN">Super League (China)</option>
-                        <option value="SWE">Allsvenskan (Suécia)</option>
-                        <option value="NOR">Eliteserien (Noruega)</option>
-                        <option value="FIN">Veikkausliiga (Finlândia)</option>
-                        <option value="IRL">Premier Division (Irlanda)</option>
-                        <option value="POL">Ekstraklasa (Polónia)</option>
-                        <option value="ROU">Liga 1 (Roménia)</option>
-                        <option value="RUS">Premier League (Rússia)</option>
-                        <option value="SWZ">Super League (Suíça)</option>
-                        <option value="AUT">Bundesliga (Áustria)</option>
-                        <option value="DNK">Superliga (Dinamarca)</option>
                     </optgroup>
                 </select>
             </div>
@@ -123,7 +95,7 @@
 
     <div id="loading" class="hidden text-center py-12 glass-panel rounded-3xl space-y-4">
         <div class="loader-ring rounded-full h-12 w-12 border-4 border-slate-800 mx-auto"></div>
-        <p class="text-emerald-400 text-xs uppercase tracking-widest font-mono-data font-bold">Calculando Matrizes Bivariadas...</p>
+        <p class="text-emerald-400 text-xs uppercase tracking-widest font-mono-data font-bold">Calculando Matrizes e Variância...</p>
     </div>
 
     <section id="matchPanel" class="hidden space-y-6">
@@ -160,7 +132,7 @@
                 <div><label class="block text-[10px] uppercase text-slate-500 font-bold mb-1.5 text-center">BTTS (Sim)</label><input id="oddBTTS" type="number" step="0.01" value="1.95" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3.5 text-center font-mono-data font-bold text-white text-lg"></div>
             </div>
             <button onclick="calculateModel()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black uppercase tracking-widest text-xs p-5 rounded-2xl shadow-lg transition-all hover:scale-[1.01]">
-                CRUZAR DADOS E GERAR SCORE
+                CRUZAR DADOS E GERAR SCORE (V8)
             </button>
         </div>
     </section>
@@ -170,22 +142,24 @@
             <div class="lg:col-span-7 space-y-6">
                 <div class="glass-panel rounded-3xl p-6 space-y-6">
                     <div>
-                        <h2 class="text-xs uppercase tracking-widest font-black text-slate-400 border-b border-slate-800 pb-2 mb-4">Projeção Híbrida xG</h2>
+                        <h2 class="text-xs uppercase tracking-widest font-black text-slate-400 border-b border-slate-800 pb-2 mb-4">Projeção Híbrida xG (C/ Modificadores)</h2>
                         <div class="flex justify-between items-end mb-1">
                             <span class="font-bold text-sm text-blue-400" id="homeLabel">Casa</span>
                             <span class="text-2xl font-black font-mono-data text-white" id="homeXG">0.00</span>
                         </div>
+                        <div id="homeXPts" class="text-[9px] text-slate-500 mb-2 font-mono-data uppercase tracking-wider"></div>
                         <div class="w-full bg-slate-900 rounded-full h-2 mb-4"><div id="homeBar" class="bg-blue-500 h-full"></div></div>
                         
-                        <div class="flex justify-between items-end mb-1">
+                        <div class="flex justify-between items-end mb-1 mt-4">
                             <span class="font-bold text-sm text-purple-400" id="awayLabel">Fora</span>
                             <span class="text-2xl font-black font-mono-data text-white" id="awayXG">0.00</span>
                         </div>
+                        <div id="awayXPts" class="text-[9px] text-slate-500 mb-2 font-mono-data uppercase tracking-wider"></div>
                         <div class="w-full bg-slate-900 rounded-full h-2"><div id="awayBar" class="bg-purple-500 h-full"></div></div>
                     </div>
 
                     <div class="overflow-x-auto">
-                        <h2 class="text-xs uppercase tracking-widest font-black text-slate-400 border-b border-slate-800 pb-2 mb-4">Matriz Bivariada (Golos)</h2>
+                        <h2 class="text-xs uppercase tracking-widest font-black text-slate-400 border-b border-slate-800 pb-2 mb-4">Matriz Bivariada (Binomial Negativa)</h2>
                         <table class="w-full matrix-table">
                             <thead><tr id="matrixHead"></tr></thead>
                             <tbody id="matrixBody"></tbody>
@@ -212,16 +186,13 @@
 </div>
 
 <script>
-    // MATEMÁTICA INSTITUCIONAL V7.7 (The Global Edition - Temporal Bayes)
-    const CONFIG = { timeDecayLambda: 0.003, eloKFactor: 25, matrixLimit: 7, visualLimit: 5, eloCarryOver: 0.20, basePriorShrinkage: 5 };
+    // Configurações Globais V8.0
+    const CONFIG = { timeDecayLambda: 0.003, eloKFactor: 25, matrixLimit: 7, visualLimit: 5, eloCarryOver: 0.20, basePriorShrinkage: 5, overdispersionR: 5.5 };
     let csvMatches = [], uniqueTeams = [], teamEloRatings = {}, teamLastPlayed = {}, leagueAverages = { homeAvg: 1.40, awayAvg: 1.15 }, globalLatestDate = new Date(2000, 0, 1);
     
-    // Variáveis Globais de Rastreio Empírico
     let expectedZeros = {}; let actualZeros = {};
-    
     let dynamicHFA = 60, dynamicRho = -0.05;
 
-    // Lista definitiva das Ligas Globais da API football-data
     const globalLeagues = ["BRA", "ARG", "USA", "MEX", "JPN", "CHN", "SWE", "NOR", "FIN", "IRL", "POL", "ROU", "RUS", "SWZ", "AUT", "DNK"];
 
     window.addEventListener('DOMContentLoaded', () => { fetchAndParseCSV(); });
@@ -231,6 +202,21 @@
         document.getElementById('dashboard').classList.add('hidden');
         document.getElementById('loading').classList.toggle('hidden', !isLoading);
         document.getElementById('btnLoadCSV').disabled = isLoading;
+    }
+
+    // [NOVO] Matemática: Distribuição Binomial Negativa (Trata o Overdispersion/Variância Extrema)
+    function negBinomial(k, mean, r = CONFIG.overdispersionR) {
+        if (mean <= 0) return k === 0 ? 1 : 0;
+        let p = r / (r + mean);
+        let coeff = 1;
+        for (let i = 0; i < k; i++) coeff *= (i + r) / (i + 1);
+        return coeff * Math.pow(p, r) * Math.pow(1 - p, k);
+    }
+
+    function dixonColes(x, y, L, M, rho) {
+        if(x===0 && y===0) return Math.max(0, 1 - L*M*rho); if(x===0 && y===1) return Math.max(0, 1 + L*rho);
+        if(x===1 && y===0) return Math.max(0, 1 + M*rho);   if(x===1 && y===1) return Math.max(0, 1 - rho);
+        return 1;
     }
 
     function parseCSVText(text) {
@@ -245,7 +231,7 @@
         let hstIdx = headers.indexOf('hst'), astIdx = headers.indexOf('ast'), hsIdx = headers.indexOf('hs'), asIdx = headers.indexOf('as');
         let hcIdx = headers.indexOf('hc'), acIdx = headers.indexOf('ac'), dateIdx = headers.indexOf('date');
 
-        if (hIdx === -1 || aIdx === -1 || hgIdx === -1 || agIdx === -1 || dateIdx === -1) throw new Error('CSV Inválido ou Sem Colunas Necessárias.');
+        if (hIdx === -1 || aIdx === -1 || hgIdx === -1 || agIdx === -1 || dateIdx === -1) throw new Error('CSV Inválido.');
 
         const parsed = [];
         for (let i = 1; i < lines.length; i++) {
@@ -282,25 +268,15 @@
             let wSoT = rSoT > 100 ? (rG / rSoT) : 0.30, wOff = rOff > 100 ? (rG / rOff) : 0.03, wCor = rCor > 100 ? (rG / rCor) : 0.02;
             m.HXG = m.FTHG; m.AXG = m.FTAG; 
             
-            // Lógica Fallback de xG: Em ligas globais sem dados de remates, a premissa volta a ser m.FTHG / m.FTAG
-            if (m.HST !== null && !isNaN(m.HST)) {
-                m.HXG = (m.FTHG*0.4) + (m.HST*wSoT*0.4) + (Math.max(0, m.HS-m.HST)*wOff*0.1) + ((m.HC||0)*wCor*0.1);
-            }
-            if (m.AST !== null && !isNaN(m.AST)) {
-                m.AXG = (m.FTAG*0.4) + (m.AST*wSoT*0.4) + (Math.max(0, m.AS-m.AST)*wOff*0.1) + ((m.AC||0)*wCor*0.1);
-            }
+            if (m.HST !== null && !isNaN(m.HST)) m.HXG = (m.FTHG*0.4) + (m.HST*wSoT*0.4) + (Math.max(0, m.HS-m.HST)*wOff*0.1) + ((m.HC||0)*wCor*0.1);
+            if (m.AST !== null && !isNaN(m.AST)) m.AXG = (m.FTAG*0.4) + (m.AST*wSoT*0.4) + (Math.max(0, m.AS-m.AST)*wOff*0.1) + ((m.AC||0)*wCor*0.1);
 
             if (!expectedZeros[m.HomeTeam]) { expectedZeros[m.HomeTeam] = 0; actualZeros[m.HomeTeam] = 0; }
             if (!expectedZeros[m.AwayTeam]) { expectedZeros[m.AwayTeam] = 0; actualZeros[m.AwayTeam] = 0; }
             
-            const daysAgo = (globalLatestDate - m.DateObj) / 86400000;
-            const weight = Math.exp(-CONFIG.timeDecayLambda * daysAgo);
-            
-            expectedZeros[m.HomeTeam] += Math.exp(-m.HXG) * weight;
-            expectedZeros[m.AwayTeam] += Math.exp(-m.AXG) * weight;
-            
-            if (m.FTHG === 0) actualZeros[m.HomeTeam] += weight;
-            if (m.FTAG === 0) actualZeros[m.AwayTeam] += weight;
+            const weight = Math.exp(-CONFIG.timeDecayLambda * ((globalLatestDate - m.DateObj) / 86400000));
+            expectedZeros[m.HomeTeam] += Math.exp(-m.HXG) * weight; expectedZeros[m.AwayTeam] += Math.exp(-m.AXG) * weight;
+            if (m.FTHG === 0) actualZeros[m.HomeTeam] += weight; if (m.FTAG === 0) actualZeros[m.AwayTeam] += weight;
 
             [m.HomeTeam, m.AwayTeam].forEach(t => {
                 if (!teamEloRatings[t]) teamEloRatings[t] = 1500;
@@ -314,13 +290,10 @@
             let actH = m.FTHG > m.FTAG ? 1 : (m.FTHG === m.FTAG ? 0.5 : 0);
             
             const kMult = Math.log(Math.abs(m.FTHG - m.FTAG) + 1) * (2.2 / ((Math.abs(eloH - eloA) * 0.001) + 2.2));
-            const fm = isNaN(kMult) || kMult < 1 ? 1 : kMult;
-            
-            teamEloRatings[m.HomeTeam] += CONFIG.eloKFactor * fm * (actH - pH);
-            teamEloRatings[m.AwayTeam] += CONFIG.eloKFactor * fm * ((1 - actH) - pA);
+            teamEloRatings[m.HomeTeam] += CONFIG.eloKFactor * (isNaN(kMult) || kMult < 1 ? 1 : kMult) * (actH - pH);
+            teamEloRatings[m.AwayTeam] += CONFIG.eloKFactor * (isNaN(kMult) || kMult < 1 ? 1 : kMult) * ((1 - actH) - pA);
 
-            rM++; rH += m.FTHG; rA += m.FTAG; if (m.FTHG === m.FTAG) rD++;
-            rG += (m.FTHG + m.FTAG);
+            rM++; rH += m.FTHG; rA += m.FTAG; if (m.FTHG === m.FTAG) rD++; rG += (m.FTHG + m.FTAG);
             if (m.HST !== null) { rSoT += (m.HST + m.AST); rOff += (Math.max(0, m.HS - m.HST) + Math.max(0, m.AS - m.AST)); rCor += (m.HC + m.AC); }
         });
 
@@ -338,24 +311,18 @@
         if (aS.options.length > 1) aS.selectedIndex = 1;
         updateEloBadges(); hS.addEventListener('change', updateEloBadges); aS.addEventListener('change', updateEloBadges);
     }
-    function updateEloBadges() { document.getElementById('homeEloBadge').innerText = Math.round(teamEloRatings[document.getElementById('homeTeam').value]); document.getElementById('awayEloBadge').innerText = Math.round(teamEloRatings[document.getElementById('awayTeam').value]); }
+    
+    function updateEloBadges() { 
+        document.getElementById('homeEloBadge').innerText = Math.round(teamEloRatings[document.getElementById('homeTeam').value]); 
+        document.getElementById('awayEloBadge').innerText = Math.round(teamEloRatings[document.getElementById('awayTeam').value]); 
+    }
 
     async function fetchAndParseCSV() {
         toggleUIState(true);
-        const l = document.getElementById('league').value;
-        const s = document.getElementById('season').value;
-        
-        // Roteamento Inteligente da API (Main Européia vs Global Periférica)
-        const url = globalLeagues.includes(l) 
-            ? `https://www.football-data.co.uk/new/${l}.csv` 
-            : `https://www.football-data.co.uk/mmz4281/${s}/${l}.csv`;
-            
-        try { 
-            const res = await fetch(`/api/fetch-football?url=${encodeURIComponent(url)}`); 
-            if (!res.ok) throw new Error(); 
-            processRawCSV(await res.text()); 
-        } 
-        catch { alert('Erro na API ou liga ainda não começou nesta temporada. Utilize o upload manual.'); toggleUIState(false); }
+        const l = document.getElementById('league').value, s = document.getElementById('season').value;
+        const url = globalLeagues.includes(l) ? `https://www.football-data.co.uk/new/${l}.csv` : `https://www.football-data.co.uk/mmz4281/${s}/${l}.csv`;
+        try { const res = await fetch(`/api/fetch-football?url=${encodeURIComponent(url)}`); if (!res.ok) throw new Error(); processRawCSV(await res.text()); } 
+        catch { alert('Erro na API. Utilize o upload manual.'); toggleUIState(false); }
     }
     
     function handleFileUpload(e) {
@@ -364,11 +331,25 @@
         e.target.value = ''; r.readAsText(f);
     }
 
-    function poissonProb(k, l) { return k<=0 ? Math.exp(-l) : (Math.pow(l, k) * Math.exp(-l)) / (Array.from({length:k}, (_,i)=>i+1).reduce((a,b)=>a*b,1)); }
-    function dixonColes(x, y, L, M, rho) {
-        if(x===0 && y===0) return Math.max(0, 1 - L*M*rho); if(x===0 && y===1) return Math.max(0, 1 + L*rho);
-        if(x===1 && y===0) return Math.max(0, 1 + M*rho);   if(x===1 && y===1) return Math.max(0, 1 - rho);
-        return 1;
+    // [NOVO] Cálculo de Formato/XPts do Campeonato para Over/Underperformance
+    function calculateXPts(team) {
+        let pts = 0, xPts = 0, matches = 0;
+        csvMatches.forEach(m => {
+            if (m.HomeTeam === team || m.AwayTeam === team) {
+                matches++;
+                let isHome = m.HomeTeam === team;
+                if(isHome) pts += m.FTHG>m.FTAG?3:(m.FTHG===m.FTAG?1:0);
+                else pts += m.FTAG>m.FTHG?3:(m.FTAG===m.FTHG?1:0);
+                
+                let pW=0, pD=0, pL=0;
+                for(let i=0;i<5;i++) for(let j=0;j<5;j++) {
+                    let p = negBinomial(i, m.HXG) * negBinomial(j, m.AXG);
+                    if(i>j) pW+=p; else if(i===j) pD+=p; else pL+=p;
+                }
+                xPts += isHome ? (pW*3 + pD) : (pL*3 + pD);
+            }
+        });
+        return { pts, xPts, matches };
     }
 
     function calculateModel() {
@@ -380,8 +361,10 @@
         let ratioAway = (actualZeros[awayTeam] + prior) / (expectedZeros[awayTeam] + prior);
 
         let wHS = 0, wHC = 0, wHSum = 0, wAS = 0, wAC = 0, wASum = 0;
-        csvMatches.filter(m => m.HomeTeam === homeTeam).forEach(m => { const w = Math.exp(-CONFIG.timeDecayLambda * ((globalLatestDate - m.DateObj)/86400000)); wHS += m.HXG*w; wHC += m.AXG*w; wHSum += w; });
-        csvMatches.filter(m => m.AwayTeam === awayTeam).forEach(m => { const w = Math.exp(-CONFIG.timeDecayLambda * ((globalLatestDate - m.DateObj)/86400000)); wAS += m.AXG*w; wAC += m.HXG*w; wASum += w; });
+        let mCountH = 0, mCountA = 0;
+        
+        csvMatches.filter(m => m.HomeTeam === homeTeam).forEach(m => { const w = Math.exp(-CONFIG.timeDecayLambda * ((globalLatestDate - m.DateObj)/86400000)); wHS += m.HXG*w; wHC += m.AXG*w; wHSum += w; mCountH++; });
+        csvMatches.filter(m => m.AwayTeam === awayTeam).forEach(m => { const w = Math.exp(-CONFIG.timeDecayLambda * ((globalLatestDate - m.DateObj)/86400000)); wAS += m.AXG*w; wAC += m.HXG*w; wASum += w; mCountA++; });
 
         const hSA = wHSum > 0 ? wHS/wHSum : leagueAverages.homeAvg, hCA = wHSum > 0 ? wHC/wHSum : leagueAverages.awayAvg;
         const aSA = wASum > 0 ? wAS/wASum : leagueAverages.awayAvg, aCA = wASum > 0 ? wAC/wASum : leagueAverages.homeAvg;
@@ -393,18 +376,29 @@
         let lam = (lam_xG * 0.65) + (leagueAverages.homeAvg * Math.exp(eloDiff/400) * 0.35);
         let mu = (mu_xG * 0.65) + (leagueAverages.awayAvg * Math.exp(-eloDiff/400) * 0.35);
 
-        lam = Math.max(0.2, (lam * (1 - CONFIG.basePriorShrinkage/(CONFIG.basePriorShrinkage+wHSum))) + (leagueAverages.homeAvg * (CONFIG.basePriorShrinkage/(CONFIG.basePriorShrinkage+wHSum))));
-        mu = Math.max(0.2, (mu * (1 - CONFIG.basePriorShrinkage/(CONFIG.basePriorShrinkage+wASum))) + (leagueAverages.awayAvg * (CONFIG.basePriorShrinkage/(CONFIG.basePriorShrinkage+wASum))));
+        // [NOVO] Shrinkage Dinâmico (Bayesian Prior decai com a amostragem)
+        let dynShrinkH = Math.max(0.5, CONFIG.basePriorShrinkage * Math.exp(-0.06 * mCountH));
+        let dynShrinkA = Math.max(0.5, CONFIG.basePriorShrinkage * Math.exp(-0.06 * mCountA));
+        lam = Math.max(0.2, (lam * (1 - dynShrinkH/(dynShrinkH+wHSum))) + (leagueAverages.homeAvg * (dynShrinkH/(dynShrinkH+wHSum))));
+        mu = Math.max(0.2, (mu * (1 - dynShrinkA/(dynShrinkA+wASum))) + (leagueAverages.awayAvg * (dynShrinkA/(dynShrinkA+wASum))));
+
+        // [NOVO] Modificador de Fadiga / Calendário (< 72h = 10% penalty de xG)
+        let daysSinceH = (globalLatestDate - teamLastPlayed[homeTeam]) / 86400000;
+        let daysSinceA = (globalLatestDate - teamLastPlayed[awayTeam]) / 86400000;
+        if(daysSinceH < 3.5) lam *= 0.90;
+        if(daysSinceA < 3.5) mu *= 0.90;
 
         let matrix = [], pH=0, pD=0, pA=0, pU=0, pB=0, total=0;
         for (let x=0; x<=CONFIG.matrixLimit; x++) {
             matrix[x] = [];
             for (let y=0; y<=CONFIG.matrixLimit; y++) {
-                let p = poissonProb(x, lam) * poissonProb(y, mu) * dixonColes(x, y, lam, mu, dynamicRho);
+                // Aplicação da Binomial Negativa
+                let p = negBinomial(x, lam) * negBinomial(y, mu) * dixonColes(x, y, lam, mu, dynamicRho);
                 if (x>=2 && y>=2) p *= 1.15;
                 matrix[x][y] = p; total += p;
             }
         }
+        
         for (let x=0; x<=CONFIG.matrixLimit; x++) {
             for (let y=0; y<=CONFIG.matrixLimit; y++) {
                 matrix[x][y] /= total; let p = matrix[x][y];
@@ -413,20 +407,30 @@
                 if(x>0 && y>0) pB+=p;
             }
         }
+        
+        // Normalização Marginal de Probs para fechar a 100%
         const s = pH+pD+pA; pH/=s; pD/=s; pA/=s; let pO = 1-pU;
 
+        // [NOVO] Correção da Contagem de Golos (Inclui Empates para Força Real)
         let hG = [0,0,0,0], aG = [0,0,0,0]; 
         for(let i=0; i<=CONFIG.matrixLimit; i++) {
             for(let j=0; j<=CONFIG.matrixLimit; j++) {
-                if(i !== j) {
-                    let hi = i >= 3 ? 3 : i; let ai = j >= 3 ? 3 : j;
-                    hG[hi] += matrix[i][j]; aG[ai] += matrix[i][j];
-                }
+                let hi = i >= 3 ? 3 : i; let ai = j >= 3 ? 3 : j;
+                hG[hi] += matrix[i][j]; aG[ai] += matrix[i][j];
             }
         }
         
+        // UI Updates xG + Fadiga + xPts
+        let hXPts = calculateXPts(homeTeam), aXPts = calculateXPts(awayTeam);
+        let flagH = daysSinceH < 3.5 ? '<span class="bg-red-500/20 text-red-400 px-1.5 py-0.5 rounded text-[8px] ml-2 font-bold border border-red-500/30">FADIGA</span>' : '';
+        let flagA = daysSinceA < 3.5 ? '<span class="bg-red-500/20 text-red-400 px-1.5 py-0.5 rounded text-[8px] ml-2 font-bold border border-red-500/30">FADIGA</span>' : '';
+        
+        document.getElementById('homeLabel').innerHTML = `${homeTeam} ${flagH}`; document.getElementById('awayLabel').innerHTML = `${awayTeam} ${flagA}`;
         document.getElementById('homeXG').innerText = lam.toFixed(2); document.getElementById('awayXG').innerText = mu.toFixed(2);
-        document.getElementById('homeLabel').innerText = homeTeam; document.getElementById('awayLabel').innerText = awayTeam;
+        
+        document.getElementById('homeXPts').innerHTML = `Camp: <span class="text-white">${hXPts.pts} pts</span> | xPts: <span class="${hXPts.pts < hXPts.xPts ? 'text-emerald-400' : 'text-red-400'}">${hXPts.xPts.toFixed(1)}</span> (${hXPts.matches}J)`;
+        document.getElementById('awayXPts').innerHTML = `Camp: <span class="text-white">${aXPts.pts} pts</span> | xPts: <span class="${aXPts.pts < aXPts.xPts ? 'text-emerald-400' : 'text-red-400'}">${aXPts.xPts.toFixed(1)}</span> (${aXPts.matches}J)`;
+
         document.getElementById('homeBar').style.width = `${Math.min(lam*25, 100)}%`; document.getElementById('awayBar').style.width = `${Math.min(mu*25, 100)}%`;
 
         const odds = {
@@ -438,52 +442,41 @@
         };
 
         let validMarkets = [];
+        
+        // [NOVO] Sistema de Score Proporcional Contínuo (0 a 100+)
         Object.values(odds).forEach(m => {
             let ev = (m.prob * m.odd) - 1;
-            let score = 0;
-            let pMat = false, pXG = false, pEV = false;
-            let pClinica = false;
+            let score = ev > 0 ? Math.min(40, ev * 150) : 0; 
+            let pMat = false, pXG = false, pEV = (ev > 0.02 && ev < 0.25), pClinica = false;
             
             if(m.id === 'Casa') {
-                if(pH > pA) { score += 20; pMat = true; }
-                if(pH > 0.40) score += 15;
-                if(lam > mu) { score += 20; pXG = true; }
-                if(lam - mu > 0.4) score += 15;
-                if(ratioHome < 0.95) { score += 10; pClinica = true; } 
-                if(ratioHome > 1.20) score -= 15; 
+                score += Math.max(0, pH - pA) * 60;
+                score += Math.max(0, lam - mu) * 20;
+                if (ratioHome < 1) score += (1 - ratioHome) * 30; else score -= (ratioHome - 1) * 30;
+                pMat = pH > pA; pXG = lam > mu; pClinica = ratioHome < 1.0;
             } else if(m.id === 'Fora') {
-                if(pA > pH) { score += 20; pMat = true; }
-                if(pA > 0.40) score += 15;
-                if(mu > lam) { score += 20; pXG = true; }
-                if(mu - lam > 0.4) score += 15;
-                if(ratioAway < 0.95) { score += 10; pClinica = true; }
-                if(ratioAway > 1.20) score -= 15;
+                score += Math.max(0, pA - pH) * 60;
+                score += Math.max(0, mu - lam) * 20;
+                if (ratioAway < 1) score += (1 - ratioAway) * 30; else score -= (ratioAway - 1) * 30;
+                pMat = pA > pH; pXG = mu > lam; pClinica = ratioAway < 1.0;
             } else if(m.id === 'Empate') {
-                if(pD > 0.25) { score += 20; pMat = true; }
-                if(Math.abs(pH - pA) < 0.15) score += 15;
-                if(Math.abs(lam - mu) < 0.3) { score += 20; pXG = true; }
-                if(lam + mu < 2.5) score += 15;
-                if(ratioHome > 1.10 && ratioAway > 1.10) { score += 10; pClinica = true; } 
+                score += Math.max(0, pD - 0.22) * 150;
+                score += Math.max(0, 30 - (Math.abs(pH - pA) * 100));
+                pMat = pD > 0.25; pXG = Math.abs(lam - mu) < 0.3; pClinica = ratioHome > 1.10 && ratioAway > 1.10;
             } else if(m.id === 'Over') {
-                if(pO > 0.5) { score += 20; pMat = true; }
-                if(pO > 0.6) score += 15;
-                if(lam + mu > 2.5) { score += 20; pXG = true; }
-                if(lam + mu > 3.0) score += 15;
-                if(ratioHome < 1.0 && ratioAway < 1.0) { score += 10; pClinica = true; } 
-                if(ratioHome > 1.25 || ratioAway > 1.25) score -= 15; 
+                score += Math.max(0, pO - 0.45) * 80;
+                score += Math.max(0, (lam + mu) - 2.2) * 20;
+                if (ratioHome < 1.0 && ratioAway < 1.0) score += 15; else score -= 15;
+                pMat = pO > 0.5; pXG = (lam + mu) > 2.5; pClinica = ratioHome < 1.05 && ratioAway < 1.05;
             } else if(m.id === 'BTTS') {
-                if(pB > 0.5) { score += 20; pMat = true; }
-                if(pB > 0.6) score += 15;
-                if(lam > 1.0 && mu > 1.0) { score += 20; pXG = true; }
-                if(lam > 1.3 && mu > 1.3) score += 15;
-                if(ratioHome < 1.05 && ratioAway < 1.05) { score += 10; pClinica = true; }
-                if(ratioHome > 1.20 || ratioAway > 1.20) score -= 20; 
+                score += Math.max(0, pB - 0.45) * 80;
+                score += (Math.min(lam, mu) - 0.9) * 25;
+                if (ratioHome < 1.05 && ratioAway < 1.05) score += 10; else score -= 20;
+                pMat = pB > 0.5; pXG = lam > 1.0 && mu > 1.0; pClinica = ratioHome < 1.05 && ratioAway < 1.05;
             }
 
-            if(ev > 0.02) { score += 15; pEV = true; }
-            if(ev >= 0.02 && ev <= 0.20) { score += 15; } 
-            if(ev > 0.30) { score -= 20; } 
-
+            if(ev > 0.30) score -= 40; // Penalidade armadilha alto EV
+            
             m.ev = ev; 
             m.score = Math.max(0, Math.min(100, score));
             m.pillars = { m: pMat, x: pXG, e: pEV, c: pClinica };
@@ -511,7 +504,7 @@
         const rep = document.getElementById('reportContainer');
         
         let gHTML = `<div class="bg-slate-900/60 rounded-xl p-4 border border-slate-800">
-            <h3 class="text-[10px] uppercase tracking-widest font-bold text-slate-400 mb-3 text-center">Probabilidade de Golos (Excluindo Empates)</h3>
+            <h3 class="text-[10px] uppercase tracking-widest font-bold text-slate-400 mb-3 text-center">Probabilidade de Golos Total</h3>
             <div class="flex justify-between text-xs font-mono-data border-b border-slate-700 pb-2 mb-2 text-slate-500 font-bold">
                 <span class="w-1/4">Golos</span>
                 <span class="w-1/4 text-center text-blue-400">Casa</span>
@@ -524,13 +517,8 @@
             let ch = (hG[i]*100).toFixed(1), ca = (aG[i]*100).toFixed(1);
             let hlH = hG[i] > aG[i] ? 'text-white font-bold' : 'text-slate-400';
             let hlA = aG[i] > hG[i] ? 'text-white font-bold' : 'text-slate-400';
-            let ratioH = hG[i] / lam;
-            let ratioA = aG[i] / mu;
-            let tendency = "-";
-            let tendClass = "text-slate-500";
-            
-            if (ratioH > ratioA) { tendency = "CASA"; tendClass = "text-blue-400 font-bold"; } 
-            else if (ratioA > ratioH) { tendency = "FORA"; tendClass = "text-purple-400 font-bold"; }
+            let tendency = hG[i] > aG[i] ? "CASA" : (aG[i] > hG[i] ? "FORA" : "-");
+            let tendClass = hG[i] > aG[i] ? "text-blue-400 font-bold" : (aG[i] > hG[i] ? "text-purple-400 font-bold" : "text-slate-500");
 
             gHTML += `<div class="flex justify-between text-xs font-mono-data py-1">
                 <span class="w-1/4 text-slate-500">${labels[i]} Golo(s)</span>
@@ -544,8 +532,7 @@
         if(best) {
             let scColor = best.score >= 80 ? 'text-emerald-400' : (best.score >= 50 ? 'text-amber-400' : 'text-red-400');
             let verdict = best.score >= 80 ? 'Sinergia Máxima. Indicadores convergem.' : (best.score >= 50 ? 'Convergência Parcial. Risco moderado.' : 'Conflito de Indicadores. Risco Estatístico Alto.');
-            let b = best.odd - 1;
-            let fK = ((b * best.prob) - (1 - best.prob)) / b;
+            let b = best.odd - 1; let fK = ((b * best.prob) - (1 - best.prob)) / b;
             let stake = Math.max(0, Math.min((fK * 0.125 * (best.score / 100)) * 100, 2.5)); 
 
             rep.innerHTML = gHTML + `
@@ -556,15 +543,15 @@
                             <p class="text-sm font-black text-white mt-1">${best.name} @ ${best.odd.toFixed(2)}</p>
                         </div>
                         <div class="text-right">
-                            <p class="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Score de Chance</p>
-                            <p class="text-2xl font-black font-mono-data ${scColor}">${best.score}</p>
+                            <p class="text-[10px] text-slate-400 uppercase tracking-widest font-bold">Score Dinâmico</p>
+                            <p class="text-2xl font-black font-mono-data ${scColor}">${Math.round(best.score)}</p>
                         </div>
                     </div>
                     
                     <div class="space-y-2 border-t border-slate-800 pt-3 text-[11px] font-medium text-slate-300">
                         <div class="flex items-center gap-2">
                             <span class="${best.pillars.m ? 'text-emerald-400' : 'text-slate-600'}">${best.pillars.m ? '✅' : '❌'}</span>
-                            <span>Matriz Bivariada apoia o evento.</span>
+                            <span>Matriz (Binomial Negativa) apoia o evento.</span>
                         </div>
                         <div class="flex items-center gap-2">
                             <span class="${best.pillars.x ? 'text-emerald-400' : 'text-slate-600'}">${best.pillars.x ? '✅' : '❌'}</span>
@@ -578,7 +565,7 @@
                         <div class="flex items-center justify-between border-t border-slate-800/50 pt-2 mt-2">
                             <div class="flex items-center gap-2">
                                 <span class="${best.pillars.c ? 'text-emerald-400' : 'text-slate-600'}">${best.pillars.c ? '✅' : '❌'}</span>
-                                <span title="Eficiência vs Poisson. <1.0 é ótimo, >1.0 é perigoso">Auditoria Empírica (Risco de Zero Golos)</span>
+                                <span title="Eficiência vs Expected. <1.0 é ótimo, >1.0 é perigoso">Auditoria Empírica (Risco de Zeros)</span>
                             </div>
                             <div class="text-[9px] font-mono-data text-slate-500 bg-slate-900 px-2 py-0.5 rounded">
                                 C: <span class="${ratioHome > 1.1 ? 'text-red-400' : (ratioHome < 0.9 ? 'text-emerald-400' : 'text-white')}">${ratioHome.toFixed(2)}x</span> | 
