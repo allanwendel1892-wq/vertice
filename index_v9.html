@@ -1,0 +1,1006 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>QUANT ENGINE V9.0 – ACCURACY-WEIGHTED</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+  body { font-family:'Inter',sans-serif; background:#030712; color:#f3f4f6; overflow-x:hidden; }
+  .mono { font-family:'JetBrains Mono',monospace; }
+  .glass { background:rgba(17,24,39,0.75); backdrop-filter:blur(20px); border:1px solid rgba(255,255,255,0.05); }
+  .card { background:rgba(31,41,55,0.45); border:1px solid rgba(255,255,255,0.04); transition:all .25s; }
+  .card:hover { border-color:rgba(16,185,129,.2); transform:translateY(-1px); }
+  .value-bet { background:rgba(16,185,129,.07); border:1px solid rgba(16,185,129,.35)!important; box-shadow:0 0 18px rgba(16,185,129,.1); }
+  .matrix-table td { width:50px; height:46px; text-align:center; border:1px solid rgba(255,255,255,.02); font-size:.7rem; font-family:'JetBrains Mono',monospace; }
+  .loader { border-top-color:#10b981; animation:spin .8s linear infinite; }
+  @keyframes spin{ to{ transform:rotate(360deg) } }
+  .scroll::-webkit-scrollbar{ width:5px; }
+  .scroll::-webkit-scrollbar-track{ background:rgba(15,23,42,.5); border-radius:8px; }
+  .scroll::-webkit-scrollbar-thumb{ background:rgba(51,65,85,.8); border-radius:8px; }
+  optgroup{ font-weight:800; color:#94a3b8; background:#020617; }
+  option{ font-weight:500; color:#f8fafc; }
+
+  /* Accuracy badge inline */
+  .acc-badge { display:inline-flex; align-items:center; gap:3px; font-family:'JetBrains Mono',monospace; font-size:.6rem; font-weight:700; padding:1px 6px; border-radius:999px; }
+  .acc-hot  { background:rgba(16,185,129,.15); color:#34d399; border:1px solid rgba(16,185,129,.35); }
+  .acc-warm { background:rgba(245,158,11,.12); color:#fbbf24; border:1px solid rgba(245,158,11,.35); }
+  .acc-cold { background:rgba(239,68,68,.12);  color:#f87171; border:1px solid rgba(239,68,68,.35); }
+  .acc-none { background:rgba(100,116,139,.1); color:#64748b; border:1px solid rgba(100,116,139,.25); }
+
+  /* Pillar row */
+  .pillar-row { display:flex; align-items:center; justify-content:space-between; padding:.45rem 0; border-bottom:1px solid rgba(255,255,255,.04); }
+  .pillar-row:last-child { border-bottom:none; }
+  .pillar-label { font-size:.68rem; font-weight:500; color:#cbd5e1; }
+  .pillar-left { display:flex; align-items:center; gap:.5rem; }
+
+  /* Weight bar */
+  .wbar { height:3px; border-radius:9px; background:rgba(255,255,255,.06); flex:1; min-width:40px; overflow:hidden; }
+  .wbar-fill { height:100%; border-radius:9px; transition:width .6s ease; }
+
+  /* Loading overlay msg */
+  #loadingMsg { transition:opacity .3s; }
+
+  /* Backtest mini panel */
+  .bt-row { display:flex; align-items:center; justify-content:space-between; padding:.3rem 0; border-bottom:1px solid rgba(255,255,255,.03); }
+  .bt-row:last-child { border-bottom:none; }
+</style>
+</head>
+<body class="min-h-screen p-4 md:p-6">
+<div class="max-w-7xl mx-auto space-y-5">
+
+<!-- ═══════════════════════════ HEADER ═══════════════════════════ -->
+<header class="glass rounded-3xl p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-3 border-b-4 border-emerald-600">
+  <div>
+    <h1 class="text-2xl font-extrabold mono text-white">QUANT<span class="text-emerald-400 font-light">ENGINE</span>
+      <span class="text-[9px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded border border-emerald-500/30 font-bold ml-2 uppercase tracking-widest">V9.0 · Accuracy-Weighted</span>
+    </h1>
+    <p class="text-slate-400 text-xs mt-1">Binomial Negativa · Shrinkage Bayesiano · Dixon-Coles · Backtester Integrado · Pesos Calibrados por Liga</p>
+  </div>
+  <div id="btStatusBadge" class="hidden text-[10px] mono font-bold px-3 py-1.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-400"></div>
+</header>
+
+<!-- ═══════════════════════════ INPUTS ═══════════════════════════ -->
+<section class="glass rounded-3xl p-5 grid grid-cols-1 xl:grid-cols-12 gap-5 items-end">
+  <div class="xl:col-span-8 grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div>
+      <label class="block text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-2">Temporada</label>
+      <select id="season" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3.5 text-sm text-white focus:outline-none">
+        <option value="2526">2025 / 2026</option>
+        <option value="2425">2024 / 2025</option>
+        <option value="2324">2023 / 2024</option>
+      </select>
+      <p class="text-[9px] text-slate-500 mt-1">* Apenas Ligas Europeias (Main)</p>
+    </div>
+    <div>
+      <label class="block text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-2">Liga / Competição</label>
+      <select id="league" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3 text-sm text-white focus:outline-none scroll">
+        <optgroup label="EUROPA – MAIN (xG Avançado)">
+          <option value="E0">Premier League (Inglaterra)</option>
+          <option value="E1">Championship (Inglaterra 2ª)</option>
+          <option value="SP1">La Liga (Espanha)</option>
+          <option value="D1">Bundesliga (Alemanha)</option>
+          <option value="I1">Serie A (Itália)</option>
+          <option value="F1">Ligue 1 (França)</option>
+          <option value="P1">Primeira Liga (Portugal)</option>
+          <option value="N1">Eredivisie (Países Baixos)</option>
+        </optgroup>
+        <optgroup label="GLOBAL (Sazonal Contínuo)">
+          <option value="BRA">Brasileirão Série A</option>
+          <option value="ARG">Primera División (Argentina)</option>
+          <option value="USA">MLS (EUA)</option>
+        </optgroup>
+      </select>
+    </div>
+    <div class="flex items-end">
+      <button id="btnLoadCSV" onclick="fetchAndParseCSV()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold uppercase tracking-wider text-xs p-4 rounded-2xl transition-all">
+        Sincronizar API
+      </button>
+    </div>
+  </div>
+  <div class="xl:col-span-1 flex items-center justify-center">
+    <span class="text-slate-600 font-bold text-[10px] uppercase tracking-widest px-3 py-1 rounded-full border border-slate-800 bg-slate-900/50">OU</span>
+  </div>
+  <div class="xl:col-span-3">
+    <label class="block text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-2">Histórico Local</label>
+    <input type="file" id="localCsvFile" accept=".csv" class="hidden" onchange="handleFileUpload(event)">
+    <button onclick="document.getElementById('localCsvFile').click()" class="w-full bg-slate-800 hover:bg-slate-700 border border-slate-600 text-white font-bold uppercase tracking-wider text-xs p-4 rounded-2xl transition-all">
+      Carregar CSV
+    </button>
+  </div>
+</section>
+
+<!-- ═══════════════════════════ LOADING ═══════════════════════════ -->
+<div id="loading" class="hidden text-center py-14 glass rounded-3xl space-y-3">
+  <div class="loader rounded-full h-10 w-10 border-4 border-slate-800 mx-auto"></div>
+  <p id="loadingMsg" class="text-emerald-400 text-xs uppercase tracking-widest mono font-bold">Inicializando...</p>
+</div>
+
+<!-- ═══════════════════════════ MATCH PANEL ═══════════════════════ -->
+<section id="matchPanel" class="hidden space-y-5">
+
+  <!-- Team selectors -->
+  <div class="glass rounded-3xl p-5 grid grid-cols-1 md:grid-cols-2 gap-5">
+    <div>
+      <label class="block text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-2">Mandante / Casa</label>
+      <div class="flex gap-2">
+        <select id="homeTeam" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3.5 text-sm text-blue-400 font-bold focus:outline-none"></select>
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 text-xs flex flex-col justify-center items-center min-w-[76px]">
+          <span class="text-[9px] text-slate-500 uppercase">ELO</span>
+          <span id="homeEloBadge" class="mono font-bold text-white">---</span>
+        </div>
+      </div>
+    </div>
+    <div>
+      <label class="block text-[10px] uppercase tracking-wider text-slate-400 font-bold mb-2">Visitante / Fora</label>
+      <div class="flex gap-2">
+        <select id="awayTeam" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3.5 text-sm text-purple-400 font-bold focus:outline-none"></select>
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-3.5 text-xs flex flex-col justify-center items-center min-w-[76px]">
+          <span class="text-[9px] text-slate-500 uppercase">ELO</span>
+          <span id="awayEloBadge" class="mono font-bold text-white">---</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Odds -->
+  <div class="glass rounded-3xl p-5 space-y-4 border border-slate-800/80 bg-slate-900/30">
+    <h2 class="text-[10px] uppercase tracking-widest font-black text-slate-400">Odds de Mercado</h2>
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+      <div><label class="block text-[10px] uppercase text-slate-500 font-bold mb-1.5 text-center">Casa (1)</label><input id="oddHome" type="number" step="0.01" value="2.80" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3 text-center mono font-bold text-white text-base focus:outline-none"></div>
+      <div><label class="block text-[10px] uppercase text-slate-500 font-bold mb-1.5 text-center">Empate (X)</label><input id="oddDraw" type="number" step="0.01" value="3.10" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3 text-center mono font-bold text-white text-base focus:outline-none"></div>
+      <div><label class="block text-[10px] uppercase text-slate-500 font-bold mb-1.5 text-center">Fora (2)</label><input id="oddAway" type="number" step="0.01" value="2.60" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3 text-center mono font-bold text-white text-base focus:outline-none"></div>
+      <div><label class="block text-[10px] uppercase text-slate-500 font-bold mb-1.5 text-center">Over 2.5</label><input id="oddOver" type="number" step="0.01" value="2.10" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3 text-center mono font-bold text-white text-base focus:outline-none"></div>
+      <div><label class="block text-[10px] uppercase text-slate-500 font-bold mb-1.5 text-center">BTTS (Sim)</label><input id="oddBTTS" type="number" step="0.01" value="1.95" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-3 text-center mono font-bold text-white text-base focus:outline-none"></div>
+    </div>
+    <button onclick="calculateModel()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black uppercase tracking-widest text-xs p-4 rounded-2xl transition-all hover:scale-[1.005]">
+      CRUZAR DADOS E GERAR SCORE V9
+    </button>
+  </div>
+</section>
+
+<!-- ═══════════════════════════ DASHBOARD ═══════════════════════ -->
+<section id="dashboard" class="hidden space-y-5">
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+
+    <!-- LEFT: xG + Matrix + EV cards -->
+    <div class="lg:col-span-7 space-y-5">
+
+      <!-- xG Projection -->
+      <div class="glass rounded-3xl p-5 space-y-5">
+        <h2 class="text-[10px] uppercase tracking-widest font-black text-slate-400 border-b border-slate-800 pb-2">Projeção Híbrida xG (C/ Modificadores)</h2>
+        <div>
+          <div class="flex justify-between items-end mb-1">
+            <span class="font-bold text-sm text-blue-400" id="homeLabel">Casa</span>
+            <span class="text-2xl font-black mono text-white" id="homeXG">0.00</span>
+          </div>
+          <div id="homeXPts" class="text-[9px] text-slate-500 mb-2 mono uppercase tracking-wider"></div>
+          <div class="w-full bg-slate-900 rounded-full h-1.5 mb-4"><div id="homeBar" class="bg-blue-500 h-full rounded-full transition-all duration-700"></div></div>
+          <div class="flex justify-between items-end mb-1">
+            <span class="font-bold text-sm text-purple-400" id="awayLabel">Fora</span>
+            <span class="text-2xl font-black mono text-white" id="awayXG">0.00</span>
+          </div>
+          <div id="awayXPts" class="text-[9px] text-slate-500 mb-2 mono uppercase tracking-wider"></div>
+          <div class="w-full bg-slate-900 rounded-full h-1.5"><div id="awayBar" class="bg-purple-500 h-full rounded-full transition-all duration-700"></div></div>
+        </div>
+
+        <!-- Bivariada Matrix -->
+        <div class="overflow-x-auto">
+          <h2 class="text-[10px] uppercase tracking-widest font-black text-slate-400 border-b border-slate-800 pb-2 mb-3">Matriz Bivariada (Binomial Negativa)</h2>
+          <table class="w-full matrix-table">
+            <thead><tr id="matrixHead"></tr></thead>
+            <tbody id="matrixBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- EV Cards -->
+      <div class="glass rounded-3xl p-5">
+        <h2 class="text-[10px] uppercase tracking-widest font-black text-slate-400 border-b border-slate-800 pb-2 mb-4">Prob × Mercado (EV por Outcome)</h2>
+        <div id="marketCards" class="grid grid-cols-2 md:grid-cols-3 gap-3"></div>
+      </div>
+
+      <!-- Backtester mini panel (shown after BT runs) -->
+      <div id="btPanel" class="hidden glass rounded-3xl p-5">
+        <div class="flex justify-between items-center border-b border-slate-800 pb-2 mb-4">
+          <h2 class="text-[10px] uppercase tracking-widest font-black text-slate-400">Acurácia Histórica por Indicador (Liga Atual)</h2>
+          <span id="btSampleCount" class="text-[10px] mono text-slate-500"></span>
+        </div>
+        <div id="btRows" class="space-y-0.5"></div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Intelligence report -->
+    <div class="lg:col-span-5 flex flex-col">
+      <div class="glass rounded-3xl p-5 flex-grow flex flex-col border border-slate-700/50 relative overflow-hidden">
+        <div class="absolute -top-10 -right-10 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        <h2 class="text-sm uppercase tracking-widest font-black text-white border-b border-slate-700 pb-3 mb-4">Motor de Inteligência Cruzada</h2>
+        <div id="reportContainer" class="flex-grow scroll overflow-y-auto pr-1 space-y-4"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</div><!-- /max-w -->
+
+<!-- ═══════════════════════════ SCRIPT ═══════════════════════════ -->
+<script>
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CONFIG
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+const CFG = {
+  timeDecayLambda : 0.003,
+  eloKFactor      : 25,
+  matrixLimit     : 7,
+  visualLimit     : 5,
+  eloCarryOver    : 0.20,
+  basePriorShrink : 5,
+  overdispR       : 5.5
+};
+
+// Global state
+let csvMatches=[], uniqueTeams=[], teamElo={}, teamLastPlayed={};
+let leagueAvg={ homeAvg:1.40, awayAvg:1.15 };
+let globalLatestDate=new Date(2000,0,1);
+let expectedZeros={}, actualZeros={};
+let dynamicHFA=60, dynamicRho=-0.05;
+let leagueBaseFreq={ h:0.45, d:0.26, a:0.29 };
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// BACKTEST WEIGHTS (computed per-league, persisted here)
+// Keys: mat_h, mat_a, mat_d, xg_h, xg_a, xg_d,
+//       elo_h, elo_a, clinica_h, clinica_a, ev_ratio, over, btts, fatigue
+// Each: { acc: 0–100, n: int, w: 0–1 (normalized weight) }
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+let BT = {
+  mat_h:    { acc:50, n:0, w:1 },
+  mat_a:    { acc:50, n:0, w:1 },
+  mat_d:    { acc:50, n:0, w:1 },
+  xg_h:     { acc:50, n:0, w:1 },
+  xg_a:     { acc:50, n:0, w:1 },
+  xg_d:     { acc:50, n:0, w:1 },
+  elo_h:    { acc:50, n:0, w:1 },
+  elo_a:    { acc:50, n:0, w:1 },
+  clinica_h:{ acc:50, n:0, w:1 },
+  clinica_a:{ acc:50, n:0, w:1 },
+  ev_ratio: { acc:50, n:0, w:1 },
+  over:     { acc:50, n:0, w:1 },
+  btts:     { acc:50, n:0, w:1 },
+  fatigue:  { acc:50, n:0, w:0.5 }
+};
+let btDone = false;
+
+const globalLeagues = ["BRA","ARG","USA","MEX","JPN","CHN","SWE","NOR","FIN","IRL","POL","ROU","RUS","SWZ","AUT","DNK"];
+
+window.addEventListener('DOMContentLoaded', () => fetchAndParseCSV());
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// MATH (identical to V8 + extensions)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function negBinomial(k, mean, r=CFG.overdispR) {
+  if (mean<=0) return k===0?1:0;
+  const p=r/(r+mean); let c=1;
+  for(let i=0;i<k;i++) c*=(i+r)/(i+1);
+  return c*Math.pow(p,r)*Math.pow(1-p,k);
+}
+
+function dixonColes(x,y,L,M,rho) {
+  if(x===0&&y===0) return Math.max(0,1-L*M*rho);
+  if(x===0&&y===1) return Math.max(0,1+L*rho);
+  if(x===1&&y===0) return Math.max(0,1+M*rho);
+  if(x===1&&y===1) return Math.max(0,1-rho);
+  return 1;
+}
+
+function buildMatrix(lam, mu, rho) {
+  let mat=[], pH=0, pD=0, pA=0, pU=0, pB=0, total=0;
+  for(let x=0;x<=CFG.matrixLimit;x++){
+    mat[x]=[];
+    for(let y=0;y<=CFG.matrixLimit;y++){
+      let p=negBinomial(x,lam)*negBinomial(y,mu)*dixonColes(x,y,lam,mu,rho);
+      if(x>=2&&y>=2) p*=1.15;
+      mat[x][y]=p; total+=p;
+    }
+  }
+  for(let x=0;x<=CFG.matrixLimit;x++)
+    for(let y=0;y<=CFG.matrixLimit;y++){
+      mat[x][y]/=total; let p=mat[x][y];
+      if(x>y) pH+=p; else if(x===y) pD+=p; else pA+=p;
+      if((x+y)<2.5) pU+=p;
+      if(x>0&&y>0) pB+=p;
+    }
+  const s=pH+pD+pA; pH/=s; pD/=s; pA/=s;
+  return { mat, pH, pD, pA, pO:1-pU, pB };
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// CSV PARSER
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function parseCSVText(text) {
+  const lines=text.split('\n').map(l=>l.trim()).filter(l=>l.length>0);
+  if(!lines.length) return [];
+  const hdr=lines[0].split(',').map(h=>h.replace(/['"]+/g,'').trim().toLowerCase());
+  const id=k=>{ let i=hdr.indexOf(k); return i; };
+  const hIdx=id('hometeam')>=0?id('hometeam'):id('home');
+  const aIdx=id('awayteam')>=0?id('awayteam'):id('away');
+  const hgIdx=id('fthg')>=0?id('fthg'):id('hg');
+  const agIdx=id('ftag')>=0?id('ftag'):id('ag');
+  const hstI=id('hst'),astI=id('ast'),hsI=id('hs'),asI=id('as'),hcI=id('hc'),acI=id('ac'),dtI=id('date');
+  if(hIdx<0||aIdx<0||hgIdx<0||agIdx<0||dtI<0) throw new Error('CSV inválido: campos obrigatórios ausentes.');
+  const rows=[];
+  for(let i=1;i<lines.length;i++){
+    const c=lines[i].split(',').map(v=>v.replace(/['"]+/g,'').trim());
+    if(!c[hIdx]||!c[aIdx]||!c[dtI]) continue;
+    const dp=c[dtI].split('/'); if(dp.length!==3) continue;
+    let y=parseInt(dp[2]); if(y<100) y+=2000;
+    rows.push({
+      HomeTeam:c[hIdx], AwayTeam:c[aIdx],
+      FTHG:parseFloat(c[hgIdx])||0, FTAG:parseFloat(c[agIdx])||0,
+      HST:hstI>=0?parseInt(c[hstI]):null, AST:astI>=0?parseInt(c[astI]):null,
+      HS:hsI>=0?parseInt(c[hsI]):null, AS:asI>=0?parseInt(c[asI]):null,
+      HC:hcI>=0?parseInt(c[hcI]):null, AC:acI>=0?parseInt(c[acI]):null,
+      HXG:0, AXG:0,
+      DateObj:new Date(y,parseInt(dp[1])-1,parseInt(dp[0]))
+    });
+  }
+  return rows.sort((a,b)=>a.DateObj-b.DateObj);
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// PROCESS RAW CSV (ELO + xG calibration)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function processRawCSV(rawText) {
+  setLoadMsg('Parsing CSV...');
+  csvMatches=parseCSVText(rawText);
+  if(!csvMatches.length) return alert('Erro nos dados.');
+  globalLatestDate=csvMatches[csvMatches.length-1].DateObj;
+  teamElo={}; teamLastPlayed={}; expectedZeros={}; actualZeros={};
+
+  let rH=0,rA=0,rD=0,rM=0,rG=0,rSoT=0,rOff=0,rCor=0;
+  const teamSet=new Set();
+
+  setLoadMsg('Calibrando ELO e xG histórico...');
+  csvMatches.forEach(m=>{
+    teamSet.add(m.HomeTeam); teamSet.add(m.AwayTeam);
+    let wSoT=rSoT>100?(rG/rSoT):0.30, wOff=rOff>100?(rG/rOff):0.03, wCor=rCor>100?(rG/rCor):0.02;
+    m.HXG=m.FTHG; m.AXG=m.FTAG;
+    if(m.HST!==null&&!isNaN(m.HST)) m.HXG=(m.FTHG*.4)+(m.HST*wSoT*.4)+(Math.max(0,(m.HS||0)-(m.HST||0))*wOff*.1)+((m.HC||0)*wCor*.1);
+    if(m.AST!==null&&!isNaN(m.AST)) m.AXG=(m.FTAG*.4)+(m.AST*wSoT*.4)+(Math.max(0,(m.AS||0)-(m.AST||0))*wOff*.1)+((m.AC||0)*wCor*.1);
+
+    if(!expectedZeros[m.HomeTeam]){expectedZeros[m.HomeTeam]=0;actualZeros[m.HomeTeam]=0;}
+    if(!expectedZeros[m.AwayTeam]){expectedZeros[m.AwayTeam]=0;actualZeros[m.AwayTeam]=0;}
+    const w=Math.exp(-CFG.timeDecayLambda*((globalLatestDate-m.DateObj)/86400000));
+    expectedZeros[m.HomeTeam]+=Math.exp(-m.HXG)*w;
+    expectedZeros[m.AwayTeam]+=Math.exp(-m.AXG)*w;
+    if(m.FTHG===0) actualZeros[m.HomeTeam]+=w;
+    if(m.FTAG===0) actualZeros[m.AwayTeam]+=w;
+
+    [m.HomeTeam,m.AwayTeam].forEach(t=>{
+      if(!teamElo[t]) teamElo[t]=1500;
+      else if(teamLastPlayed[t]&&(m.DateObj-teamLastPlayed[t])/86400000>60) teamElo[t]+=(1500-teamElo[t])*CFG.eloCarryOver;
+      teamLastPlayed[t]=m.DateObj;
+    });
+
+    const cHFA=rM>20?((rH-rA)/rM)*120:60;
+    const eloH=teamElo[m.HomeTeam]+cHFA, eloA=teamElo[m.AwayTeam];
+    const pHelo=1/(1+Math.pow(10,(eloA-eloH)/400));
+    let actH=m.FTHG>m.FTAG?1:(m.FTHG===m.FTAG?.5:0);
+    const km=Math.log(Math.abs(m.FTHG-m.FTAG)+1)*(2.2/((Math.abs(eloH-eloA)*.001)+2.2));
+    const kv=isNaN(km)||km<1?1:km;
+    teamElo[m.HomeTeam]+=CFG.eloKFactor*kv*(actH-pHelo);
+    teamElo[m.AwayTeam]+=CFG.eloKFactor*kv*((1-actH)-(1-pHelo));
+
+    rM++; rH+=m.FTHG; rA+=m.FTAG; if(m.FTHG===m.FTAG)rD++;
+    rG+=(m.FTHG+m.FTAG);
+    if(m.HST!==null){rSoT+=(m.HST+(m.AST||0)); rOff+=(Math.max(0,(m.HS||0)-(m.HST||0))+Math.max(0,(m.AS||0)-(m.AST||0))); rCor+=((m.HC||0)+(m.AC||0));}
+  });
+
+  uniqueTeams=Array.from(teamSet).sort();
+  dynamicHFA=rM>0?((rH-rA)/rM)*120:60;
+  dynamicRho=0.24-(rM>0?rD/rM:0.24);
+  leagueAvg.homeAvg=rM>0?rH/rM:1.40;
+  leagueAvg.awayAvg=rM>0?rA/rM:1.15;
+  leagueBaseFreq={ h:rH/(rM*1||1)*0+(rM>0?(csvMatches.filter(x=>x.FTHG>x.FTAG).length/rM):0.45),
+                   d:rM>0?rD/rM:0.26,
+                   a:rM>0?(csvMatches.filter(x=>x.FTAG>x.FTHG).length/rM):0.29 };
+
+  setLoadMsg('Rodando backteste de indicadores...');
+  // Run backtest asynchronously so UI updates first
+  setTimeout(()=>{
+    runBacktest();
+    populateDropdowns();
+    toggleUI(false);
+    renderBtPanel();
+  },50);
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// BACKTEST ENGINE (leave-one-out on processed matches)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function runBacktest() {
+  // Reset
+  Object.keys(BT).forEach(k=>{ BT[k]={acc:50,n:0,w:1,hits:0,tots:0}; });
+
+  const teamCounts={};
+  csvMatches.forEach(m=>{ teamCounts[m.HomeTeam]=(teamCounts[m.HomeTeam]||0)+1; teamCounts[m.AwayTeam]=(teamCounts[m.AwayTeam]||0)+1; });
+
+  // Snapshot ELO per match index for leave-one-out accuracy
+  // (We rebuild incrementally — identical to processRawCSV logic but tracking predictions)
+  let snapElo={}, snapLast={}, snapExpZ={}, snapActZ={};
+  let rH2=0,rA2=0,rD2=0,rM2=0,rG2=0,rSoT2=0,rOff2=0,rCor2=0;
+
+  csvMatches.forEach((m,idx)=>{
+    const ht=m.HomeTeam, at=m.AwayTeam;
+
+    // Ensure init
+    [ht,at].forEach(t=>{
+      if(!snapElo[t]) snapElo[t]=1500;
+      if(!snapExpZ[t]) snapExpZ[t]=0;
+      if(!snapActZ[t]) snapActZ[t]=0;
+    });
+
+    // Only evaluate if enough data
+    if(idx>=10 && (teamCounts[ht]||0)>=6 && (teamCounts[at]||0)>=6){
+
+      // Build weighted stats with data BEFORE this match
+      let wHS=0,wHC=0,wHSum=0,wAS=0,wAC=0,wASum=0,mCH=0,mCA=0;
+      const nowDate=m.DateObj;
+      for(let j=0;j<idx;j++){
+        const p=csvMatches[j];
+        const w=Math.exp(-CFG.timeDecayLambda*((nowDate-p.DateObj)/86400000));
+        if(p.HomeTeam===ht){wHS+=p.HXG*w;wHC+=p.AXG*w;wHSum+=w;mCH++;}
+        if(p.AwayTeam===at){wAS+=p.AXG*w;wAC+=p.HXG*w;wASum+=w;mCA++;}
+      }
+      if(mCH>=3&&mCA>=3){
+        const hSA=wHSum>0?wHS/wHSum:leagueAvg.homeAvg, hCA=wHSum>0?wHC/wHSum:leagueAvg.awayAvg;
+        const aSA=wASum>0?wAS/wASum:leagueAvg.awayAvg, aCA=wASum>0?wAC/wASum:leagueAvg.homeAvg;
+        let lam_xG=(hSA/leagueAvg.homeAvg)*(aCA/leagueAvg.homeAvg)*leagueAvg.homeAvg;
+        let mu_xG=(aSA/leagueAvg.awayAvg)*(hCA/leagueAvg.awayAvg)*leagueAvg.awayAvg;
+        const eloDiff=(snapElo[ht]+dynamicHFA)-snapElo[at];
+        let lam=(lam_xG*.65)+(leagueAvg.homeAvg*Math.exp(eloDiff/400)*.35);
+        let mu=(mu_xG*.65)+(leagueAvg.awayAvg*Math.exp(-eloDiff/400)*.35);
+        let dsSH=Math.max(.5,CFG.basePriorShrink*Math.exp(-.06*mCH));
+        let dsSA=Math.max(.5,CFG.basePriorShrink*Math.exp(-.06*mCA));
+        lam=Math.max(.2,(lam*(1-dsSH/(dsSH+wHSum)))+(leagueAvg.homeAvg*(dsSH/(dsSH+wHSum))));
+        mu=Math.max(.2,(mu*(1-dsSA/(dsSA+wASum)))+(leagueAvg.awayAvg*(dsSA/(dsSA+wASum))));
+
+        const dayH=snapLast[ht]?((nowDate-snapLast[ht])/86400000):99;
+        const dayA=snapLast[at]?((nowDate-snapLast[at])/86400000):99;
+        const fatigH=dayH<3.5, fatigA=dayA<3.5;
+        if(fatigH) lam*=.90; if(fatigA) mu*=.90;
+
+        const prior=1.5;
+        const rH_=(snapActZ[ht]+prior)/(snapExpZ[ht]+prior);
+        const rA_=(snapActZ[at]+prior)/(snapExpZ[at]+prior);
+
+        const {pH,pD,pA,pO,pB}=buildMatrix(lam,mu,dynamicRho);
+
+        // Real outcomes
+        const realH=m.FTHG>m.FTAG, realD=m.FTHG===m.FTAG, realA=m.FTAG>m.FTHG;
+        const realO=(m.FTHG+m.FTAG)>=3, realB=m.FTHG>0&&m.FTAG>0;
+
+        function rec(key,pred,correct){ BT[key].tots=(BT[key].tots||0)+1; if(pred&&correct) BT[key].hits=(BT[key].hits||0)+1; }
+
+        // Matriz
+        const matH=pH>pD&&pH>pA, matA=pA>pH&&pA>pD, matD=pD>pH&&pD>pA;
+        if(matH)  rec('mat_h',true,realH);
+        if(matA)  rec('mat_a',true,realA);
+        if(matD)  rec('mat_d',true,realD);
+
+        // xG puro
+        const xgH=lam>mu, xgA=mu>lam, xgD=Math.abs(lam-mu)<0.25;
+        if(xgH) rec('xg_h',true,realH);
+        if(xgA) rec('xg_a',true,realA);
+        if(xgD) rec('xg_d',true,realD);
+
+        // ELO puro
+        const eloScoreH=snapElo[ht]+dynamicHFA;
+        if(eloScoreH>snapElo[at]) rec('elo_h',true,realH);
+        else rec('elo_a',true,realA);
+
+        // Clínica
+        BT['clinica_h'].tots=(BT['clinica_h'].tots||0)+1;
+        if((rH_<1.0&&realH)||( rH_>=1.0&&(realD||realA))) BT['clinica_h'].hits=(BT['clinica_h'].hits||0)+1;
+        BT['clinica_a'].tots=(BT['clinica_a'].tots||0)+1;
+        if((rA_<1.0&&realA)||(rA_>=1.0&&(realD||realH))) BT['clinica_a'].hits=(BT['clinica_a'].hits||0)+1;
+
+        // EV ratio proxy (model prob vs league base)
+        const evH=pH>leagueBaseFreq.h*1.05, evA=pA>leagueBaseFreq.a*1.05, evD=pD>leagueBaseFreq.d*1.05;
+        if(evH||evA||evD){
+          BT['ev_ratio'].tots=(BT['ev_ratio'].tots||0)+1;
+          if((evH&&realH)||(evA&&realA)||(evD&&realD)) BT['ev_ratio'].hits=(BT['ev_ratio'].hits||0)+1;
+        }
+
+        // Over / BTTS
+        BT['over'].tots=(BT['over'].tots||0)+1;
+        const xgOver=(lam+mu)>2.5;
+        if((xgOver&&realO)||(!xgOver&&!realO)) BT['over'].hits=(BT['over'].hits||0)+1;
+        BT['btts'].tots=(BT['btts'].tots||0)+1;
+        const xgBTTS=lam>1.0&&mu>1.0;
+        if((xgBTTS&&realB)||(!xgBTTS&&!realB)) BT['btts'].hits=(BT['btts'].hits||0)+1;
+
+        // Fadiga
+        if(fatigH){ BT['fatigue'].tots=(BT['fatigue'].tots||0)+1; if(realA||realD) BT['fatigue'].hits=(BT['fatigue'].hits||0)+1; }
+        if(fatigA){ BT['fatigue'].tots=(BT['fatigue'].tots||0)+1; if(realH||realD) BT['fatigue'].hits=(BT['fatigue'].hits||0)+1; }
+      }
+    }
+
+    // Update rolling ELO snapshot for next iteration
+    const cHFA2=rM2>20?((rH2-rA2)/rM2)*120:60;
+    const eH2=snapElo[ht]+cHFA2, eA2=snapElo[at];
+    const pH2=1/(1+Math.pow(10,(eA2-eH2)/400));
+    let aH2=m.FTHG>m.FTAG?1:(m.FTHG===m.FTAG?.5:0);
+    const km2=Math.log(Math.abs(m.FTHG-m.FTAG)+1)*(2.2/((Math.abs(eH2-eA2)*.001)+2.2));
+    const kv2=isNaN(km2)||km2<1?1:km2;
+    snapElo[ht]+=CFG.eloKFactor*kv2*(aH2-pH2);
+    snapElo[at]+=CFG.eloKFactor*kv2*((1-aH2)-(1-pH2));
+
+    const w2=Math.exp(-CFG.timeDecayLambda*((globalLatestDate-m.DateObj)/86400000));
+    snapExpZ[ht]+=Math.exp(-m.HXG)*w2; snapExpZ[at]+=Math.exp(-m.AXG)*w2;
+    if(m.FTHG===0) snapActZ[ht]+=w2; if(m.FTAG===0) snapActZ[at]+=w2;
+    snapLast[ht]=m.DateObj; snapLast[at]=m.DateObj;
+
+    rM2++; rH2+=m.FTHG; rA2+=m.FTAG; if(m.FTHG===m.FTAG)rD2++;
+    rG2+=(m.FTHG+m.FTAG);
+    if(m.HST!==null){rSoT2+=(m.HST+(m.AST||0));rOff2+=(Math.max(0,(m.HS||0)-(m.HST||0))+Math.max(0,(m.AS||0)-(m.AST||0)));rCor2+=((m.HC||0)+(m.AC||0));}
+  });
+
+  // Compute accuracy + normalize weights
+  // Weight = max(0, acc - 50) → higher = more reliable
+  let maxExcess=0;
+  Object.keys(BT).forEach(k=>{
+    const t=BT[k].tots||0, h=BT[k].hits||0;
+    BT[k].n=t;
+    BT[k].acc=t>0?(h/t*100):50;
+    const excess=Math.max(0,BT[k].acc-50);
+    if(excess>maxExcess) maxExcess=excess;
+  });
+  // Normalize to 0-2 range (baseline 1.0 = 50% acc, max 2.0 for best indicator)
+  Object.keys(BT).forEach(k=>{
+    const excess=Math.max(0,BT[k].acc-50);
+    // Weight: 0.2 minimum (never completely ignore), up to 2.0
+    BT[k].w = maxExcess>0 ? 0.2+(excess/maxExcess)*1.8 : 1.0;
+  });
+
+  btDone=true;
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// RENDER BACKTEST PANEL
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function accClass(a){ return a>=57?'acc-hot':a>=50?'acc-warm':a>=43?'acc-cold':'acc-none'; }
+function accLabel(a,n){ if(n<10) return '—'; return a.toFixed(1)+'%'; }
+
+function renderBtPanel() {
+  if(!btDone) return;
+  document.getElementById('btPanel').classList.remove('hidden');
+
+  const totalSamples=Object.values(BT).reduce((s,v)=>s+v.n,0);
+  document.getElementById('btSampleCount').textContent=`${csvMatches.length} jogos · ${totalSamples} avaliações`;
+
+  const rows=[
+    { key:'mat_h',    label:'Matriz — Casa' },
+    { key:'mat_a',    label:'Matriz — Fora' },
+    { key:'mat_d',    label:'Matriz — Empate' },
+    { key:'xg_h',     label:'xG — Casa (λ>μ)' },
+    { key:'xg_a',     label:'xG — Fora (μ>λ)' },
+    { key:'xg_d',     label:'xG — Empate (|λ−μ|<0.25)' },
+    { key:'elo_h',    label:'ELO — Casa' },
+    { key:'elo_a',    label:'ELO — Fora' },
+    { key:'clinica_h',label:'Clínica — Casa (ratio zeros)' },
+    { key:'clinica_a',label:'Clínica — Fora (ratio zeros)' },
+    { key:'ev_ratio', label:'EV Ratio (prob>base×1.05)' },
+    { key:'over',     label:'xG Over 2.5' },
+    { key:'btts',     label:'xG BTTS' },
+    { key:'fatigue',  label:'Sinal Fadiga' },
+  ];
+
+  const html=rows.map(r=>{
+    const b=BT[r.key];
+    const aStr=accLabel(b.acc,b.n);
+    const aClass=b.n>=10?accClass(b.acc):'acc-none';
+    const barW=b.n>=10?Math.round(Math.min(b.acc,100)):0;
+    const wStr=b.n>=10?b.w.toFixed(2):'—';
+    const wColor=b.w>=1.5?'text-emerald-400':b.w>=1.0?'text-amber-400':'text-slate-500';
+    return `<div class="bt-row">
+      <span class="text-[11px] text-slate-300 font-medium min-w-[180px]">${r.label}</span>
+      <div class="flex items-center gap-3 flex-1 justify-end">
+        <div class="w-20 bg-slate-800 rounded-full h-1 hidden md:block">
+          <div class="h-full rounded-full ${b.acc>=57?'bg-emerald-500':b.acc>=50?'bg-amber-500':b.acc>=43?'bg-red-400':'bg-slate-600'} transition-all" style="width:${barW}%"></div>
+        </div>
+        <span class="text-[10px] text-slate-500 mono hidden lg:inline">${b.n>0?b.n+' amostras':'—'}</span>
+        <span class="acc-badge ${aClass}">${aStr}</span>
+        <span class="mono text-[10px] ${wColor} min-w-[40px] text-right">w:${wStr}</span>
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('btRows').innerHTML=html;
+
+  // Header status badge
+  const avgAcc=Object.values(BT).filter(v=>v.n>=10).reduce((s,v)=>s+v.acc,0)/
+                (Object.values(BT).filter(v=>v.n>=10).length||1);
+  const badge=document.getElementById('btStatusBadge');
+  badge.classList.remove('hidden');
+  badge.textContent=`BT calibrado · acurácia média ${avgAcc.toFixed(1)}%`;
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// xPTS HELPER
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function calculateXPts(team) {
+  let pts=0,xPts=0,matches=0;
+  csvMatches.forEach(m=>{
+    if(m.HomeTeam!==team&&m.AwayTeam!==team) return;
+    matches++;
+    const isH=m.HomeTeam===team;
+    if(isH) pts+=m.FTHG>m.FTAG?3:(m.FTHG===m.FTAG?1:0);
+    else    pts+=m.FTAG>m.FTHG?3:(m.FTAG===m.FTHG?1:0);
+    let pW=0,pD=0,pL=0;
+    for(let i=0;i<5;i++) for(let j=0;j<5;j++){
+      let p=negBinomial(i,m.HXG)*negBinomial(j,m.AXG);
+      if(i>j)pW+=p; else if(i===j)pD+=p; else pL+=p;
+    }
+    xPts+=isH?(pW*3+pD):(pL*3+pD);
+  });
+  return {pts,xPts,matches};
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// MAIN MODEL CALCULATION
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function calculateModel() {
+  const homeTeam=document.getElementById('homeTeam').value;
+  const awayTeam=document.getElementById('awayTeam').value;
+  if(homeTeam===awayTeam) return alert('Selecione equipas diferentes.');
+
+  const prior=1.5;
+  const ratioHome=(( actualZeros[homeTeam]||0)+prior)/((expectedZeros[homeTeam]||0)+prior);
+  const ratioAway=(( actualZeros[awayTeam]||0)+prior)/((expectedZeros[awayTeam]||0)+prior);
+
+  let wHS=0,wHC=0,wHSum=0,wAS=0,wAC=0,wASum=0,mCH=0,mCA=0;
+  csvMatches.filter(m=>m.HomeTeam===homeTeam).forEach(m=>{
+    const w=Math.exp(-CFG.timeDecayLambda*((globalLatestDate-m.DateObj)/86400000));
+    wHS+=m.HXG*w;wHC+=m.AXG*w;wHSum+=w;mCH++;
+  });
+  csvMatches.filter(m=>m.AwayTeam===awayTeam).forEach(m=>{
+    const w=Math.exp(-CFG.timeDecayLambda*((globalLatestDate-m.DateObj)/86400000));
+    wAS+=m.AXG*w;wAC+=m.HXG*w;wASum+=w;mCA++;
+  });
+
+  const hSA=wHSum>0?wHS/wHSum:leagueAvg.homeAvg, hCA=wHSum>0?wHC/wHSum:leagueAvg.awayAvg;
+  const aSA=wASum>0?wAS/wASum:leagueAvg.awayAvg, aCA=wASum>0?wAC/wASum:leagueAvg.homeAvg;
+
+  let lam_xG=(hSA/leagueAvg.homeAvg)*(aCA/leagueAvg.homeAvg)*leagueAvg.homeAvg;
+  let mu_xG=(aSA/leagueAvg.awayAvg)*(hCA/leagueAvg.awayAvg)*leagueAvg.awayAvg;
+
+  const eloDiff=(teamElo[homeTeam]+dynamicHFA)-teamElo[awayTeam];
+  let lam=(lam_xG*.65)+(leagueAvg.homeAvg*Math.exp(eloDiff/400)*.35);
+  let mu=(mu_xG*.65)+(leagueAvg.awayAvg*Math.exp(-eloDiff/400)*.35);
+
+  let dsSH=Math.max(.5,CFG.basePriorShrink*Math.exp(-.06*mCH));
+  let dsSA=Math.max(.5,CFG.basePriorShrink*Math.exp(-.06*mCA));
+  lam=Math.max(.2,(lam*(1-dsSH/(dsSH+wHSum)))+(leagueAvg.homeAvg*(dsSH/(dsSH+wHSum))));
+  mu=Math.max(.2,(mu*(1-dsSA/(dsSA+wASum)))+(leagueAvg.awayAvg*(dsSA/(dsSA+wASum))));
+
+  const dayH=(globalLatestDate-teamLastPlayed[homeTeam])/86400000;
+  const dayA=(globalLatestDate-teamLastPlayed[awayTeam])/86400000;
+  const fatigH=dayH<3.5, fatigA=dayA<3.5;
+  if(fatigH) lam*=.90;
+  if(fatigA) mu*=.90;
+
+  const {mat,pH,pD,pA,pO,pB}=buildMatrix(lam,mu,dynamicRho);
+
+  // Goal distribution
+  let hG=[0,0,0,0],aG=[0,0,0,0];
+  for(let i=0;i<=CFG.matrixLimit;i++)
+    for(let j=0;j<=CFG.matrixLimit;j++){
+      const hi=i>=3?3:i, ai=j>=3?3:j;
+      hG[hi]+=mat[i][j]; aG[ai]+=mat[i][j];
+    }
+
+  // ── xG panel
+  let hXPts=calculateXPts(homeTeam), aXPts=calculateXPts(awayTeam);
+  const flagH=fatigH?'<span class="bg-red-500/20 text-red-400 px-1.5 py-0.5 rounded text-[8px] ml-2 font-bold border border-red-500/30">FADIGA</span>':'';
+  const flagA=fatigA?'<span class="bg-red-500/20 text-red-400 px-1.5 py-0.5 rounded text-[8px] ml-2 font-bold border border-red-500/30">FADIGA</span>':'';
+  document.getElementById('homeLabel').innerHTML=homeTeam+flagH;
+  document.getElementById('awayLabel').innerHTML=awayTeam+flagA;
+  document.getElementById('homeXG').innerText=lam.toFixed(2);
+  document.getElementById('awayXG').innerText=mu.toFixed(2);
+  document.getElementById('homeXPts').innerHTML=`Camp: <span class="text-white">${hXPts.pts}pts</span> | xPts: <span class="${hXPts.pts<hXPts.xPts?'text-emerald-400':'text-red-400'}">${hXPts.xPts.toFixed(1)}</span> (${hXPts.matches}J)`;
+  document.getElementById('awayXPts').innerHTML=`Camp: <span class="text-white">${aXPts.pts}pts</span> | xPts: <span class="${aXPts.pts<aXPts.xPts?'text-emerald-400':'text-red-400'}">${aXPts.xPts.toFixed(1)}</span> (${aXPts.matches}J)`;
+  document.getElementById('homeBar').style.width=`${Math.min(lam*25,100)}%`;
+  document.getElementById('awayBar').style.width=`${Math.min(mu*25,100)}%`;
+
+  // ── Matrix
+  const head=document.getElementById('matrixHead'), body=document.getElementById('matrixBody');
+  head.innerHTML='<th class="p-1 text-slate-600 border-b border-slate-800 text-[10px]">↓H \\ A→</th>';
+  for(let i=0;i<=CFG.visualLimit;i++) head.insertAdjacentHTML('beforeend',`<th class="p-1 text-slate-400 text-[10px] border-b border-slate-800">${i}</th>`);
+  body.innerHTML='';
+  for(let x=0;x<=CFG.visualLimit;x++){
+    let row=`<tr><th class="bg-slate-950/40 text-blue-400 p-1 text-[10px] border-r border-slate-800">${x}</th>`;
+    for(let y=0;y<=CFG.visualLimit;y++)
+      row+=`<td class="text-[10px] p-1 ${x===y?'bg-slate-900/60 font-bold':(x>y?'text-blue-400/80':'text-purple-400/80')}">${(mat[x][y]*100).toFixed(1)}%</td>`;
+    body.insertAdjacentHTML('beforeend',row+'</tr>');
+  }
+
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  // ACCURACY-WEIGHTED SCORE SYSTEM
+  // Each pillar contribution is multiplied by its calibrated BT weight
+  // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  const w=BT; // shorthand
+
+  const odds={
+    Casa:   { prob:pH, odd:parseFloat(document.getElementById('oddHome').value), id:'Casa',   name:`Vitória · ${homeTeam}` },
+    Empate: { prob:pD, odd:parseFloat(document.getElementById('oddDraw').value), id:'Empate', name:'Empate (X)' },
+    Fora:   { prob:pA, odd:parseFloat(document.getElementById('oddAway').value), id:'Fora',   name:`Vitória · ${awayTeam}` },
+    Over:   { prob:pO, odd:parseFloat(document.getElementById('oddOver').value), id:'Over',   name:'Mais de 2.5' },
+    BTTS:   { prob:pB, odd:parseFloat(document.getElementById('oddBTTS').value), id:'BTTS',   name:'Ambas Marcam' },
+  };
+
+  // Per-market pillar state (for display)
+  const pillars={};
+
+  Object.values(odds).forEach(m=>{
+    const ev=(m.prob*m.odd)-1;
+    const pEV=ev>0.02&&ev<0.25;
+    let score=ev>0?Math.min(40,ev*150)*1.0:0; // EV base (não ponderado, é relativo ao mercado)
+    let pMat=false,pXG=false,pClinica=false,pElo=false;
+
+    if(m.id==='Casa'){
+      // Matriz (weight: mat_h)
+      const matContrib=Math.max(0,pH-pA)*60*w.mat_h.w;
+      // xG    (weight: xg_h)
+      const xgContrib=Math.max(0,lam-mu)*20*w.xg_h.w;
+      // ELO   (weight: elo_h)
+      const eloContrib=Math.max(0,eloDiff/400)*15*w.elo_h.w;
+      // Clínica (weight: clinica_h)
+      const clinicaContrib=(ratioHome<1?(1-ratioHome)*30*w.clinica_h.w:-(ratioHome-1)*30*w.clinica_h.w);
+      score+=matContrib+xgContrib+eloContrib+clinicaContrib;
+      // Fadiga penalty (weight: fatigue)
+      if(fatigH) score-=15*w.fatigue.w;
+      pMat=pH>pA; pXG=lam>mu; pClinica=ratioHome<1.0; pElo=eloDiff>0;
+
+    } else if(m.id==='Fora'){
+      const matContrib=Math.max(0,pA-pH)*60*w.mat_a.w;
+      const xgContrib=Math.max(0,mu-lam)*20*w.xg_a.w;
+      const eloContrib=Math.max(0,-eloDiff/400)*15*w.elo_a.w;
+      const clinicaContrib=(ratioAway<1?(1-ratioAway)*30*w.clinica_a.w:-(ratioAway-1)*30*w.clinica_a.w);
+      score+=matContrib+xgContrib+eloContrib+clinicaContrib;
+      if(fatigA) score-=15*w.fatigue.w;
+      pMat=pA>pH; pXG=mu>lam; pClinica=ratioAway<1.0; pElo=eloDiff<0;
+
+    } else if(m.id==='Empate'){
+      const matContrib=Math.max(0,pD-0.22)*150*w.mat_d.w;
+      const xgContrib=Math.max(0,30-(Math.abs(pH-pA)*100))*w.xg_d.w;
+      score+=matContrib+xgContrib;
+      pMat=pD>0.25; pXG=Math.abs(lam-mu)<0.3; pClinica=ratioHome>1.10&&ratioAway>1.10;
+
+    } else if(m.id==='Over'){
+      const xgContrib=Math.max(0,(lam+mu)-2.2)*20*w.over.w;
+      const matContrib=Math.max(0,pO-0.45)*80*w.over.w;
+      const clinicaContrib=(ratioHome<1.0&&ratioAway<1.0)?15*w.clinica_h.w:-15;
+      score+=xgContrib+matContrib+clinicaContrib;
+      pMat=pO>0.5; pXG=(lam+mu)>2.5; pClinica=ratioHome<1.05&&ratioAway<1.05;
+
+    } else if(m.id==='BTTS'){
+      const xgContrib=(Math.min(lam,mu)-0.9)*25*w.btts.w;
+      const matContrib=Math.max(0,pB-0.45)*80*w.btts.w;
+      const clinicaContrib=(ratioHome<1.05&&ratioAway<1.05)?10*w.clinica_h.w:-20;
+      score+=xgContrib+matContrib+clinicaContrib;
+      pMat=pB>0.5; pXG=lam>1.0&&mu>1.0; pClinica=ratioHome<1.05&&ratioAway<1.05;
+    }
+
+    if(ev>0.30) score-=40; // EV absurdo
+    m.ev=ev;
+    m.score=Math.max(0,Math.min(100,score));
+    m.pillars={ m:pMat, x:pXG, e:pEV, c:pClinica, elo:pElo };
+    pillars[m.id]=m.pillars;
+  });
+
+  const validMarkets=Object.values(odds).filter(m=>m.ev>0).sort((a,b)=>b.score-a.score);
+  const best=validMarkets.length>0?validMarkets[0]:null;
+
+  // ── EV Market Cards
+  const mC=document.getElementById('marketCards'); mC.innerHTML='';
+  Object.values(odds).forEach(m=>{
+    const isBest=best&&m.id===best.id;
+    const cls=isBest?'value-bet':(m.ev>0?'card border-emerald-500/20':'card opacity-40');
+    // Accuracy badge for this market
+    let accKey='';
+    if(m.id==='Casa')   accKey='mat_h';
+    if(m.id==='Fora')   accKey='mat_a';
+    if(m.id==='Empate') accKey='mat_d';
+    if(m.id==='Over')   accKey='over';
+    if(m.id==='BTTS')   accKey='btts';
+    const btInfo=BT[accKey];
+    const accStr=btInfo&&btInfo.n>=10?`<span class="acc-badge ${accClass(btInfo.acc)} ml-1">${btInfo.acc.toFixed(1)}%</span>`:'';
+
+    mC.insertAdjacentHTML('beforeend',`
+      <div class="p-3 rounded-2xl flex flex-col justify-between ${cls}">
+        <div class="flex items-start justify-between gap-1">
+          <h3 class="font-bold text-white text-[10px] uppercase">${m.name}</h3>
+          ${accStr}
+        </div>
+        <div class="mt-2 pt-2 border-t border-slate-800">
+          <div class="flex justify-between text-[10px] mono mb-1">
+            <span class="text-slate-400">Prob: ${(m.prob*100).toFixed(1)}%</span>
+            <span class="text-slate-400">Odd: ${m.odd.toFixed(2)}</span>
+          </div>
+          <div class="flex justify-between text-[10px] mono">
+            <span class="${m.ev>0?'text-emerald-400 font-bold':'text-slate-500'}">EV: ${(m.ev*100).toFixed(1)}%</span>
+            <span class="text-slate-400">Score: ${Math.round(m.score)}</span>
+          </div>
+        </div>
+      </div>`);
+  });
+
+  // ── Intelligence Report
+  const rep=document.getElementById('reportContainer');
+
+  // Goal probability table
+  let gHTML=`<div class="bg-slate-900/60 rounded-xl p-4 border border-slate-800">
+    <h3 class="text-[10px] uppercase tracking-widest font-bold text-slate-400 mb-3 text-center">Probabilidade de Golos</h3>
+    <div class="flex justify-between text-[10px] mono border-b border-slate-700 pb-2 mb-2 text-slate-500 font-bold">
+      <span class="w-1/4">Golos</span>
+      <span class="w-1/4 text-center text-blue-400">Casa</span>
+      <span class="w-1/4 text-center text-purple-400">Fora</span>
+      <span class="w-1/4 text-right text-emerald-400">Tend.</span>
+    </div>`;
+  ['0','1','2','3+'].forEach((lbl,i)=>{
+    const hv=(hG[i]*100).toFixed(1), av=(aG[i]*100).toFixed(1);
+    const hlH=hG[i]>aG[i]?'text-white font-bold':'text-slate-400';
+    const hlA=aG[i]>hG[i]?'text-white font-bold':'text-slate-400';
+    const tend=hG[i]>aG[i]?'CASA':(aG[i]>hG[i]?'FORA':'—');
+    const tendC=hG[i]>aG[i]?'text-blue-400 font-bold':(aG[i]>hG[i]?'text-purple-400 font-bold':'text-slate-500');
+    gHTML+=`<div class="flex justify-between text-[10px] mono py-1">
+      <span class="w-1/4 text-slate-500">${lbl} golo(s)</span>
+      <span class="w-1/4 text-center ${hlH}">${hv}%</span>
+      <span class="w-1/4 text-center ${hlA}">${av}%</span>
+      <span class="w-1/4 text-right ${tendC}">${tend}</span>
+    </div>`;
+  });
+  gHTML+='</div>';
+
+  if(best){
+    const scColor=best.score>=80?'text-emerald-400':(best.score>=50?'text-amber-400':'text-red-400');
+    const verdict=best.score>=80?'Sinergia Máxima · indicadores convergem.':(best.score>=50?'Convergência Parcial · risco moderado.':'Conflito de Indicadores · risco estatístico alto.');
+    const b_=best.odd-1;
+    const fK=((b_*best.prob)-(1-best.prob))/b_;
+    // Stake: agora usa também o peso médio dos pilares ativos para escalar exposição
+    const activeWeightSum=[
+      best.pillars.m?w[best.id==='Casa'?'mat_h':best.id==='Fora'?'mat_a':'mat_d'].w:0,
+      best.pillars.x?w[best.id==='Casa'?'xg_h':best.id==='Fora'?'xg_a':best.id==='Over'?'over':'btts'].w:0,
+      best.pillars.c?w[best.id==='Casa'||best.id==='Over'?'clinica_h':'clinica_a'].w:0
+    ].reduce((s,v)=>s+v,0);
+    const avgPillarW=activeWeightSum/3;
+    const stake=Math.max(0,Math.min((fK*0.125*(best.score/100)*Math.min(avgPillarW,1.5))*100,2.5));
+
+    // Pillar rows with accuracy badge
+    function pillarRow(active,label,btKey){
+      const btInfo=BT[btKey];
+      const aStr=btInfo&&btInfo.n>=10?`<span class="acc-badge ${accClass(btInfo.acc)}">${btInfo.acc.toFixed(1)}%</span>`:'<span class="acc-badge acc-none">—</span>';
+      return `<div class="pillar-row">
+        <div class="pillar-left">
+          <span class="${active?'text-emerald-400':'text-slate-600'} text-sm">${active?'✅':'❌'}</span>
+          <span class="pillar-label">${label}</span>
+        </div>
+        ${aStr}
+      </div>`;
+    }
+
+    const matKey=best.id==='Casa'?'mat_h':best.id==='Fora'?'mat_a':'mat_d';
+    const xgKey=best.id==='Casa'?'xg_h':best.id==='Fora'?'xg_a':best.id==='Over'?'over':best.id==='BTTS'?'btts':'xg_d';
+    const clinKey=best.id==='Fora'?'clinica_a':'clinica_h';
+    const eloKey=best.id==='Casa'?'elo_h':'elo_a';
+
+    rep.innerHTML=gHTML+`
+      <div class="bg-slate-900/40 rounded-xl p-4 border border-slate-800 space-y-4">
+        <div class="flex justify-between items-center">
+          <div>
+            <p class="text-[9px] text-slate-400 uppercase tracking-widest font-bold">Entrada Recomendada</p>
+            <p class="text-sm font-black text-white mt-1">${best.name} @ ${best.odd.toFixed(2)}</p>
+            <p class="text-[10px] text-slate-500 mt-0.5 mono">Prob: ${(best.prob*100).toFixed(1)}% · EV: ${(best.ev*100).toFixed(1)}%</p>
+          </div>
+          <div class="text-right">
+            <p class="text-[9px] text-slate-400 uppercase tracking-widest font-bold">Score Ponderado</p>
+            <p class="text-3xl font-black mono ${scColor}">${Math.round(best.score)}</p>
+            <p class="text-[9px] text-slate-500">calibrado por BT</p>
+          </div>
+        </div>
+
+        <div class="border-t border-slate-800 pt-3 space-y-0">
+          ${pillarRow(best.pillars.m,'Matriz Bivariada apoia o evento',matKey)}
+          ${pillarRow(best.pillars.x,'Projeção xG / Médias convergem',xgKey)}
+          ${(best.id==='Casa'||best.id==='Fora')?pillarRow(best.pillars.elo,'ELO apoia o favorito',eloKey):''}
+          ${pillarRow(best.pillars.e,'EV dentro da zona de valor (2–25%)','ev_ratio')}
+          <div class="pillar-row">
+            <div class="pillar-left">
+              <span class="${best.pillars.c?'text-emerald-400':'text-slate-600'} text-sm">${best.pillars.c?'✅':'❌'}</span>
+              <span class="pillar-label">Auditoria Empírica · Risco de Zeros</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-[9px] mono text-slate-500">C:<span class="${ratioHome>1.1?'text-red-400':ratioHome<0.9?'text-emerald-400':'text-white'}">${ratioHome.toFixed(2)}</span> F:<span class="${ratioAway>1.1?'text-red-400':ratioAway<0.9?'text-emerald-400':'text-white'}">${ratioAway.toFixed(2)}</span></span>
+              <span class="acc-badge ${accClass(BT.clinica_h.acc)}">${BT.clinica_h.n>=10?BT.clinica_h.acc.toFixed(1)+'%':'—'}</span>
+            </div>
+          </div>
+          ${fatigH||fatigA?`<div class="pillar-row"><div class="pillar-left"><span class="text-red-400 text-sm">⚠️</span><span class="pillar-label">Fadiga detectada (${fatigH?homeTeam:''}${fatigH&&fatigA?' + ':''}${fatigA?awayTeam:''})</span></div><span class="acc-badge ${accClass(BT.fatigue.acc)}">${BT.fatigue.n>=10?BT.fatigue.acc.toFixed(1)+'%':'—'}</span></div>`:''}
+        </div>
+
+        ${best.ev>0.30?`<div class="text-red-400 text-[10px] uppercase font-bold mono">⚠️ EV Absurdo — reduza exposição. Possível armadilha.</div>`:''}
+
+        <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 flex justify-between items-center">
+          <span class="text-slate-400 text-[10px] uppercase tracking-wider font-bold">${verdict}</span>
+          <strong class="text-white mono bg-blue-700 px-3 py-1 rounded-lg text-xs">Gestão: ${stake.toFixed(2)}%</strong>
+        </div>
+      </div>`;
+  } else {
+    rep.innerHTML=gHTML+`<div class="p-6 rounded-2xl bg-slate-900/40 border border-slate-800 text-center text-slate-500 text-xs uppercase tracking-wider mt-4">Nenhum EV positivo encontrado. Fique de fora.</div>`;
+  }
+
+  document.getElementById('dashboard').classList.remove('hidden');
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// UI HELPERS
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function toggleUI(loading) {
+  document.getElementById('matchPanel').classList.toggle('hidden',loading);
+  document.getElementById('dashboard').classList.add('hidden');
+  document.getElementById('loading').classList.toggle('hidden',!loading);
+  document.getElementById('btnLoadCSV').disabled=loading;
+}
+
+function setLoadMsg(msg) {
+  document.getElementById('loadingMsg').textContent=msg;
+}
+
+function populateDropdowns() {
+  const hS=document.getElementById('homeTeam'), aS=document.getElementById('awayTeam');
+  hS.innerHTML=''; aS.innerHTML='';
+  uniqueTeams.forEach(t=>{
+    const opt=`<option value="${t}">${t}</option>`;
+    hS.insertAdjacentHTML('beforeend',opt);
+    aS.insertAdjacentHTML('beforeend',opt);
+  });
+  if(aS.options.length>1) aS.selectedIndex=1;
+  updateEloBadges();
+  hS.addEventListener('change',updateEloBadges);
+  aS.addEventListener('change',updateEloBadges);
+}
+
+function updateEloBadges() {
+  document.getElementById('homeEloBadge').innerText=Math.round(teamElo[document.getElementById('homeTeam').value]||1500);
+  document.getElementById('awayEloBadge').innerText=Math.round(teamElo[document.getElementById('awayTeam').value]||1500);
+}
+
+async function fetchAndParseCSV() {
+  toggleUI(true); setLoadMsg('Conectando à API...');
+  const l=document.getElementById('league').value, s=document.getElementById('season').value;
+  const url=globalLeagues.includes(l)?`https://www.football-data.co.uk/new/${l}.csv`:`https://www.football-data.co.uk/mmz4281/${s}/${l}.csv`;
+  try {
+    const res=await fetch(`/api/fetch-football?url=${encodeURIComponent(url)}`);
+    if(!res.ok) throw new Error();
+    processRawCSV(await res.text());
+  } catch {
+    alert('Erro na API. Utilize o upload manual.');
+    toggleUI(false);
+  }
+}
+
+function handleFileUpload(e) {
+  const f=e.target.files[0]; if(!f) return;
+  toggleUI(true); setLoadMsg('Lendo arquivo...');
+  const r=new FileReader();
+  r.onload=ev=>{
+    try { processRawCSV(ev.target.result); }
+    catch(err){ alert(err.message); toggleUI(false); }
+  };
+  e.target.value='';
+  r.readAsText(f);
+}
+</script>
+</body>
+</html>
