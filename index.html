@@ -444,12 +444,29 @@ function runBacktest() {
     rM2++; rH2+=m.FTHG; rA2+=m.FTAG; if(m.FTHG===m.FTAG)rD2++;
   });
 
+  // Linhas de base estatísticas dinâmicas baseadas na realidade da liga
+  const bL = {
+    mat_h: leagueBaseFreq.h*100, mat_a: leagueBaseFreq.a*100, mat_d: leagueBaseFreq.d*100,
+    xg_h: leagueBaseFreq.h*100,  xg_a: leagueBaseFreq.a*100,  xg_d: leagueBaseFreq.d*100,
+    elo_h: leagueBaseFreq.h*100, elo_a: leagueBaseFreq.a*100,
+    clinica_h: 50, clinica_a: 50, ev_ratio: 50, over: 48, btts: 50, fatigue: 50
+  };
+
   let maxExcess=0;
   Object.keys(BT).forEach(k=>{
-    const t=BT[k].tots||0, h=BT[k].hits||0; BT[k].n=t; BT[k].acc=t>0?(h/t*100):50;
-    const excess=Math.max(0,BT[k].acc-50); if(excess>maxExcess) maxExcess=excess;
+    const t=BT[k].tots||0, h=BT[k].hits||0; 
+    BT[k].n=t; 
+    BT[k].acc=t>0?(h/t*100):50;
+    const target = bL[k] || 50; // Usa a linha de base estatística do evento real
+    const excess = Math.max(0, BT[k].acc - target); 
+    if(excess>maxExcess) maxExcess=excess;
   });
-  Object.keys(BT).forEach(k=>{ const excess=Math.max(0,BT[k].acc-50); BT[k].w = maxExcess>0 ? 0.2+(excess/maxExcess)*1.8 : 1.0; });
+
+  Object.keys(BT).forEach(k=>{ 
+    const target = bL[k] || 50;
+    const excess = Math.max(0, BT[k].acc - target); 
+    BT[k].w = maxExcess>0 ? 0.6+(excess/maxExcess)*0.9 : 1.0; 
+  });
   btDone=true;
 }
 
