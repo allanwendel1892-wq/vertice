@@ -594,11 +594,16 @@ function calculateModel() {
     m.pillars={ m:pMat, x:pXG, e:pEV, c:pClinica, elo:pElo };
   });
 
-  // DUPLA ANÁLISE DE MERCADOS
-  const valueMarkets = Object.values(odds).filter(m => m.ev > 0).sort((a,b) => b.score - a.score);
+  // PAINEL 1: FOCO PURO EM VALOR ESPERADO (Matemática Financeira / Edge)
+  // Ordena ESTRITAMENTE pelo EV, não pelo score.
+  const valueMarkets = Object.values(odds).filter(m => m.ev > 0.02).sort((a,b) => b.ev - a.ev);
   const bestValue = valueMarkets.length > 0 ? valueMarkets[0] : null;
 
-  const predictiveMarkets = Object.values(odds).filter(m => m.score >= 35).sort((a,b) => b.score - a.score);
+  // PAINEL 2: FOCO ESTRITO EM PREVISÃO (Sinergia de Indicadores / Probabilidade Alta)
+  // Exclui a opção de Valor para forçar uma segunda perspectiva, garantindo que EV não seja negativo
+  const predictiveMarkets = Object.values(odds)
+    .filter(m => m.score > 40 && m.ev > -0.08 && (!bestValue || m.id !== bestValue.id))
+    .sort((a,b) => b.score - a.score);
   const bestPredictive = predictiveMarkets.length > 0 ? predictiveMarkets[0] : null;
 
   // ── EV Market Cards
