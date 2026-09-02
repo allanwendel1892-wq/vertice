@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>QUANT ENGINE V14 – ABSOLUTE CONSENSUS</title>
+<title>QUANT ENGINE V15 – ABSOLUTE FUSION</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
@@ -14,6 +14,7 @@
   .card { background:rgba(31,41,55,0.45); border:1px solid rgba(255,255,255,0.04); transition:all .25s; }
   .card:hover { border-color:rgba(139,92,246,.2); transform:translateY(-1px); }
   .super-bet { background:rgba(139,92,246,.08); border:1px solid rgba(139,92,246,.4)!important; box-shadow:0 0 25px rgba(139,92,246,.15); }
+  .matrix-table td { width:45px; height:42px; text-align:center; border:1px solid rgba(255,255,255,.02); font-size:.65rem; font-family:'JetBrains Mono',monospace; }
   .loader { border-top-color:#8b5cf6; animation:spin .8s linear infinite; }
   @keyframes spin{ to{ transform:rotate(360deg) } }
   .scroll::-webkit-scrollbar{ width:5px; }
@@ -35,9 +36,9 @@
 <header class="glass rounded-3xl p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-3 border-b-4 border-violet-600">
   <div>
     <h1 class="text-2xl font-extrabold mono text-white">QUANT<span class="text-violet-400 font-light">ENGINE</span>
-      <span class="text-[9px] bg-violet-500/20 text-violet-400 px-2 py-0.5 rounded border border-violet-500/30 font-bold ml-2 uppercase tracking-widest">V14 · ABSOLUTE CONSENSUS</span>
+      <span class="text-[9px] bg-violet-500/20 text-violet-400 px-2 py-0.5 rounded border border-violet-500/30 font-bold ml-2 uppercase tracking-widest">V15 · ABSOLUTE FUSION</span>
     </h1>
-    <p class="text-slate-400 text-xs mt-1">Shrinkage Bayesiano · 4-Way Cross-Validation · Backtest Weights · Momentum</p>
+    <p class="text-slate-400 text-xs mt-1">Market Edge Tracking · 4-Way True CV · Neg. Binomial Matrix · Momentum</p>
   </div>
   <div id="btStatusBadge" class="hidden text-[10px] mono font-bold px-3 py-1.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-400"></div>
 </header>
@@ -172,11 +173,19 @@
           <div id="awayXPts" class="text-[9px] text-slate-500 mb-2 mono uppercase tracking-wider"></div>
           <div class="w-full bg-slate-900 rounded-full h-1.5"><div id="awayBar" class="bg-pink-500 h-full rounded-full transition-all duration-700"></div></div>
         </div>
+
+        <div class="overflow-x-auto mt-4">
+          <h2 class="text-[10px] uppercase tracking-widest font-black text-slate-400 border-b border-slate-800 pb-2 mb-3">Matriz Bivariada (Binomial Negativa)</h2>
+          <table class="w-full matrix-table">
+            <thead><tr id="matrixHead"></tr></thead>
+            <tbody id="matrixBody"></tbody>
+          </table>
+        </div>
       </div>
 
       <div id="btPanel" class="glass rounded-3xl p-5">
         <div class="flex justify-between items-center border-b border-slate-800 pb-2 mb-4">
-          <h2 class="text-[10px] uppercase tracking-widest font-black text-slate-400">Backtest Dinâmico (Pesos Bayesiano da Liga)</h2>
+          <h2 class="text-[10px] uppercase tracking-widest font-black text-slate-400">Backtest Dinâmico de Liga</h2>
           <span id="btSampleCount" class="text-[10px] mono text-slate-500"></span>
         </div>
         <div id="btRows" class="space-y-0.5"></div>
@@ -214,7 +223,7 @@ let expectedZeros={}, actualZeros={};
 let dynamicHFA=60, dynamicRho=-0.05;
 let leagueBaseFreq={ h:0.45, d:0.26, a:0.29 };
 
-// MATRIZ DE BACKTEST (V10 Restaurada)
+// MATRIZ DE BACKTEST (14 Indicadores Consolidados)
 let BT = {
   mat_h:{acc:50,n:0,w:1}, mat_a:{acc:50,n:0,w:1}, mat_d:{acc:50,n:0,w:1},
   xg_h:{acc:50,n:0,w:1}, xg_a:{acc:50,n:0,w:1}, xg_d:{acc:50,n:0,w:1},
@@ -224,12 +233,13 @@ let BT = {
   fatigue:{acc:50,n:0,w:0.5}
 };
 let btDone = false;
+let globalMat = null; // Para renderizar a Matriz
 const globalLeagues = ["BRA","ARG","USA","MEX","JPN","CHN","SWE","NOR","FIN","IRL","POL","ROU","RUS","SWZ","AUT","DNK"];
 
 window.addEventListener('DOMContentLoaded', () => fetchAndParseCSV());
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// MATH CORE (NegBinomial, Shrinkage, V10+V13)
+// MATH CORE
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 function negBinomial(k, mean, r=CFG.overdispR) {
   if (mean<=0) return k===0?1:0;
@@ -247,17 +257,18 @@ function dixonColes(x,y,L,M,rho) {
 }
 
 function buildMatrix(lam, mu, rho) {
-  let pH=0, pD=0, pA=0, pU=0, pB=0, total=0;
+  let mat=[], pH=0, pD=0, pA=0, pU=0, pB=0, total=0;
   for(let x=0;x<=CFG.matrixLimit;x++){
+    mat[x]=[];
     for(let y=0;y<=CFG.matrixLimit;y++){
       let p=negBinomial(x,lam)*negBinomial(y,mu)*dixonColes(x,y,lam,mu,rho);
-      total+=p;
+      mat[x][y]=p; total+=p;
       if(x>y) pH+=p; else if(x===y) pD+=p; else pA+=p;
       if((x+y)<2.5) pU+=p;
       if(x>0&&y>0) pB+=p;
     }
   }
-  const s=pH+pD+pA; return { pH:pH/s, pD:pD/s, pA:pA/s, pO:1-(pU/total), pB:pB/total };
+  const s=pH+pD+pA; return { mat, pH:pH/s, pD:pD/s, pA:pA/s, pO:1-(pU/total), pB:pB/total };
 }
 
 function removeVig1X2(h, d, a) { const sum = (1/h) + (1/d) + (1/a); return { pH: (1/h)/sum, pD: (1/d)/sum, pA: (1/a)/sum }; }
@@ -289,7 +300,7 @@ function calculateXPts(team) {
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// CSV PARSER
+// CSV PARSER & BACKTEST
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 function parseCSVText(text) {
   const lines=text.split('\n').map(l=>l.trim()).filter(l=>l.length>0);
@@ -339,7 +350,6 @@ function processRawCSV(rawText) {
     if(!expectedZeros[m.AwayTeam]){expectedZeros[m.AwayTeam]=0;actualZeros[m.AwayTeam]=0;}
     const w=Math.exp(-CFG.timeDecayLambda*((globalLatestDate-m.DateObj)/86400000));
     
-    // Purificação V10 - NegBinomial Zero Risk
     expectedZeros[m.HomeTeam] += Math.pow(CFG.overdispR / (CFG.overdispR + m.HXG), CFG.overdispR) * w;
     expectedZeros[m.AwayTeam] += Math.pow(CFG.overdispR / (CFG.overdispR + m.AXG), CFG.overdispR) * w;
     if(m.FTHG===0) actualZeros[m.HomeTeam]+=w; if(m.FTAG===0) actualZeros[m.AwayTeam]+=w;
@@ -370,9 +380,6 @@ function processRawCSV(rawText) {
   setTimeout(()=>{ runBacktest(); populateDropdowns(); toggleUI(false); renderBtPanel(); },50);
 }
 
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// BACKTEST ENGINE (Restaurado da V10)
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 function runBacktest() {
   Object.keys(BT).forEach(k=>{ BT[k]={acc:50,n:0,w:1,hits:0,tots:0}; });
   const teamCounts={};
@@ -430,8 +437,7 @@ function runBacktest() {
     }
     const cHFA2=rM2>20?((rH2-rA2)/rM2)*120:60; const eH2=snapElo[ht]+cHFA2, eA2=snapElo[at];
     const pH2=1/(1+Math.pow(10,(eA2-eH2)/400)); let aH2=m.FTHG>m.FTAG?1:(m.FTHG===m.FTAG?.5:0);
-    const kv2=1; // Simplificado para acelerar
-    snapElo[ht]+=CFG.eloKFactor*kv2*(aH2-pH2); snapElo[at]+=CFG.eloKFactor*kv2*((1-aH2)-(1-pH2));
+    snapElo[ht]+=CFG.eloKFactor*1*(aH2-pH2); snapElo[at]+=CFG.eloKFactor*1*((1-aH2)-(1-pH2));
     const w2=Math.exp(-CFG.timeDecayLambda*((globalLatestDate-m.DateObj)/86400000));
     snapExpZ[ht]+= Math.pow(CFG.overdispR / (CFG.overdispR + m.HXG), CFG.overdispR) * w2; 
     snapExpZ[at]+= Math.pow(CFG.overdispR / (CFG.overdispR + m.AXG), CFG.overdispR) * w2;
@@ -466,8 +472,9 @@ function renderBtPanel() {
 
   const rows=[
     { key:'mat_h', label:'Matriz — Casa' }, { key:'mat_a', label:'Matriz — Fora' },
+    { key:'xg_h', label:'xG — Casa (λ>μ)' }, { key:'xg_a', label:'xG — Fora (μ>λ)' },
     { key:'elo_h', label:'ELO — Casa' }, { key:'clinica_h',label:'Clínica — Casa' },
-    { key:'over', label:'xG Over 2.5' }, { key:'btts', label:'xG BTTS' }
+    { key:'ev_ratio', label:'EV Ratio (Edge)'}, { key:'over', label:'xG Over 2.5' }, { key:'btts', label:'xG BTTS' }
   ];
 
   document.getElementById('btRows').innerHTML=rows.map(r=>{
@@ -485,19 +492,41 @@ function renderBtPanel() {
 
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// ENGINE CORE (EXECUTADO 4 VEZES C/ UPGRADES)
+// ENGINE CORE (Absolute Fusion - V10 + V14)
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-function runEngineCore(dataset, homeTeam, awayTeam, isH2H = false, refLam = null, refMu = null) {
-  if(!dataset || dataset.length === 0) return null;
-
-  // Restaurado da V10: Penalidades Clínicas (Ratio Zeros)
+function runEngineCore(homeTeam, awayTeam, scenario = 'BASE', refLam = null, refMu = null) {
   const prior=1.5;
   const ratioHome=((actualZeros[homeTeam]||0)+prior)/((expectedZeros[homeTeam]||0)+prior);
   const ratioAway=((actualZeros[awayTeam]||0)+prior)/((expectedZeros[awayTeam]||0)+prior);
 
+  // FIX DO CROSS-VALIDATION: Evita o "data starving" separando os datasets de forma justa.
+  let filtH = csvMatches, filtA = csvMatches;
+  if (scenario === 'RECENTE') {
+      filtH = csvMatches.filter(m => m.HomeTeam === homeTeam || m.AwayTeam === homeTeam).slice(-12);
+      filtA = csvMatches.filter(m => m.HomeTeam === awayTeam || m.AwayTeam === awayTeam).slice(-12);
+  } else if (scenario === 'H2H') {
+      filtH = csvMatches.filter(m => (m.HomeTeam === homeTeam && m.AwayTeam === awayTeam) || (m.HomeTeam === awayTeam && m.AwayTeam === homeTeam));
+      filtA = filtH;
+  }
+
   let wHS=0,wHC=0,wHSum=0,wAS=0,wAC=0,wASum=0,mCH=0,mCA=0;
-  dataset.filter(m=>m.HomeTeam===homeTeam).forEach(m=>{ const w=Math.exp(-CFG.timeDecayLambda*((globalLatestDate-m.DateObj)/86400000)); wHS+=m.HXG*w;wHC+=m.AXG*w;wHSum+=w;mCH++; });
-  dataset.filter(m=>m.AwayTeam===awayTeam).forEach(m=>{ const w=Math.exp(-CFG.timeDecayLambda*((globalLatestDate-m.DateObj)/86400000)); wAS+=m.AXG*w;wAC+=m.HXG*w;wASum+=w;mCA++; });
+  
+  filtH.forEach(m => {
+      const w = Math.exp(-CFG.timeDecayLambda*((globalLatestDate-m.DateObj)/86400000));
+      if(m.HomeTeam === homeTeam) { wHS+=m.HXG*w; wHC+=m.AXG*w; wHSum+=w; mCH++; }
+      // Em Cenário Global, adicionamos o form do time fora de casa balanceado pelo HFA.
+      else if (scenario === 'GLOBAL_ALL' && m.AwayTeam === homeTeam) {
+          wHS+=(m.AXG * 1.15)*w; wHC+=(m.HXG * 0.85)*w; wHSum+=w; mCH++;
+      }
+  });
+  
+  filtA.forEach(m => {
+      const w = Math.exp(-CFG.timeDecayLambda*((globalLatestDate-m.DateObj)/86400000));
+      if(m.AwayTeam === awayTeam) { wAS+=m.AXG*w; wAC+=m.HXG*w; wASum+=w; mCA++; }
+      else if (scenario === 'GLOBAL_ALL' && m.HomeTeam === awayTeam) {
+          wAS+=(m.HXG * 0.85)*w; wAC+=(m.AXG * 1.15)*w; wASum+=w; mCA++;
+      }
+  });
 
   if(wHSum===0 && wASum===0) return null;
 
@@ -513,28 +542,26 @@ function runEngineCore(dataset, homeTeam, awayTeam, isH2H = false, refLam = null
   let lam=(lam_xG*.65)+(leagueAvg.homeAvg*Math.exp(eloDiff/400)*.35);
   let mu=(mu_xG*.65)+(leagueAvg.awayAvg*Math.exp(-eloDiff/400)*.35);
 
-  // Shrinkage de Amostra (Prevenção de Overfitting)
   let dsSH=Math.max(.5,CFG.basePriorShrink*Math.exp(-.06*mCH)), dsSA=Math.max(.5,CFG.basePriorShrink*Math.exp(-.06*mCA));
   lam=Math.max(.2,(lam*(1-dsSH/(dsSH+wHSum)))+(leagueAvg.homeAvg*(dsSH/(dsSH+wHSum))));
   mu=Math.max(.2,(mu*(1-dsSA/(dsSA+wASum)))+(leagueAvg.awayAvg*(dsSA/(dsSA+wASum))));
 
-  // Melhoria Crítica: Shrinkage Severo para H2H (Amostra Pequena vs Média Global)
-  if (isH2H && dataset.length < 5 && refLam !== null && refMu !== null) {
-      const wH2H = dataset.length / 5.0; // max 1.0
+  if (scenario === 'H2H' && mCH < 5 && refLam !== null && refMu !== null) {
+      const wH2H = mCH / 5.0; // max 1.0
       lam = (lam * wH2H) + (refLam * (1 - wH2H));
       mu  = (mu  * wH2H) + (refMu  * (1 - wH2H));
   }
 
-  // Restaurado da V10: Checagem de Fadiga
   const dayH=(globalLatestDate-teamLastPlayed[homeTeam])/86400000, dayA=(globalLatestDate-teamLastPlayed[awayTeam])/86400000;
   const fatigH=dayH<3.5, fatigA=dayA<3.5;
   if(fatigH) lam*=.90; if(fatigA) mu*=.90;
   
-  // Da V13: Momentum 
-  const hMom = calculateMomentum(homeTeam, dataset), aMom = calculateMomentum(awayTeam, dataset);
+  const hMom = calculateMomentum(homeTeam, csvMatches), aMom = calculateMomentum(awayTeam, csvMatches);
   lam *= (1 + (hMom.diff * 0.05)); mu *= (1 + (aMom.diff * 0.05));
 
-  const {pH,pD,pA,pO,pB} = buildMatrix(lam,mu,dynamicRho);
+  const {mat, pH, pD, pA, pO, pB} = buildMatrix(lam,mu,dynamicRho);
+  if(scenario === 'GLOBAL_ALL') globalMat = mat; // Salva para a UI
+
   const mkt1X2 = removeVig1X2(parseFloat(document.getElementById('oddHomeRef').value), parseFloat(document.getElementById('oddDrawRef').value), parseFloat(document.getElementById('oddAwayRef').value));
   const mktOver = removeVig2Way(parseFloat(document.getElementById('oddOverRef').value));
   const mktBTTS = removeVig2Way(parseFloat(document.getElementById('oddBTTSRef').value));
@@ -549,36 +576,47 @@ function runEngineCore(dataset, homeTeam, awayTeam, isH2H = false, refLam = null
 
   let bestPick = null; let maxScore = -9999;
   Object.values(odds).forEach(m=>{
-    // Fusão V10+V13: HitRate Dinâmico Baseado no Backtest (Não mais fixo 0.4, 0.2, 0.4)
     let wM = 1, wE = 1, wMkt = 1.2; 
-    let pen = 0; // Penalidades V10 restauradas
+    let pen = 0; 
     
+    // RESTAURAÇÃO: Discrepância / Market Edge (Value vs Sharp) da V10
+    const impliedOddMkt = 1 / m.mktP;
+    const valueVsSharp = m.odd > impliedOddMkt ? (m.odd / impliedOddMkt - 1) : 0; 
+    
+    // Aplicação dos pesos do backtest + Penalidades V10
     if(m.id==='Casa'){ 
         wM = BT.mat_h.w; wE = BT.elo_h.w; 
         if(fatigH) pen += 10 * BT.fatigue.w; 
-        if(ratioHome>1.10) pen += 15 * BT.clinica_h.w; // Cria muito e não faz gol 
-    }
-    else if(m.id==='Fora'){ 
+        if(ratioHome>1.10) pen += 15 * BT.clinica_h.w; 
+    } else if(m.id==='Fora'){ 
         wM = BT.mat_a.w; wE = BT.elo_a.w; 
         if(fatigA) pen += 10 * BT.fatigue.w; 
         if(ratioAway>1.10) pen += 15 * BT.clinica_a.w; 
+    } else if(m.id==='Empate'){ 
+        wM = BT.mat_d.w; wE = 0.5; 
+    } else if(m.id==='Over'){ 
+        wM = BT.over.w; wE = BT.over.w; 
+        if(ratioHome>1.05||ratioAway>1.05) pen += 8; 
+    } else if(m.id==='BTTS'){ 
+        wM = BT.btts.w; wE = BT.btts.w; 
+        if(ratioHome>1.05||ratioAway>1.05) pen += 10; 
     }
-    else if(m.id==='Empate'){ wM = BT.mat_d.w; wE = 0.5; }
-    else if(m.id==='Over'){ wM = BT.over.w; wE = BT.over.w; if(ratioHome>1.05||ratioAway>1.05) pen += 8; }
-    else if(m.id==='BTTS'){ wM = BT.btts.w; wE = BT.btts.w; if(ratioHome>1.05||ratioAway>1.05) pen += 10; }
 
     const totalW = wM + wE + wMkt;
-    m.trueHitRate = ((m.matP * wM) + (m.eloP * wE) + (m.mktP * wMkt)) / totalW;
+    m.trueHitRate = ((m.matP * wM) + (m.eloP * wE) + (m.mktP * wMkt)) / totalW; // Fusion Core
 
     const ev = (m.trueHitRate * m.odd) - 1;
-    let score = (m.trueHitRate * 100); 
-    if(m.matP > 0.45) score += 10; 
-    if(m.eloP > 0.45) score += 10; 
-    if(ev > 0) score += (ev * 100);
+    let score = ev > 0 ? (ev * 150) : 0;
     
-    score -= pen; // Applica penalidades clínicas e fadiga
+    // RESTAURAÇÃO: Incorpora os pesos de Backtest estatístico (xG, EvRatio) no SCORE
+    if (valueVsSharp > 0.03) score += 30; // Premia apostas com vantagem sobre a Pinnacle
+    if(m.id==='Casa') score += Math.max(0, pH-pA)*60*BT.mat_h.w + Math.max(0, lam-mu)*20*BT.xg_h.w + Math.max(0, eloDiff/400)*15*BT.elo_h.w;
+    if(m.id==='Fora') score += Math.max(0, pA-pH)*60*BT.mat_a.w + Math.max(0, mu-lam)*20*BT.xg_a.w + Math.max(0, -eloDiff/400)*15*BT.elo_a.w;
+    if(m.id==='Empate') score += Math.max(0, pD-0.22)*150*BT.mat_d.w + Math.max(0, 30-(Math.abs(pH-pA)*100))*BT.xg_d.w;
+    
+    score -= pen;
 
-    if(score > maxScore) { maxScore = score; bestPick = m; bestPick.ev = ev; bestPick.lam = lam; bestPick.mu = mu; }
+    if(score > maxScore) { maxScore = score; bestPick = m; bestPick.ev = ev; bestPick.valMkt = valueVsSharp; bestPick.lam = lam; bestPick.mu = mu; }
   });
   
   return bestPick;
@@ -597,19 +635,13 @@ function runCrossValidation() {
   document.getElementById('homeXPts').innerHTML=`Camp: <span class="text-white">${hXPts.pts}pts</span> | xPts: ${hXPts.xPts.toFixed(1)}`;
   document.getElementById('awayXPts').innerHTML=`Camp: <span class="text-white">${aXPts.pts}pts</span> | xPts: ${aXPts.xPts.toFixed(1)}`;
 
-  const dsGlobal = csvMatches;
-  const dsHome = csvMatches.filter(m => m.HomeTeam === hT || m.AwayTeam === hT);
-  const dsAway = csvMatches.filter(m => m.HomeTeam === aT || m.AwayTeam === aT);
-  const dsH2H = csvMatches.filter(m => (m.HomeTeam === hT && m.AwayTeam === aT) || (m.HomeTeam === aT && m.AwayTeam === hT));
-
-  // Roda Global Primeiro para ancorar o Shrinkage do H2H
-  const globalRes = runEngineCore(dsGlobal, hT, aT);
+  const globalRes = runEngineCore(hT, aT, 'GLOBAL_ALL'); // Ancora Global
 
   const runs = [
-    { name: '1. Global', result: globalRes },
-    { name: '2. Mandante', result: runEngineCore(dsHome, hT, aT) },
-    { name: '3. Visitante', result: runEngineCore(dsAway, hT, aT) },
-    { name: '4. Confronto H2H', result: runEngineCore(dsH2H, hT, aT, true, globalRes?.lam, globalRes?.mu) }
+    { name: '1. Força Global', result: globalRes },
+    { name: '2. Mando Clássico', result: runEngineCore(hT, aT, 'BASE') },
+    { name: '3. Form Recente', result: runEngineCore(hT, aT, 'RECENTE') },
+    { name: '4. Confronto H2H', result: runEngineCore(hT, aT, 'H2H', globalRes?.lam, globalRes?.mu) }
   ];
 
   const logsContainer = document.getElementById('scenarioLogs'); logsContainer.innerHTML = '';
@@ -618,6 +650,19 @@ function runCrossValidation() {
       document.getElementById('awayXG').innerText = globalRes.mu.toFixed(2);
       document.getElementById('homeBar').style.width=`${Math.min(globalRes.lam*25,100)}%`; 
       document.getElementById('awayBar').style.width=`${Math.min(globalRes.mu*25,100)}%`;
+  }
+  
+  // RENDER MATRIZ (RESTORED FROM V10)
+  if(globalMat){
+      const head=document.getElementById('matrixHead'), body=document.getElementById('matrixBody');
+      head.innerHTML='<th class="p-1 text-slate-600 border-b border-slate-800 text-[10px]">↓H \\ A→</th>';
+      for(let i=0;i<=CFG.visualLimit;i++) head.insertAdjacentHTML('beforeend',`<th class="p-1 text-slate-400 text-[10px] border-b border-slate-800">${i}</th>`);
+      body.innerHTML='';
+      for(let x=0;x<=CFG.visualLimit;x++){
+        let row=`<tr><th class="bg-slate-950/40 text-blue-400 p-1 text-[10px] border-r border-slate-800">${x}</th>`;
+        for(let y=0;y<=CFG.visualLimit;y++) row+=`<td class="text-[10px] p-1 ${x===y?'bg-slate-900/60 font-bold':(x>y?'text-blue-400/80':'text-pink-400/80')}">${(globalMat[x][y]*100).toFixed(1)}%</td>`;
+        body.insertAdjacentHTML('beforeend',row+'</tr>');
+      }
   }
 
   const consensusMap = {};
@@ -639,7 +684,6 @@ function runCrossValidation() {
     logsContainer.insertAdjacentHTML('beforeend', html);
   });
 
-  // Determinar o Super Card
   let superPick = null; let highestScore = -1;
   Object.values(consensusMap).forEach(cand => {
     let finalScore = (cand.votes * 100) + (cand.sumRate * 100); 
@@ -648,7 +692,6 @@ function runCrossValidation() {
 
   const rep = document.getElementById('reportContainer');
   
-  // FILTRO ABSOLUTO: 3 DE 4 CENÁRIOS DEVEM CONCORDAR
   if(!superPick || superPick.votes < 3) {
     rep.innerHTML = `<div class="p-5 text-center flex flex-col items-center justify-center h-full min-h-[250px] border border-slate-700/50 rounded-xl bg-slate-900/40">
         <span class="text-3xl mb-2">⚠️</span>
@@ -670,13 +713,14 @@ function runCrossValidation() {
             <span class="bg-violet-900/50 text-violet-300 px-2 py-0.5 rounded-full text-[8px] border border-violet-500/30">${superPick.votes}/4 CENÁRIOS</span>
           </p>
           <p class="text-[16px] font-black text-white mt-2 leading-tight truncate">${m.name} @ ${m.odd.toFixed(2)}</p>
-          <p class="text-[10px] text-slate-300 mt-1.5 mono">Taxa de Acerto Base: ${(m.trueHitRate*100).toFixed(1)}% <span class="${m.ev>0?'text-emerald-400':'text-red-400'} ml-2">EV Médio: ${(m.ev*100).toFixed(1)}%</span></p>
+          <p class="text-[10px] text-slate-300 mt-1.5 mono">P(True): ${(m.trueHitRate*100).toFixed(1)}% <span class="${m.ev>0?'text-emerald-400':'text-red-400'} ml-2">EV Médio: ${(m.ev*100).toFixed(1)}%</span></p>
         </div>
       </div>
       <div class="pt-2 mt-2 flex-grow border-t border-slate-700/50 text-[10px] space-y-1.5">
         <div class="flex justify-between"><span class="text-slate-400">Suporte Matriz:</span><span class="mono text-white">${(m.matP*100).toFixed(1)}%</span></div>
         <div class="flex justify-between"><span class="text-slate-400">Suporte ELO:</span><span class="mono text-white">${(m.eloP*100).toFixed(1)}%</span></div>
         <div class="flex justify-between"><span class="text-slate-400">Mercado Referência:</span><span class="mono text-violet-400">${(m.mktP*100).toFixed(1)}%</span></div>
+        ${m.valMkt > 0.01 ? `<div class="flex justify-between font-bold"><span class="text-emerald-400">🚨 Edge vs Pinnacle:</span><span class="mono text-emerald-400">+${(m.valMkt*100).toFixed(1)}%</span></div>` : ''}
       </div>
       <div class="bg-violet-950/80 p-3 mt-4 rounded-xl border border-violet-800 flex justify-between items-center shadow-inner">
         <span class="text-violet-200 text-[9px] uppercase tracking-wider font-bold">RECOMENDAÇÃO UNIFICADA</span>
