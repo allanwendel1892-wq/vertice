@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>QUANT ENGINE V13 – CROSS-VALIDATION</title>
+<title>QUANT ENGINE V14 – ABSOLUTE CONSENSUS</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700;800&display=swap" rel="stylesheet">
@@ -14,7 +14,6 @@
   .card { background:rgba(31,41,55,0.45); border:1px solid rgba(255,255,255,0.04); transition:all .25s; }
   .card:hover { border-color:rgba(139,92,246,.2); transform:translateY(-1px); }
   .super-bet { background:rgba(139,92,246,.08); border:1px solid rgba(139,92,246,.4)!important; box-shadow:0 0 25px rgba(139,92,246,.15); }
-  .matrix-table td { width:50px; height:46px; text-align:center; border:1px solid rgba(255,255,255,.02); font-size:.7rem; font-family:'JetBrains Mono',monospace; }
   .loader { border-top-color:#8b5cf6; animation:spin .8s linear infinite; }
   @keyframes spin{ to{ transform:rotate(360deg) } }
   .scroll::-webkit-scrollbar{ width:5px; }
@@ -23,7 +22,7 @@
   optgroup{ font-weight:800; color:#94a3b8; background:#020617; }
   option{ font-weight:500; color:#f8fafc; }
 
-  .acc-badge { display:inline-flex; align-items:center; gap:3px; font-family:'JetBrains Mono',monospace; font-weight:700; border-radius:999px; }
+  .acc-badge { display:inline-flex; align-items:center; justify-content:center; gap:3px; font-family:'JetBrains Mono',monospace; font-weight:700; border-radius:999px; }
   .acc-hot  { background:rgba(16,185,129,.15); color:#34d399; border:1px solid rgba(16,185,129,.35); }
   .acc-warm { background:rgba(245,158,11,.12); color:#fbbf24; border:1px solid rgba(245,158,11,.35); }
   .acc-cold { background:rgba(239,68,68,.12);  color:#f87171; border:1px solid rgba(239,68,68,.35); }
@@ -36,11 +35,11 @@
 <header class="glass rounded-3xl p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-3 border-b-4 border-violet-600">
   <div>
     <h1 class="text-2xl font-extrabold mono text-white">QUANT<span class="text-violet-400 font-light">ENGINE</span>
-      <span class="text-[9px] bg-violet-500/20 text-violet-400 px-2 py-0.5 rounded border border-violet-500/30 font-bold ml-2 uppercase tracking-widest">V13 · 4-WAY CROSS-VALIDATION</span>
+      <span class="text-[9px] bg-violet-500/20 text-violet-400 px-2 py-0.5 rounded border border-violet-500/30 font-bold ml-2 uppercase tracking-widest">V14 · ABSOLUTE CONSENSUS</span>
     </h1>
-    <p class="text-slate-400 text-xs mt-1">Global · Mandante Isolado · Visitante Isolado · H2H (Confronto Direto)</p>
+    <p class="text-slate-400 text-xs mt-1">Shrinkage Bayesiano · 4-Way Cross-Validation · Backtest Weights · Momentum</p>
   </div>
-  <div id="btStatusBadge" class="hidden text-[10px] mono font-bold px-3 py-1.5 rounded-xl border border-violet-500/30 bg-violet-500/10 text-violet-400"></div>
+  <div id="btStatusBadge" class="hidden text-[10px] mono font-bold px-3 py-1.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 text-emerald-400"></div>
 </header>
 
 <section class="glass rounded-3xl p-5 grid grid-cols-1 xl:grid-cols-12 gap-5 items-end">
@@ -148,7 +147,7 @@
     </div>
 
     <button onclick="runCrossValidation()" class="w-full bg-violet-600 hover:bg-violet-500 text-white font-black uppercase tracking-widest text-xs p-4 rounded-2xl transition-all hover:scale-[1.005] shadow-[0_0_20px_rgba(139,92,246,0.3)]">
-      EXECUTAR 4x CROSS-VALIDATION E SUGERIR RESULTADO ÚNICO
+      VALIDAR 4 CENÁRIOS E ENCONTRAR CONSENSO (3/4)
     </button>
   </div>
 </section>
@@ -157,7 +156,7 @@
   <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
     <div class="lg:col-span-7 space-y-5">
       <div class="glass rounded-3xl p-5 space-y-5">
-        <h2 class="text-[10px] uppercase tracking-widest font-black text-slate-400 border-b border-slate-800 pb-2">Projeção Base (Dados Globais)</h2>
+        <h2 class="text-[10px] uppercase tracking-widest font-black text-slate-400 border-b border-slate-800 pb-2">Projeção Consolidada (Base Global)</h2>
         <div>
           <div class="flex justify-between items-end mb-1">
             <span class="font-bold text-sm text-blue-400" id="homeLabel">Casa</span>
@@ -174,9 +173,17 @@
           <div class="w-full bg-slate-900 rounded-full h-1.5"><div id="awayBar" class="bg-pink-500 h-full rounded-full transition-all duration-700"></div></div>
         </div>
       </div>
+
+      <div id="btPanel" class="glass rounded-3xl p-5">
+        <div class="flex justify-between items-center border-b border-slate-800 pb-2 mb-4">
+          <h2 class="text-[10px] uppercase tracking-widest font-black text-slate-400">Backtest Dinâmico (Pesos Bayesiano da Liga)</h2>
+          <span id="btSampleCount" class="text-[10px] mono text-slate-500"></span>
+        </div>
+        <div id="btRows" class="space-y-0.5"></div>
+      </div>
       
       <div class="glass rounded-3xl p-5">
-        <h2 class="text-[10px] uppercase tracking-widest font-black text-slate-400 border-b border-slate-800 pb-2 mb-4">Monitor 4-Way (Resultados Individuais)</h2>
+        <h2 class="text-[10px] uppercase tracking-widest font-black text-slate-400 border-b border-slate-800 pb-2 mb-4">Monitor 4-Way Cross-Validation</h2>
         <div id="scenarioLogs" class="space-y-2"></div>
       </div>
     </div>
@@ -184,7 +191,7 @@
     <div class="lg:col-span-5 flex flex-col">
       <div class="glass rounded-3xl p-4 lg:p-5 flex-grow flex flex-col border border-violet-700/50 relative overflow-hidden shadow-[0_0_40px_rgba(139,92,246,0.1)]">
         <div class="absolute -top-10 -right-10 w-32 h-32 bg-violet-500/20 rounded-full blur-3xl pointer-events-none"></div>
-        <h2 class="text-sm uppercase tracking-widest font-black text-white border-b border-slate-700 pb-3 mb-4">SUGESTÃO FINAL UNIFICADA</h2>
+        <h2 class="text-sm uppercase tracking-widest font-black text-white border-b border-slate-700 pb-3 mb-4">SUGESTÃO FINAL (FILTRO 3/4)</h2>
         <div id="reportContainer" class="flex-grow scroll overflow-y-auto pr-1 space-y-4"></div>
       </div>
     </div>
@@ -207,6 +214,7 @@ let expectedZeros={}, actualZeros={};
 let dynamicHFA=60, dynamicRho=-0.05;
 let leagueBaseFreq={ h:0.45, d:0.26, a:0.29 };
 
+// MATRIZ DE BACKTEST (V10 Restaurada)
 let BT = {
   mat_h:{acc:50,n:0,w:1}, mat_a:{acc:50,n:0,w:1}, mat_d:{acc:50,n:0,w:1},
   xg_h:{acc:50,n:0,w:1}, xg_a:{acc:50,n:0,w:1}, xg_d:{acc:50,n:0,w:1},
@@ -221,7 +229,7 @@ const globalLeagues = ["BRA","ARG","USA","MEX","JPN","CHN","SWE","NOR","FIN","IR
 window.addEventListener('DOMContentLoaded', () => fetchAndParseCSV());
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// MATH CORE
+// MATH CORE (NegBinomial, Shrinkage, V10+V13)
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 function negBinomial(k, mean, r=CFG.overdispR) {
   if (mean<=0) return k===0?1:0;
@@ -252,23 +260,19 @@ function buildMatrix(lam, mu, rho) {
   const s=pH+pD+pA; return { pH:pH/s, pD:pD/s, pA:pA/s, pO:1-(pU/total), pB:pB/total };
 }
 
-function removeVig1X2(h, d, a) {
-  const sum = (1/h) + (1/d) + (1/a);
-  return { pH: (1/h)/sum, pD: (1/d)/sum, pA: (1/a)/sum };
-}
+function removeVig1X2(h, d, a) { const sum = (1/h) + (1/d) + (1/a); return { pH: (1/h)/sum, pD: (1/d)/sum, pA: (1/a)/sum }; }
 function removeVig2Way(odd) { return (1/odd) / 1.05; }
 
 function calculateMomentum(team, dataset) {
   let recent = dataset.filter(m => m.HomeTeam === team || m.AwayTeam === team).slice(-5);
-  if(recent.length === 0) return { diff: 0, form: '---' };
-  let xgDiffTotal = 0; let formStr = '';
+  if(recent.length === 0) return { diff: 0 };
+  let xgDiffTotal = 0;
   recent.forEach(m => {
     let isH = m.HomeTeam === team;
-    let gd = isH ? (m.FTHG - m.FTAG) : (m.FTAG - m.FTHG);
     let xgd = isH ? (m.HXG - m.AXG) : (m.AXG - m.HXG);
-    xgDiffTotal += xgd; formStr += gd > 0 ? 'V' : (gd < 0 ? 'D' : 'E');
+    xgDiffTotal += xgd;
   });
-  return { diff: xgDiffTotal / recent.length, form: formStr };
+  return { diff: xgDiffTotal / recent.length };
 }
 
 function calculateXPts(team) {
@@ -334,6 +338,8 @@ function processRawCSV(rawText) {
     if(!expectedZeros[m.HomeTeam]){expectedZeros[m.HomeTeam]=0;actualZeros[m.HomeTeam]=0;}
     if(!expectedZeros[m.AwayTeam]){expectedZeros[m.AwayTeam]=0;actualZeros[m.AwayTeam]=0;}
     const w=Math.exp(-CFG.timeDecayLambda*((globalLatestDate-m.DateObj)/86400000));
+    
+    // Purificação V10 - NegBinomial Zero Risk
     expectedZeros[m.HomeTeam] += Math.pow(CFG.overdispR / (CFG.overdispR + m.HXG), CFG.overdispR) * w;
     expectedZeros[m.AwayTeam] += Math.pow(CFG.overdispR / (CFG.overdispR + m.AXG), CFG.overdispR) * w;
     if(m.FTHG===0) actualZeros[m.HomeTeam]+=w; if(m.FTAG===0) actualZeros[m.AwayTeam]+=w;
@@ -360,15 +366,131 @@ function processRawCSV(rawText) {
   dynamicHFA=rM>0?((rH-rA)/rM)*120:60; dynamicRho = rM > 0 ? Math.max(0.05, (rD/rM) - 0.12) : 0.14;
   leagueAvg.homeAvg=rM>0?rH/rM:1.40; leagueAvg.awayAvg=rM>0?rA/rM:1.15;
   leagueBaseFreq={ h:rM>0?(csvMatches.filter(x=>x.FTHG>x.FTAG).length/rM):0.45, d:rM>0?rD/rM:0.26, a:rM>0?(csvMatches.filter(x=>x.FTAG>x.FTHG).length/rM):0.29 };
-  setTimeout(()=>{ populateDropdowns(); toggleUI(false); },50);
+  
+  setTimeout(()=>{ runBacktest(); populateDropdowns(); toggleUI(false); renderBtPanel(); },50);
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// ENGINE CORE (EXECUTADO 4 VEZES)
+// BACKTEST ENGINE (Restaurado da V10)
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-function runEngineCore(dataset, homeTeam, awayTeam) {
+function runBacktest() {
+  Object.keys(BT).forEach(k=>{ BT[k]={acc:50,n:0,w:1,hits:0,tots:0}; });
+  const teamCounts={};
+  csvMatches.forEach(m=>{ teamCounts[m.HomeTeam]=(teamCounts[m.HomeTeam]||0)+1; teamCounts[m.AwayTeam]=(teamCounts[m.AwayTeam]||0)+1; });
+
+  let snapElo={}, snapLast={}, snapExpZ={}, snapActZ={};
+  let rH2=0,rA2=0,rD2=0,rM2=0;
+
+  csvMatches.forEach((m,idx)=>{
+    const ht=m.HomeTeam, at=m.AwayTeam;
+    [ht,at].forEach(t=>{ if(!snapElo[t]) snapElo[t]=1500; if(!snapExpZ[t]) snapExpZ[t]=0; if(!snapActZ[t]) snapActZ[t]=0; });
+
+    if(idx>=10 && (teamCounts[ht]||0)>=6 && (teamCounts[at]||0)>=6){
+      let wHS=0,wHC=0,wHSum=0,wAS=0,wAC=0,wASum=0,mCH=0,mCA=0;
+      const nowDate=m.DateObj;
+      for(let j=0;j<idx;j++){
+        const p=csvMatches[j];
+        const w=Math.exp(-CFG.timeDecayLambda*((nowDate-p.DateObj)/86400000));
+        if(p.HomeTeam===ht){wHS+=p.HXG*w;wHC+=p.AXG*w;wHSum+=w;mCH++;}
+        if(p.AwayTeam===at){wAS+=p.AXG*w;wAC+=p.HXG*w;wASum+=w;mCA++;}
+      }
+      if(mCH>=3&&mCA>=3){
+        const hSA=wHSum>0?wHS/wHSum:leagueAvg.homeAvg, hCA=wHSum>0?wHC/wHSum:leagueAvg.awayAvg;
+        const aSA=wASum>0?wAS/wASum:leagueAvg.awayAvg, aCA=wASum>0?wAC/wASum:leagueAvg.homeAvg;
+        let lam_xG=(hSA/leagueAvg.homeAvg)*(aCA/leagueAvg.homeAvg)*leagueAvg.homeAvg;
+        let mu_xG=(aSA/leagueAvg.awayAvg)*(hCA/leagueAvg.awayAvg)*leagueAvg.awayAvg;
+        const eloDiff=(snapElo[ht]+dynamicHFA)-snapElo[at];
+        let lam=(lam_xG*.65)+(leagueAvg.homeAvg*Math.exp(eloDiff/400)*.35);
+        let mu=(mu_xG*.65)+(leagueAvg.awayAvg*Math.exp(-eloDiff/400)*.35);
+        
+        const dayH=snapLast[ht]?((nowDate-snapLast[ht])/86400000):99, dayA=snapLast[at]?((nowDate-snapLast[at])/86400000):99;
+        const fatigH=dayH<3.5, fatigA=dayA<3.5; if(fatigH) lam*=.90; if(fatigA) mu*=.90;
+
+        const prior=1.5;
+        const rH_=(snapActZ[ht]+prior)/(snapExpZ[ht]+prior), rA_=(snapActZ[at]+prior)/(snapExpZ[at]+prior);
+        const {pH,pD,pA,pO,pB}=buildMatrix(lam,mu,dynamicRho);
+        const realH=m.FTHG>m.FTAG, realD=m.FTHG===m.FTAG, realA=m.FTAG>m.FTHG, realO=(m.FTHG+m.FTAG)>=3, realB=m.FTHG>0&&m.FTAG>0;
+
+        function rec(key,pred,correct){ BT[key].tots=(BT[key].tots||0)+1; if(pred&&correct) BT[key].hits=(BT[key].hits||0)+1; }
+        if(pH>pD&&pH>pA) rec('mat_h',true,realH); if(pA>pH&&pA>pD) rec('mat_a',true,realA); if(pD>pH&&pD>pA) rec('mat_d',true,realD);
+        if(lam>mu) rec('xg_h',true,realH); if(mu>lam) rec('xg_a',true,realA); if(Math.abs(lam-mu)<0.25) rec('xg_d',true,realD);
+        if((snapElo[ht]+dynamicHFA)>snapElo[at]) rec('elo_h',true,realH); else rec('elo_a',true,realA);
+        
+        BT['clinica_h'].tots=(BT['clinica_h'].tots||0)+1; if((rH_<1.0&&realH)||(rH_>=1.0&&(realD||realA))) BT['clinica_h'].hits=(BT['clinica_h'].hits||0)+1;
+        BT['clinica_a'].tots=(BT['clinica_a'].tots||0)+1; if((rA_<1.0&&realA)||(rA_>=1.0&&(realD||realH))) BT['clinica_a'].hits=(BT['clinica_a'].hits||0)+1;
+
+        const evH=pH>leagueBaseFreq.h*1.05, evA=pA>leagueBaseFreq.a*1.05, evD=pD>leagueBaseFreq.d*1.05;
+        if(evH||evA||evD){ BT['ev_ratio'].tots=(BT['ev_ratio'].tots||0)+1; if((evH&&realH)||(evA&&realA)||(evD&&realD)) BT['ev_ratio'].hits=(BT['ev_ratio'].hits||0)+1; }
+
+        BT['over'].tots=(BT['over'].tots||0)+1; const xgOver=(lam+mu)>2.5; if((xgOver&&realO)||(!xgOver&&!realO)) BT['over'].hits=(BT['over'].hits||0)+1;
+        BT['btts'].tots=(BT['btts'].tots||0)+1; const xgBTTS=lam>1.0&&mu>1.0; if((xgBTTS&&realB)||(!xgBTTS&&!realB)) BT['btts'].hits=(BT['btts'].hits||0)+1;
+        if(fatigH){ BT['fatigue'].tots=(BT['fatigue'].tots||0)+1; if(realA||realD) BT['fatigue'].hits=(BT['fatigue'].hits||0)+1; }
+        if(fatigA){ BT['fatigue'].tots=(BT['fatigue'].tots||0)+1; if(realH||realD) BT['fatigue'].hits=(BT['fatigue'].hits||0)+1; }
+      }
+    }
+    const cHFA2=rM2>20?((rH2-rA2)/rM2)*120:60; const eH2=snapElo[ht]+cHFA2, eA2=snapElo[at];
+    const pH2=1/(1+Math.pow(10,(eA2-eH2)/400)); let aH2=m.FTHG>m.FTAG?1:(m.FTHG===m.FTAG?.5:0);
+    const kv2=1; // Simplificado para acelerar
+    snapElo[ht]+=CFG.eloKFactor*kv2*(aH2-pH2); snapElo[at]+=CFG.eloKFactor*kv2*((1-aH2)-(1-pH2));
+    const w2=Math.exp(-CFG.timeDecayLambda*((globalLatestDate-m.DateObj)/86400000));
+    snapExpZ[ht]+= Math.pow(CFG.overdispR / (CFG.overdispR + m.HXG), CFG.overdispR) * w2; 
+    snapExpZ[at]+= Math.pow(CFG.overdispR / (CFG.overdispR + m.AXG), CFG.overdispR) * w2;
+    if(m.FTHG===0) snapActZ[ht]+=w2; if(m.FTAG===0) snapActZ[at]+=w2;
+    snapLast[ht]=m.DateObj; snapLast[at]=m.DateObj; rM2++; rH2+=m.FTHG; rA2+=m.FTAG; if(m.FTHG===m.FTAG)rD2++;
+  });
+
+  const bL = {
+    mat_h: leagueBaseFreq.h*100, mat_a: leagueBaseFreq.a*100, mat_d: leagueBaseFreq.d*100,
+    xg_h: leagueBaseFreq.h*100,  xg_a: leagueBaseFreq.a*100,  xg_d: leagueBaseFreq.d*100,
+    elo_h: leagueBaseFreq.h*100, elo_a: leagueBaseFreq.a*100,
+    clinica_h: 50, clinica_a: 50, ev_ratio: 50, over: 48, btts: 50, fatigue: 50
+  };
+
+  let maxExcess=0;
+  Object.keys(BT).forEach(k=>{
+    const t=BT[k].tots||0, h=BT[k].hits||0; BT[k].n=t; BT[k].acc=t>0?(h/t*100):50;
+    const excess = Math.max(0, BT[k].acc - (bL[k] || 50)); if(excess>maxExcess) maxExcess=excess;
+  });
+  Object.keys(BT).forEach(k=>{ 
+    const excess = Math.max(0, BT[k].acc - (bL[k] || 50)); 
+    BT[k].w = maxExcess>0 ? 0.6+(excess/maxExcess)*0.9 : 1.0; 
+  });
+  btDone=true;
+}
+
+function accClass(a){ return a>=57?'acc-hot':a>=50?'acc-warm':a>=43?'acc-cold':'acc-none'; }
+function renderBtPanel() {
+  if(!btDone) return;
+  const totalSamples=Object.values(BT).reduce((s,v)=>s+v.n,0);
+  document.getElementById('btSampleCount').textContent=`${csvMatches.length} jogos · ${totalSamples} avaliações`;
+
+  const rows=[
+    { key:'mat_h', label:'Matriz — Casa' }, { key:'mat_a', label:'Matriz — Fora' },
+    { key:'elo_h', label:'ELO — Casa' }, { key:'clinica_h',label:'Clínica — Casa' },
+    { key:'over', label:'xG Over 2.5' }, { key:'btts', label:'xG BTTS' }
+  ];
+
+  document.getElementById('btRows').innerHTML=rows.map(r=>{
+    const b=BT[r.key];
+    return `<div class="bt-row flex items-center justify-between py-0.5 border-b border-slate-800/50">
+      <span class="text-[11px] text-slate-300 font-medium min-w-[150px]">${r.label}</span>
+      <div class="flex items-center gap-3 flex-1 justify-end">
+        <span class="acc-badge ${b.n>=10?accClass(b.acc):'acc-none'} text-[10px] px-2 py-0.5">${b.n>=10?b.acc.toFixed(1)+'%':'—'}</span>
+        <span class="mono text-[10px] ${b.w>=1.5?'text-emerald-400':b.w>=1.0?'text-amber-400':'text-slate-500'} min-w-[40px] text-right">w:${b.n>=10?b.w.toFixed(2):'—'}</span>
+      </div>
+    </div>`;
+  }).join('');
+  const badge=document.getElementById('btStatusBadge'); badge.classList.remove('hidden'); badge.textContent=`BT calibrado · wDinâmico ON`;
+}
+
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ENGINE CORE (EXECUTADO 4 VEZES C/ UPGRADES)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function runEngineCore(dataset, homeTeam, awayTeam, isH2H = false, refLam = null, refMu = null) {
   if(!dataset || dataset.length === 0) return null;
 
+  // Restaurado da V10: Penalidades Clínicas (Ratio Zeros)
   const prior=1.5;
   const ratioHome=((actualZeros[homeTeam]||0)+prior)/((expectedZeros[homeTeam]||0)+prior);
   const ratioAway=((actualZeros[awayTeam]||0)+prior)/((expectedZeros[awayTeam]||0)+prior);
@@ -391,13 +513,24 @@ function runEngineCore(dataset, homeTeam, awayTeam) {
   let lam=(lam_xG*.65)+(leagueAvg.homeAvg*Math.exp(eloDiff/400)*.35);
   let mu=(mu_xG*.65)+(leagueAvg.awayAvg*Math.exp(-eloDiff/400)*.35);
 
+  // Shrinkage de Amostra (Prevenção de Overfitting)
   let dsSH=Math.max(.5,CFG.basePriorShrink*Math.exp(-.06*mCH)), dsSA=Math.max(.5,CFG.basePriorShrink*Math.exp(-.06*mCA));
   lam=Math.max(.2,(lam*(1-dsSH/(dsSH+wHSum)))+(leagueAvg.homeAvg*(dsSH/(dsSH+wHSum))));
   mu=Math.max(.2,(mu*(1-dsSA/(dsSA+wASum)))+(leagueAvg.awayAvg*(dsSA/(dsSA+wASum))));
 
+  // Melhoria Crítica: Shrinkage Severo para H2H (Amostra Pequena vs Média Global)
+  if (isH2H && dataset.length < 5 && refLam !== null && refMu !== null) {
+      const wH2H = dataset.length / 5.0; // max 1.0
+      lam = (lam * wH2H) + (refLam * (1 - wH2H));
+      mu  = (mu  * wH2H) + (refMu  * (1 - wH2H));
+  }
+
+  // Restaurado da V10: Checagem de Fadiga
   const dayH=(globalLatestDate-teamLastPlayed[homeTeam])/86400000, dayA=(globalLatestDate-teamLastPlayed[awayTeam])/86400000;
-  if(dayH<3.5) lam*=.90; if(dayA<3.5) mu*=.90;
+  const fatigH=dayH<3.5, fatigA=dayA<3.5;
+  if(fatigH) lam*=.90; if(fatigA) mu*=.90;
   
+  // Da V13: Momentum 
   const hMom = calculateMomentum(homeTeam, dataset), aMom = calculateMomentum(awayTeam, dataset);
   lam *= (1 + (hMom.diff * 0.05)); mu *= (1 + (aMom.diff * 0.05));
 
@@ -414,13 +547,37 @@ function runEngineCore(dataset, homeTeam, awayTeam) {
     BTTS:   { id:'BTTS', name:'Ambas Marcam', matP:pB, eloP:pB, mktP:mktBTTS, odd:parseFloat(document.getElementById('oddBTTS').value) }
   };
 
-  let bestPick = null; let maxScore = 0;
+  let bestPick = null; let maxScore = -9999;
   Object.values(odds).forEach(m=>{
-    m.trueHitRate = (m.matP * 0.40) + (m.eloP * 0.20) + (m.mktP * 0.40);
+    // Fusão V10+V13: HitRate Dinâmico Baseado no Backtest (Não mais fixo 0.4, 0.2, 0.4)
+    let wM = 1, wE = 1, wMkt = 1.2; 
+    let pen = 0; // Penalidades V10 restauradas
+    
+    if(m.id==='Casa'){ 
+        wM = BT.mat_h.w; wE = BT.elo_h.w; 
+        if(fatigH) pen += 10 * BT.fatigue.w; 
+        if(ratioHome>1.10) pen += 15 * BT.clinica_h.w; // Cria muito e não faz gol 
+    }
+    else if(m.id==='Fora'){ 
+        wM = BT.mat_a.w; wE = BT.elo_a.w; 
+        if(fatigA) pen += 10 * BT.fatigue.w; 
+        if(ratioAway>1.10) pen += 15 * BT.clinica_a.w; 
+    }
+    else if(m.id==='Empate'){ wM = BT.mat_d.w; wE = 0.5; }
+    else if(m.id==='Over'){ wM = BT.over.w; wE = BT.over.w; if(ratioHome>1.05||ratioAway>1.05) pen += 8; }
+    else if(m.id==='BTTS'){ wM = BT.btts.w; wE = BT.btts.w; if(ratioHome>1.05||ratioAway>1.05) pen += 10; }
+
+    const totalW = wM + wE + wMkt;
+    m.trueHitRate = ((m.matP * wM) + (m.eloP * wE) + (m.mktP * wMkt)) / totalW;
+
     const ev = (m.trueHitRate * m.odd) - 1;
     let score = (m.trueHitRate * 100); 
-    if(m.matP > 0.45) score += 10; if(m.eloP > 0.45) score += 10; if(m.mktP > 0.45) score += 10;
+    if(m.matP > 0.45) score += 10; 
+    if(m.eloP > 0.45) score += 10; 
     if(ev > 0) score += (ev * 100);
+    
+    score -= pen; // Applica penalidades clínicas e fadiga
+
     if(score > maxScore) { maxScore = score; bestPick = m; bestPick.ev = ev; bestPick.lam = lam; bestPick.mu = mu; }
   });
   
@@ -431,10 +588,10 @@ function runEngineCore(dataset, homeTeam, awayTeam) {
 // CROSS-VALIDATION MANAGER
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 function runCrossValidation() {
+  if(!btDone) return alert("Aguarde o processamento do Backtest");
   const hT = document.getElementById('homeTeam').value, aT = document.getElementById('awayTeam').value;
   if(hT === aT) return alert('Selecione equipas diferentes.');
 
-  // Renderiza UI Base (Usando dados Globais para a HUD)
   let hXPts=calculateXPts(hT), aXPts=calculateXPts(aT);
   document.getElementById('homeLabel').innerHTML=hT; document.getElementById('awayLabel').innerHTML=aT;
   document.getElementById('homeXPts').innerHTML=`Camp: <span class="text-white">${hXPts.pts}pts</span> | xPts: ${hXPts.xPts.toFixed(1)}`;
@@ -445,21 +602,22 @@ function runCrossValidation() {
   const dsAway = csvMatches.filter(m => m.HomeTeam === aT || m.AwayTeam === aT);
   const dsH2H = csvMatches.filter(m => (m.HomeTeam === hT && m.AwayTeam === aT) || (m.HomeTeam === aT && m.AwayTeam === hT));
 
+  // Roda Global Primeiro para ancorar o Shrinkage do H2H
+  const globalRes = runEngineCore(dsGlobal, hT, aT);
+
   const runs = [
-    { name: '1. Global', result: runEngineCore(dsGlobal, hT, aT) },
+    { name: '1. Global', result: globalRes },
     { name: '2. Mandante', result: runEngineCore(dsHome, hT, aT) },
     { name: '3. Visitante', result: runEngineCore(dsAway, hT, aT) },
-    { name: '4. Confronto H2H', result: runEngineCore(dsH2H, hT, aT) }
+    { name: '4. Confronto H2H', result: runEngineCore(dsH2H, hT, aT, true, globalRes?.lam, globalRes?.mu) }
   ];
 
-  // UI para os Logs dos 4 Cenários e Atualização da Barra Principal
   const logsContainer = document.getElementById('scenarioLogs'); logsContainer.innerHTML = '';
-  let globalBase = runs[0].result;
-  if(globalBase) {
-      document.getElementById('homeXG').innerText = globalBase.lam.toFixed(2);
-      document.getElementById('awayXG').innerText = globalBase.mu.toFixed(2);
-      document.getElementById('homeBar').style.width=`${Math.min(globalBase.lam*25,100)}%`; 
-      document.getElementById('awayBar').style.width=`${Math.min(globalBase.mu*25,100)}%`;
+  if(globalRes) {
+      document.getElementById('homeXG').innerText = globalRes.lam.toFixed(2);
+      document.getElementById('awayXG').innerText = globalRes.mu.toFixed(2);
+      document.getElementById('homeBar').style.width=`${Math.min(globalRes.lam*25,100)}%`; 
+      document.getElementById('awayBar').style.width=`${Math.min(globalRes.mu*25,100)}%`;
   }
 
   const consensusMap = {};
@@ -489,8 +647,14 @@ function runCrossValidation() {
   });
 
   const rep = document.getElementById('reportContainer');
-  if(!superPick) {
-    rep.innerHTML = `<div class="p-5 text-center text-slate-500 text-xs">Dados insuficientes para cruzar validações.</div>`;
+  
+  // FILTRO ABSOLUTO: 3 DE 4 CENÁRIOS DEVEM CONCORDAR
+  if(!superPick || superPick.votes < 3) {
+    rep.innerHTML = `<div class="p-5 text-center flex flex-col items-center justify-center h-full min-h-[250px] border border-slate-700/50 rounded-xl bg-slate-900/40">
+        <span class="text-3xl mb-2">⚠️</span>
+        <span class="text-slate-400 font-bold uppercase tracking-widest text-xs">Sem Consenso de Risco</span>
+        <span class="text-slate-500 text-[10px] mt-2">O algoritmo exige que pelo menos 3/4 cenários concordem para validar um padrão matemático.</span>
+    </div>`;
   } else {
     const m = superPick.m;
     const b_ = m.odd - 1;
@@ -503,10 +667,10 @@ function runCrossValidation() {
         <div class="overflow-hidden pr-2">
           <p class="text-[10px] text-violet-400 uppercase tracking-widest font-black flex items-center gap-2">
             ✅ DECISÃO VALIDADA 
-            <span class="bg-violet-900/50 text-violet-300 px-2 py-0.5 rounded-full text-[8px] border border-violet-500/30">${superPick.votes}/4 CENÁRIOS CONCORDAM</span>
+            <span class="bg-violet-900/50 text-violet-300 px-2 py-0.5 rounded-full text-[8px] border border-violet-500/30">${superPick.votes}/4 CENÁRIOS</span>
           </p>
           <p class="text-[16px] font-black text-white mt-2 leading-tight truncate">${m.name} @ ${m.odd.toFixed(2)}</p>
-          <p class="text-[10px] text-slate-300 mt-1.5 mono">Taxa de Acerto Base: ${(m.trueHitRate*100).toFixed(1)}% <span class="${m.ev>0?'text-emerald-400':'text-red-400'} ml-2">EV Mínimo: ${(m.ev*100).toFixed(1)}%</span></p>
+          <p class="text-[10px] text-slate-300 mt-1.5 mono">Taxa de Acerto Base: ${(m.trueHitRate*100).toFixed(1)}% <span class="${m.ev>0?'text-emerald-400':'text-red-400'} ml-2">EV Médio: ${(m.ev*100).toFixed(1)}%</span></p>
         </div>
       </div>
       <div class="pt-2 mt-2 flex-grow border-t border-slate-700/50 text-[10px] space-y-1.5">
