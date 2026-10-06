@@ -84,7 +84,7 @@
 
     <div class="grid grid-cols-3 gap-4 items-center">
       <div class="flex flex-col items-center z-10">
-        <img id="logoA" src="" class="w-24 h-24 object-contain drop-shadow-[0_0_15px_rgba(59,130,246,0.5)] mb-3">
+        <img id="logoA" src="" onerror="this.style.visibility='hidden'" onload="this.style.visibility='visible'" class="w-24 h-24 object-contain drop-shadow-[0_0_15px_rgba(59,130,246,0.5)] mb-3">
         <h2 id="nameA" class="text-lg font-black uppercase text-blue-400 tracking-wider text-center">TIME A</h2>
         <div class="w-full bg-slate-900 rounded-full h-3 mt-4 border border-slate-700 overflow-hidden">
           <div id="hpA" class="bg-blue-500 h-full health-bar w-0 shadow-[0_0_10px_#3b82f6]"></div>
@@ -105,7 +105,7 @@
       </div>
 
       <div class="flex flex-col items-center z-10">
-        <img id="logoB" src="" class="w-24 h-24 object-contain drop-shadow-[0_0_15px_rgba(236,72,153,0.5)] mb-3">
+        <img id="logoB" src="" onerror="this.style.visibility='hidden'" onload="this.style.visibility='visible'" class="w-24 h-24 object-contain drop-shadow-[0_0_15px_rgba(236,72,153,0.5)] mb-3">
         <h2 id="nameB" class="text-lg font-black uppercase text-pink-400 tracking-wider text-center">TIME B</h2>
         <div class="w-full bg-slate-900 rounded-full h-3 mt-4 border border-slate-700 overflow-hidden flex justify-end">
           <div id="hpB" class="bg-pink-500 h-full health-bar w-0 shadow-[0_0_10px_#ec4899]"></div>
@@ -163,11 +163,14 @@
 // CONFIG API - FOOTBALL-DATA.ORG
 // ==========================================
 const LEAGUE_CODE = 'BSA'; // Brasileirão Série A
+const SUPABASE_URL = 'https://avyphhgctozywfsfaozq.supabase.co';
+// Chave anon (pública por design; a proteção real é RLS/verificação na Edge Function)
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF2eXBoaGdjdG96eXdmc2Zhb3pxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEyNjIxMzAsImV4cCI6MjEwNjgzODEzMH0.jBj-XZiedluQ60qek9N1WCTEgKKg8PcvxWMxt471otg';
 // ==========================================
 // MOTOR MATEMÁTICO (puro, sem DOM)
 // ==========================================
 const MAXG = 10, DAY = 864e5;
-const LF = [0]; for (let i = 1; i < 40; i++) LF[i] = LF[i-1] + Math.log(i);
+const LF = [0]; for (let i = 1; i < 120; i++) LF[i] = LF[i-1] + Math.log(i);
 
 function lgamma(z) { 
   const c=[676.5203681218851,-1259.1392167224028,771.32342877765313,-176.61502916214059,12.507343278686905,-0.13857109526572012,9.9843695780195716e-6,1.5056327351493116e-7];
@@ -269,7 +272,7 @@ function score(P, rho=0, r=Infinity) {
 
 function fitRho(P) { 
   let best={rho:0,ll:-Infinity};
-  for (let rho=-0.30; rho<=0.15001; rho+=0.005) {
+  for (let n=0; n<=90; n++) { const rho=-0.30+n*0.005;
     let ll=0, ok=true;
     for (const p of P) { if (p.hg>1||p.ag>1) continue;
       const t=tau(p.hg,p.ag,p.lam,p.mu,rho); if (t<=0){ok=false;break;} ll+=Math.log(t); }
@@ -306,58 +309,37 @@ async function loadXG(M) {
 }
 
 function cachedCalibrate(M, nxg) {
-  try { const k=JSON.parse(localStorage.getItem('cal_fd_v1')||'null');
-    if (k && k.lg===LEAGUE_CODE && M.length-k.n<10 && nxg-k.nxg<15) { if (k.cal.r===null) k.cal.r=Infinity; return k.cal; } } catch {}
+  try { const k=JSON.parse(localStorage.getItem('cal_fd_v2')||'null');
+    if (k && k.lg===LEAGUE_CODE && Math.abs(M.length-k.n)<10 && Math.abs(nxg-k.nxg)<15) { if (k.cal.r===null) k.cal.r=Infinity; return k.cal; } } catch {}
   const cal = calibrate(M);
-  try { localStorage.setItem('cal_fd_v1', JSON.stringify({lg:LEAGUE_CODE, n:M.length, nxg, cal})); } catch {}
+  try { localStorage.setItem('cal_fd_v2', JSON.stringify({lg:LEAGUE_CODE, n:M.length, nxg, cal})); } catch {}
   return cal; 
 }
 
 const ENGINE = { M:[], teams:{}, cal:null, F:null };
+const esc = t => String(t).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const $ = id => document.getElementById(id);
 function setStatus(txt, cls) { const s=$('apiStatus'); s.innerText=txt;
   s.className = `text-[10px] mono font-bold px-3 py-1.5 rounded-lg border ${cls}`; }
 const OK='border-emerald-500/30 bg-emerald-500/10 text-emerald-400', WARN='border-amber-500/30 bg-amber-500/10 text-amber-400', BAD='border-red-500/30 bg-red-500/10 text-red-400';
 
 async function loadEngine() {
+  if (LOADING) return; LOADING=true;
   const btn=$('btnSimulate'); btn.disabled=true; btn.innerText="CALIBRANDO MODELO...";
   setStatus("CARREGANDO RESULTADOS...", WARN+" animate-pulse");
   try {
-    // Busca os jogos finalizados do Campeonato na Football-Data
-    const SUPABASE_URL = 'https://avyphhgctozywfsfaozq.supabase.co';
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/football-matches`, {
+      method: 'GET',
+      headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
+    });
+    if (!res.ok) throw new Error(`Edge Function ${res.status}: ${(await res.text()).slice(0,120)}`);
+    const data = await res.json();
 
-const SUPABASE_ANON_KEY = 'SUA_ANON_KEY_AQUI';
-
-const res = await fetch(
-  `${SUPABASE_URL}/functions/v1/football-matches`,
-  {
-    method: 'GET',
-    headers: {
-      'apikey': eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF2eXBoaGdjdG96eXdmc2Zhb3pxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEyNjIxMzAsImV4cCI6MjEwNjgzODEzMH0.jBj-XZiedluQ60qek9N1WCTEgKKg8PcvxWMxt471otg,
-      'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-    }
-  }
-);
-
-if (!res.ok) {
-  const errorText = await res.text();
-  throw new Error(`Edge Function ${res.status}: ${errorText}`);
-}
-
-const data = await res.json();
-
-if (!res.ok) {
-  const errorText = await res.text();
-  throw new Error(`Edge Function ${res.status}: ${errorText}`);
-}
-
-const data = await res.json();
-    
     if (data.errorCode) throw new Error(data.message);
     if (!data.matches) throw new Error("A API não retornou dados de partidas.");
 
     // Mapeamento e filtragem para a estrutura do Motor Matemático
-    ENGINE.M = data.matches.filter(m => m.score && m.score.fullTime && m.score.fullTime.home !== null).map(m => {
+    ENGINE.M = data.matches.filter(m => (!m.status || m.status==='FINISHED') && m.homeTeam?.id && m.awayTeam?.id && m.score?.fullTime && m.score.fullTime.home !== null && m.score.fullTime.away !== null).map(m => {
       const hTeam = { id: m.homeTeam.id, name: m.homeTeam.shortName || m.homeTeam.name, logo: m.homeTeam.crest };
       const aTeam = { id: m.awayTeam.id, name: m.awayTeam.shortName || m.awayTeam.name, logo: m.awayTeam.crest };
       
@@ -376,7 +358,7 @@ const data = await res.json();
 
     if (ENGINE.M.length < 80) throw new Error(`Só ${ENGINE.M.length} jogos encontrados; modelo exige 80+.`);
 
-    const opts = Object.values(ENGINE.teams).sort((a,b)=>a.name.localeCompare(b.name)).map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
+    const opts = Object.values(ENGINE.teams).sort((a,b)=>a.name.localeCompare(b.name)).map(t=>`<option value="${t.id}">${esc(t.name)}</option>`).join('');
     $('teamA').innerHTML = opts; $('teamB').innerHTML = opts;
     if ($('teamB').options.length>1)$('teamB').selectedIndex = 1;
 
@@ -390,10 +372,9 @@ const data = await res.json();
     btn.disabled=false; btn.innerText="INICIAR SIMULAÇÃO DE COMBATE";
   } catch (err) {
     console.error(err); setStatus("ERRO NA API", BAD);
-    btn.innerText="FALHA AO CARREGAR — VERIFIQUE CHAVE E CLIQUE P/ TENTAR"; 
-    btn.disabled=false; btn.onclick=()=>{btn.onclick=startCombat; loadEngine();};
-    logMessage?.("ERRO: "+err.message, "text-red-400");
-  }
+    btn.innerText="FALHA: "+String(err.message).slice(0,90)+" — CLIQUE PARA TENTAR DE NOVO";
+    btn.disabled=false;
+  } finally { LOADING=false; }
 }
 
 function logMessage(msg, color="text-slate-300") {
@@ -402,8 +383,9 @@ function logMessage(msg, color="text-slate-300") {
   box.appendChild(s); if (box.children.length>3) box.removeChild(box.firstChild);
 }
 
+let LOADING=false;
 function startCombat() {
-  if (!ENGINE.cal) return loadEngine();
+  if (!ENGINE.cal) return LOADING ? null : loadEngine();
   const idA=+$('teamA').value, idB=+$('teamB').value;
   if (idA===idB) return alert("Selecione times diferentes para o combate.");
   const tA=ENGINE.teams[idA], tB=ENGINE.teams[idB], btn=$('btnSimulate');
@@ -411,7 +393,7 @@ function startCombat() {
   btn.disabled=true; btn.innerText="SIMULANDO...";
   $('arenaPanel').classList.remove('hidden');$('resultsPanel').classList.add('hidden');
   $('combatLog').innerHTML=""; ['scoreA','scoreB'].forEach(i=>$(i).innerText="0");
-  $('hpA').style.width="0\%"; $('hpB').style.width="0%";
+  $('hpA').style.width="0%"; $('hpB').style.width="0%";
   
   $('logoA').src=tA.logo; $('nameA').innerText=tA.name; 
   $('logoB').src=tB.logo; $('nameB').innerText=tB.name;
@@ -448,10 +430,10 @@ const fo = p => p>0 ? (1/p).toFixed(2) : '—';
 function showResults(res, lam, mu) {
   $('resultsPanel').classList.remove('hidden');
   [['1',res.pH],['X',res.pD],['2',res.pA]].forEach(([k,p])=>{
-    $('prob'+k).innerText=(p*100).toFixed(1)+"\%"; $('bar'+k).style.width=`${p*100}%`; });
+    $('prob'+k).innerText=(p*100).toFixed(1)+"%"; $('bar'+k).style.width=`${p*100}%`; });
   $('xgA').innerText=lam.toFixed(2);$('xgB').innerText=mu.toFixed(2);
 
-  $('matrixHead').innerHTML='<th class="p-2 text-slate-600 border-b border-slate-800 text-[10px]">C \\ F</th>'+
+  $('matrixHead').innerHTML='<th class="p-2 text-slate-600 border-b border-slate-800 text-[10px]">Casa↓ Fora→</th>'+
     [0,1,2,3,4].map(i=>`<th class="p-2 text-slate-400 text-[10px] border-b border-slate-800">${i}</th>`).join('');
   let body=''; for (let x=0;x<=4;x++){
     body+=`<tr><th class="bg-slate-950 text-blue-400 p-2 text-[10px] border-r border-slate-800">${x}</th>`;
