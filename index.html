@@ -162,15 +162,7 @@
 // ==========================================
 // CONFIG API - FOOTBALL-DATA.ORG
 // ==========================================
-const API_KEY = '5925cf62c04b4fbb96a49aa82cb55db4'; // <--- COLE SEU TOKEN DA FOOTBALL-DATA AQUI
-const API_HOST = 'api.football-data.org';
 const LEAGUE_CODE = 'BSA'; // Brasileirão Série A
-
-const requestOptions = { 
-  method:'GET', 
-  headers: new Headers({ "X-Auth-Token": API_KEY }) 
-};
-
 // ==========================================
 // MOTOR MATEMÁTICO (puro, sem DOM)
 // ==========================================
@@ -332,9 +324,16 @@ async function loadEngine() {
   setStatus("CARREGANDO RESULTADOS...", WARN+" animate-pulse");
   try {
     // Busca os jogos finalizados do Campeonato na Football-Data
-    const targetUrl = encodeURIComponent(`https://${API_HOST}/v4/competitions/${LEAGUE_CODE}/matches?status=FINISHED`);
-    const res = await fetch('/api/matches', requestOptions);
-    const data = await res.json();
+    const res = await fetch(
+  'https://avyphhgctozywfsfaozq.supabase.co/functions/v1/football-matches'
+);
+
+if (!res.ok) {
+  const errorText = await res.text();
+  throw new Error(`Edge Function ${res.status}: ${errorText}`);
+}
+
+const data = await res.json();
     
     if (data.errorCode) throw new Error(data.message);
     if (!data.matches) throw new Error("A API não retornou dados de partidas.");
