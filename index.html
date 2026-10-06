@@ -333,7 +333,7 @@ async function loadEngine() {
   try {
     // Busca os jogos finalizados do Campeonato na Football-Data
     const targetUrl = encodeURIComponent(`https://${API_HOST}/v4/competitions/${LEAGUE_CODE}/matches?status=FINISHED`);
-    const res = await fetch(`https://corsproxy.io/?${targetUrl}`, requestOptions);
+    const res = await fetch('/api/matches', requestOptions);
     const data = await res.json();
     
     if (data.errorCode) throw new Error(data.message);
