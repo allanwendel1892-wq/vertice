@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/matches",
+      "destination": "https://api.football-data.org/v4/competitions/BSA/matches?status=FINISHED"
+    }
+  ]
+}
