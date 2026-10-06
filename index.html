@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>QUANT ENGINE V16 – COMBAT ARENA</title>
+<title>QUANT ENGINE V16.1 – COMBAT ARENA</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet">
 <style>
@@ -332,7 +332,8 @@ async function loadEngine() {
   setStatus("CARREGANDO RESULTADOS...", WARN+" animate-pulse");
   try {
     // Busca os jogos finalizados do Campeonato na Football-Data
-    const res = await fetch(`https://${API_HOST}/v4/competitions/${LEAGUE_CODE}/matches?status=FINISHED`, requestOptions);
+    const targetUrl = encodeURIComponent(`https://${API_HOST}/v4/competitions/${LEAGUE_CODE}/matches?status=FINISHED`);
+    const res = await fetch(`https://corsproxy.io/?${targetUrl}`, requestOptions);
     const data = await res.json();
     
     if (data.errorCode) throw new Error(data.message);
