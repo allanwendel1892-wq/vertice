@@ -48,10 +48,10 @@
         QUANT<span class="text-violet-500">ARENA</span>
         <span class="text-[10px] bg-violet-500/20 text-violet-400 px-2 py-1 rounded border border-violet-500/30 ml-3 align-middle">V16 INTERACTIVE</span>
       </h1>
-      <p class="text-slate-400 text-xs mt-1 mono">Data-Driven Combat Simulation // No Odds Module</p>
+      <p class="text-slate-400 text-xs mt-1 mono">Data-Driven Combat Simulation // Football-Data.org Edition</p>
     </div>
     <div id="apiStatus" class="text-[10px] mono font-bold px-3 py-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 text-amber-400">
-      API-FOOTBALL STANDBY
+      API STANDBY
     </div>
   </header>
 
@@ -77,24 +77,21 @@
     INICIAR SIMULAÇÃO DE COMBATE
   </button>
 
-  <!-- ARENA DE COMBATE (Oculta até iniciar) -->
+  <!-- ARENA DE COMBATE -->
   <section id="arenaPanel" class="hidden glass rounded-2xl p-6 relative overflow-hidden">
-    <!-- Efeitos de Fundo -->
     <div class="absolute top-0 left-0 w-1/2 h-full bg-blue-900/10 blur-3xl pointer-events-none"></div>
     <div class="absolute top-0 right-0 w-1/2 h-full bg-pink-900/10 blur-3xl pointer-events-none"></div>
 
     <div class="grid grid-cols-3 gap-4 items-center">
-      <!-- Lado A (Casa) -->
       <div class="flex flex-col items-center z-10">
         <img id="logoA" src="" class="w-24 h-24 object-contain drop-shadow-[0_0_15px_rgba(59,130,246,0.5)] mb-3">
-        <h2 id="nameA" class="text-lg font-black uppercase text-blue-400 tracking-wider">TIME A</h2>
+        <h2 id="nameA" class="text-lg font-black uppercase text-blue-400 tracking-wider text-center">TIME A</h2>
         <div class="w-full bg-slate-900 rounded-full h-3 mt-4 border border-slate-700 overflow-hidden">
           <div id="hpA" class="bg-blue-500 h-full health-bar w-0 shadow-[0_0_10px_#3b82f6]"></div>
         </div>
         <span class="text-[10px] text-slate-400 mt-1 uppercase">Poder de Domínio</span>
       </div>
 
-      <!-- Placar / Logs Centrais -->
       <div class="flex flex-col items-center justify-center h-48 border border-slate-700/50 bg-slate-950/80 rounded-xl p-4 z-10 relative shadow-inner">
         <div id="matchTimer" class="text-xs text-violet-400 mono font-bold mb-2 animate-pulse-glow">PREPARANDO DADOS...</div>
         
@@ -104,15 +101,12 @@
           <span id="scoreB" class="text-5xl font-black text-white mono">0</span>
         </div>
 
-        <div id="combatLog" class="w-full h-16 overflow-hidden flex flex-col justify-end text-center space-y-1">
-          <!-- Logs aparecerão aqui via JS -->
-        </div>
+        <div id="combatLog" class="w-full h-16 overflow-hidden flex flex-col justify-end text-center space-y-1"></div>
       </div>
 
-      <!-- Lado B (Fora) -->
       <div class="flex flex-col items-center z-10">
         <img id="logoB" src="" class="w-24 h-24 object-contain drop-shadow-[0_0_15px_rgba(236,72,153,0.5)] mb-3">
-        <h2 id="nameB" class="text-lg font-black uppercase text-pink-400 tracking-wider">TIME B</h2>
+        <h2 id="nameB" class="text-lg font-black uppercase text-pink-400 tracking-wider text-center">TIME B</h2>
         <div class="w-full bg-slate-900 rounded-full h-3 mt-4 border border-slate-700 overflow-hidden flex justify-end">
           <div id="hpB" class="bg-pink-500 h-full health-bar w-0 shadow-[0_0_10px_#ec4899]"></div>
         </div>
@@ -121,12 +115,10 @@
     </div>
   </section>
 
-  <!-- RESULTADOS ANALÍTICOS (Aparece após o combate) -->
+  <!-- RESULTADOS ANALÍTICOS -->
   <section id="resultsPanel" class="hidden grid grid-cols-1 md:grid-cols-2 gap-6">
-    <!-- Probabilidades Matemáticas -->
     <div class="glass rounded-2xl p-6 border border-slate-800">
       <h3 class="text-[10px] text-slate-500 uppercase tracking-widest font-bold border-b border-slate-800 pb-2 mb-4">Probabilidades 1X2 (Dixon-Coles)</h3>
-      
       <div class="space-y-4">
         <div>
           <div class="flex justify-between text-xs font-bold mb-1"><span class="text-blue-400">VITÓRIA MANDANTE</span><span id="prob1" class="mono">--%</span></div>
@@ -141,20 +133,18 @@
           <div class="w-full bg-slate-900 rounded-full h-1.5"><div id="bar2" class="bg-pink-500 h-full rounded-full"></div></div>
         </div>
       </div>
-
       <div class="grid grid-cols-2 gap-4 mt-6 pt-4 border-t border-slate-800">
         <div class="bg-slate-900/50 p-3 rounded-xl text-center">
-          <span class="block text-[9px] text-slate-500 uppercase">Gols Esperados (xG) Casa</span>
+          <span class="block text-[9px] text-slate-500 uppercase">Gols Esperados Casa</span>
           <span id="xgA" class="text-xl font-black text-white mono">0.00</span>
         </div>
         <div class="bg-slate-900/50 p-3 rounded-xl text-center">
-          <span class="block text-[9px] text-slate-500 uppercase">Gols Esperados (xG) Fora</span>
+          <span class="block text-[9px] text-slate-500 uppercase">Gols Esperados Fora</span>
           <span id="xgB" class="text-xl font-black text-white mono">0.00</span>
         </div>
       </div>
     </div>
 
-    <!-- Matriz de Placar -->
     <div class="glass rounded-2xl p-6 border border-slate-800">
       <h3 class="text-[10px] text-slate-500 uppercase tracking-widest font-bold border-b border-slate-800 pb-2 mb-4">Matriz de Probabilidade de Placares</h3>
       <div class="overflow-x-auto">
@@ -170,13 +160,16 @@
 
 <script>
 // ==========================================
-// CONFIG API
+// CONFIG API - FOOTBALL-DATA.ORG
 // ==========================================
-const API_KEY = 'be8c77945eb7936750bd8e83cc0d9369';
-const API_HOST = 'v3.football.api-sports.io';
-const LEAGUE_ID = 71, SEASON = 2024;
-const requestOptions = { method:'GET', redirect:'follow',
-  headers: new Headers({ "x-rapidapi-key": API_KEY, "x-rapidapi-host": API_HOST }) };
+const API_KEY = '5925cf62c04b4fbb96a49aa82cb55db4'; // <--- COLE SEU TOKEN DA FOOTBALL-DATA AQUI
+const API_HOST = 'api.football-data.org';
+const LEAGUE_CODE = 'BSA'; // Brasileirão Série A
+
+const requestOptions = { 
+  method:'GET', 
+  headers: new Headers({ "X-Auth-Token": API_KEY }) 
+};
 
 // ==========================================
 // MOTOR MATEMÁTICO (puro, sem DOM)
@@ -184,7 +177,7 @@ const requestOptions = { method:'GET', redirect:'follow',
 const MAXG = 10, DAY = 864e5;
 const LF = [0]; for (let i = 1; i < 40; i++) LF[i] = LF[i-1] + Math.log(i);
 
-function lgamma(z) { // Lanczos
+function lgamma(z) { 
   const c=[676.5203681218851,-1259.1392167224028,771.32342877765313,-176.61502916214059,12.507343278686905,-0.13857109526572012,9.9843695780195716e-6,1.5056327351493116e-7];
   if (z < 0.5) return Math.log(Math.PI/Math.sin(Math.PI*z)) - lgamma(1-z);
   z -= 1; let x = 0.99999999999980993;
@@ -192,20 +185,21 @@ function lgamma(z) { // Lanczos
   const t = z + 7.5;
   return 0.5*Math.log(2*Math.PI) + (z+0.5)*Math.log(t) - t + Math.log(x);
 }
-// PMF de gols: r = Infinity => Poisson; r finito => Binomial Negativa (média m, tamanho r)
+
 function pmf(k, m, r) {
   if (m <= 0) return k === 0 ? 1 : 0;
   if (!isFinite(r)) return Math.exp(k*Math.log(m) - m - LF[k]);
   return Math.exp(lgamma(k+r) - LF[k] - lgamma(r) + r*Math.log(r/(r+m)) + k*Math.log(m/(r+m)));
 }
-function tau(x, y, lam, mu, rho) { // Dixon-Coles (1997)
+
+function tau(x, y, lam, mu, rho) { 
   if (x===0 && y===0) return 1 - lam*mu*rho;
   if (x===0 && y===1) return 1 + lam*rho;
   if (x===1 && y===0) return 1 + mu*rho;
   if (x===1 && y===1) return 1 - rho;
   return 1;
 }
-// Matriz de placares. A única normalização é a do truncamento (cauda > MAXG gols).
+
 function buildScoreMatrix(lam, mu, rho = 0, r = Infinity) {
   const px = [], py = [];
   for (let k=0;k<=MAXG;k++){ px[k]=pmf(k,lam,r); py[k]=pmf(k,mu,r); }
@@ -222,10 +216,7 @@ function buildScoreMatrix(lam, mu, rho = 0, r = Infinity) {
   return { mat, pH, pD, pA, o25, btts, best };
 }
 
-// Ajuste Dixon-Coles: lam = base*gamma*att[h]*def[a] ; mu = base*att[a]*def[h]
-// Máx. verossimilhança Poisson ponderada (decaimento temporal) + encolhimento p/ média da liga.
 function fitStrengths(M, tNow, cfg) {
-  // alvo do ajuste: mistura gols e xG (xw=0 => só gols). Sem xG no jogo, usa gols.
   const Y = M.map(m => (cfg.xw && m.xh!=null) ? [(1-cfg.xw)*m.hg+cfg.xw*m.xh, (1-cfg.xw)*m.ag+cfg.xw*m.xa] : [m.hg,m.ag]);
   const w = M.map(m => cfg.halfLife ? Math.pow(0.5, (tNow-m.t)/(cfg.halfLife*DAY)) : 1);
   const att={}, def={};
@@ -246,19 +237,19 @@ function fitStrengths(M, tNow, cfg) {
     for (const id in att){ att[id]=(Ga[id]+kb)/(Ea[id]+kb); def[id]=(Gd[id]+kb)/(Ed[id]+kb); }
     let ea=0, eh=0;
     M.forEach((m,i)=>{ ea+=w[i]*att[m.a]*def[m.h]; });
-    base = sa/ea;                                   // escala (gols do visitante)
+    base = sa/ea;                                   
     M.forEach((m,i)=>{ eh+=w[i]*base*att[m.h]*def[m.a]; });
-    gamma = sh/eh;                                  // vantagem de mando (MLE)
+    gamma = sh/eh;                                  
   }
   return { att, def, base, gamma };
 }
+
 function predict(F, h, a) {
   const ah=F.att[h]??1, dh=F.def[h]??1, aa=F.att[a]??1, da=F.def[a]??1;
   return { lam: F.base*F.gamma*ah*da, mu: F.base*aa*dh };
 }
 const outcome = m => m.hg>m.ag ? 0 : (m.hg===m.ag ? 1 : 2);
 
-// Backtest walk-forward: cada jogo é previsto SÓ com dados anteriores à sua rodada
 function walkForward(M, cfg, warm=60) {
   const out=[], cnt=[1,1,1]; for (let j=0;j<warm;j++) cnt[outcome(M[j])]++;
   let i=warm;
@@ -272,6 +263,7 @@ function walkForward(M, cfg, warm=60) {
   }
   return out;
 }
+
 function score(P, rho=0, r=Infinity) {
   let ll=0, br=0, acc=0, llB=0, brB=0;
   P.forEach(p=>{
@@ -282,7 +274,8 @@ function score(P, rho=0, r=Infinity) {
   });
   const n=P.length; return { n, ll:ll/n, llBase:llB/n, brier:br/n, brierBase:brB/n, acc:acc/n };
 }
-function fitRho(P) { // MLE de rho nas células (0,0),(0,1),(1,0),(1,1) com λ/μ fora da amostra
+
+function fitRho(P) { 
   let best={rho:0,ll:-Infinity};
   for (let rho=-0.30; rho<=0.15001; rho+=0.005) {
     let ll=0, ok=true;
@@ -292,55 +285,42 @@ function fitRho(P) { // MLE de rho nas células (0,0),(0,1),(1,0),(1,1) com λ/�
   }
   return best.rho;
 }
-function fitDispersion(P) { // Poisson vs NegBin por AIC (NegBin = +1 parâmetro)
+
+function fitDispersion(P) { 
   const LL = r => P.reduce((s,p)=>s+Math.log(pmf(p.hg,p.lam,r)+1e-12)+Math.log(pmf(p.ag,p.mu,r)+1e-12),0);
   const base=LL(Infinity); let best={r:Infinity,ll:base};
   for (const r of [80,50,30,20,12,8,5]) { const l=LL(r); if (l>best.ll) best={r,ll:l}; }
   const useNB = isFinite(best.r) && (2*(best.ll-base) - 2) > 0;
   return { r: useNB ? best.r : Infinity, gain: best.ll-base };
 }
+
 function calibrate(M) {
-  const hasXG = M.filter(m=>m.xh!=null).length / M.length >= 0.7; // exige cobertura mínima
+  const hasXG = false; // Football-Data free tier não tem xG
   let best=null;
-  for (const xw of (hasXG ? [0,0.5,1] : [0]))
+  for (const xw of [0]) // Força uso exclusivo de Gols reais
   for (const halfLife of [60,120,240,0]) for (const k of [1,3,6,12]) {
-    const P=walkForward(M,{halfLife,k,xw}), s=score(P);   // sempre avaliado contra GOLS reais
+    const P=walkForward(M,{halfLife,k,xw}), s=score(P);   
     if (!best || s.ll<best.s.ll) best={cfg:{halfLife,k,xw},P,s};
   }
   const rho=fitRho(best.P), disp=fitDispersion(best.P);
   return { cfg:best.cfg, rho, r:disp.r, nbGain:disp.gain, before:best.s, after:score(best.P,rho,disp.r), hasXG, n:M.length };
 }
-// ===== UI =====
 
-// ==========================================
-// DADOS + CALIBRAÇÃO (carrega ao abrir a página)
-// ==========================================
-// xG por jogo via /fixtures/statistics (1 requisição por jogo). Cache em localStorage;
-// carrega no máx. XG_BATCH jogos novos (os mais recentes) por abertura, respeitando o limite do plano.
-const XG_BATCH = 40;
+// ===== UI & INTEGRAÇÃO FOOTBALL-DATA =====
+
 async function loadXG(M) {
-  let c = {}; try { c = JSON.parse(localStorage.getItem('xg_v1')||'{}'); } catch {}
-  const todo = M.filter(m => !(m.id in c)).slice(-XG_BATCH);
-  for (let i=0;i<todo.length;i+=5) await Promise.all(todo.slice(i,i+5).map(async m => {
-    try {
-      const d = await (await fetch(`https://${API_HOST}/fixtures/statistics?fixture=${m.id}`, requestOptions)).json();
-      const g = id => { const t=(d.response||[]).find(x=>x.team.id===id);
-        const v=t?.statistics?.find(s=>s.type==='expected_goals')?.value; return v==null ? null : parseFloat(v); };
-      const xh=g(m.h), xa=g(m.a); c[m.id] = (xh==null||xa==null||isNaN(xh)||isNaN(xa)) ? false : [xh,xa];
-    } catch { /* falha de rede: tenta de novo na próxima abertura */ }
-  }));
-  try { localStorage.setItem('xg_v1', JSON.stringify(c)); } catch {}
-  M.forEach(m => { if (Array.isArray(c[m.id])) { m.xh=c[m.id][0]; m.xa=c[m.id][1]; } });
-  return M.filter(m=>m.xh!=null).length;
+  // Football-Data Free API não fornece xG. O modelo ignora e roda com dados de golos.
+  return 0;
 }
-// Calibração cacheada: só refaz o backtest se entraram >=10 jogos ou >=15 xG novos
+
 function cachedCalibrate(M, nxg) {
-  try { const k=JSON.parse(localStorage.getItem('cal_v1')||'null');
-    if (k && k.lg===`${LEAGUE_ID}-${SEASON}` && M.length-k.n<10 && nxg-k.nxg<15) { if (k.cal.r===null) k.cal.r=Infinity; return k.cal; } } catch {}
+  try { const k=JSON.parse(localStorage.getItem('cal_fd_v1')||'null');
+    if (k && k.lg===LEAGUE_CODE && M.length-k.n<10 && nxg-k.nxg<15) { if (k.cal.r===null) k.cal.r=Infinity; return k.cal; } } catch {}
   const cal = calibrate(M);
-  try { localStorage.setItem('cal_v1', JSON.stringify({lg:`${LEAGUE_ID}-${SEASON}`, n:M.length, nxg, cal})); } catch {}
-  return cal; // (JSON converte r=Infinity em null; tratado acima)
+  try { localStorage.setItem('cal_fd_v1', JSON.stringify({lg:LEAGUE_CODE, n:M.length, nxg, cal})); } catch {}
+  return cal; 
 }
+
 const ENGINE = { M:[], teams:{}, cal:null, F:null };
 const $ = id => document.getElementById(id);
 function setStatus(txt, cls) { const s=$('apiStatus'); s.innerText=txt;
@@ -351,30 +331,49 @@ async function loadEngine() {
   const btn=$('btnSimulate'); btn.disabled=true; btn.innerText="CALIBRANDO MODELO...";
   setStatus("CARREGANDO RESULTADOS...", WARN+" animate-pulse");
   try {
-    const res = await fetch(`https://${API_HOST}/fixtures?league=${LEAGUE_ID}&season=${SEASON}&status=FT`, requestOptions);
+    // Busca os jogos finalizados do Campeonato na Football-Data
+    const res = await fetch(`https://${API_HOST}/v4/competitions/${LEAGUE_CODE}/matches?status=FINISHED`, requestOptions);
     const data = await res.json();
-    if (data.errors && Object.keys(data.errors).length) throw new Error(JSON.stringify(data.errors));
-    ENGINE.M = data.response.filter(f=>f.goals.home!=null && f.goals.away!=null).map(f=>{
-      ENGINE.teams[f.teams.home.id]=f.teams.home; ENGINE.teams[f.teams.away.id]=f.teams.away;
-      return { id:f.fixture.id, t:Date.parse(f.fixture.date), h:f.teams.home.id, a:f.teams.away.id, hg:f.goals.home, ag:f.goals.away };
-    }).sort((x,y)=>x.t-y.t);
-    if (ENGINE.M.length < 80) throw new Error(`Só ${ENGINE.M.length} jogos encerrados; o modelo precisa de no mínimo 80.`);
+    
+    if (data.errorCode) throw new Error(data.message);
+    if (!data.matches) throw new Error("A API não retornou dados de partidas.");
+
+    // Mapeamento e filtragem para a estrutura do Motor Matemático
+    ENGINE.M = data.matches.filter(m => m.score && m.score.fullTime && m.score.fullTime.home !== null).map(m => {
+      const hTeam = { id: m.homeTeam.id, name: m.homeTeam.shortName || m.homeTeam.name, logo: m.homeTeam.crest };
+      const aTeam = { id: m.awayTeam.id, name: m.awayTeam.shortName || m.awayTeam.name, logo: m.awayTeam.crest };
+      
+      ENGINE.teams[hTeam.id] = hTeam;
+      ENGINE.teams[aTeam.id] = aTeam;
+      
+      return { 
+        id: m.id, 
+        t: Date.parse(m.utcDate), 
+        h: hTeam.id, 
+        a: aTeam.id, 
+        hg: m.score.fullTime.home, 
+        ag: m.score.fullTime.away 
+      };
+    }).sort((x,y) => x.t - y.t);
+
+    if (ENGINE.M.length < 80) throw new Error(`Só ${ENGINE.M.length} jogos encontrados; modelo exige 80+.`);
 
     const opts = Object.values(ENGINE.teams).sort((a,b)=>a.name.localeCompare(b.name)).map(t=>`<option value="${t.id}">${t.name}</option>`).join('');
     $('teamA').innerHTML = opts; $('teamB').innerHTML = opts;
-    if ($('teamB').options.length>1) $('teamB').selectedIndex = 1;
+    if ($('teamB').options.length>1)$('teamB').selectedIndex = 1;
 
-    await new Promise(r=>setTimeout(r,30)); // deixa a UI pintar antes do cálculo
-    $('apiStatus').innerText='CARREGANDO xG...';
+    await new Promise(r=>setTimeout(r,30)); 
     const nxg = await loadXG(ENGINE.M);
-    await new Promise(r=>setTimeout(r,30));
+    
     ENGINE.cal = cachedCalibrate(ENGINE.M, nxg);
     ENGINE.F = fitStrengths(ENGINE.M, Date.now(), ENGINE.cal.cfg);
-    setStatus(`API CONECTADA · ${ENGINE.M.length} JOGOS · xG ${nxg}`, OK);
+    
+    setStatus(`FOOTBALL-DATA CONECTADA · ${ENGINE.M.length} JOGOS`, OK);
     btn.disabled=false; btn.innerText="INICIAR SIMULAÇÃO DE COMBATE";
   } catch (err) {
     console.error(err); setStatus("ERRO NA API", BAD);
-    btn.innerText="FALHA AO CARREGAR — CLIQUE P/ TENTAR NOVAMENTE"; btn.disabled=false; btn.onclick=()=>{btn.onclick=startCombat; loadEngine();};
+    btn.innerText="FALHA AO CARREGAR — VERIFIQUE CHAVE E CLIQUE P/ TENTAR"; 
+    btn.disabled=false; btn.onclick=()=>{btn.onclick=startCombat; loadEngine();};
     logMessage?.("ERRO: "+err.message, "text-red-400");
   }
 }
@@ -390,15 +389,19 @@ function startCombat() {
   const idA=+$('teamA').value, idB=+$('teamB').value;
   if (idA===idB) return alert("Selecione times diferentes para o combate.");
   const tA=ENGINE.teams[idA], tB=ENGINE.teams[idB], btn=$('btnSimulate');
+  
   btn.disabled=true; btn.innerText="SIMULANDO...";
-  $('arenaPanel').classList.remove('hidden'); $('resultsPanel').classList.add('hidden');
+  $('arenaPanel').classList.remove('hidden');$('resultsPanel').classList.add('hidden');
   $('combatLog').innerHTML=""; ['scoreA','scoreB'].forEach(i=>$(i).innerText="0");
-  $('hpA').style.width="0%"; $('hpB').style.width="0%";
-  $('logoA').src=tA.logo; $('nameA').innerText=tA.name; $('logoB').src=tB.logo; $('nameB').innerText=tB.name;
+  $('hpA').style.width="0\%"; $('hpB').style.width="0%";
+  
+  $('logoA').src=tA.logo; $('nameA').innerText=tA.name; 
+  $('logoB').src=tB.logo; $('nameB').innerText=tB.name;
 
-  const { lam, mu } = predict(ENGINE.F, idA, idB);   // sem fator HFA manual: γ já está no ajuste
+  const { lam, mu } = predict(ENGINE.F, idA, idB);   
   const { rho, r } = ENGINE.cal;
   const res = buildScoreMatrix(lam, mu, rho, r);
+  
   logMessage(`Ataque/defesa ajustados por adversário (${tA.name} x ${tB.name})`, "text-violet-400");
   runAnimationSequence(res, lam, mu);
 }
@@ -408,6 +411,7 @@ function runAnimationSequence(res, lam, mu) {
   timer.classList.add("animate-pulse-glow");
   $('hpA').style.width=`${res.pH*100}%`; $('hpB').style.width=`${res.pA*100}%`;
   const c=ENGINE.cal;
+  
   const iv=setInterval(()=>{
     time+=15; timer.innerText=`${time}' MINUTOS`;
     if (time===30) logMessage(`λ casa ${lam.toFixed(2)} · μ fora ${mu.toFixed(2)}`, "text-blue-300");
@@ -415,7 +419,6 @@ function runAnimationSequence(res, lam, mu) {
     if (time===75) logMessage(isFinite(c.r)?`Binomial Negativa r = ${c.r}`:"Dispersão: Poisson", "text-violet-300");
     if (time>=90) {
       clearInterval(iv); timer.innerText="PLACAR MAIS PROVÁVEL (MODA)"; timer.classList.remove("animate-pulse-glow");
-      // Placar exibido = moda real da matriz. Nenhuma regra força vitória.
       $('scoreA').innerText=res.best.x; $('scoreB').innerText=res.best.y;
       logMessage(`Prob. do placar: ${(res.best.p*100).toFixed(1)}%`, "text-emerald-400");
       showResults(res, lam, mu);
@@ -427,8 +430,8 @@ const fo = p => p>0 ? (1/p).toFixed(2) : '—';
 function showResults(res, lam, mu) {
   $('resultsPanel').classList.remove('hidden');
   [['1',res.pH],['X',res.pD],['2',res.pA]].forEach(([k,p])=>{
-    $('prob'+k).innerText=(p*100).toFixed(1)+"%"; $('bar'+k).style.width=`${p*100}%`; });
-  $('xgA').innerText=lam.toFixed(2); $('xgB').innerText=mu.toFixed(2);
+    $('prob'+k).innerText=(p*100).toFixed(1)+"\%"; $('bar'+k).style.width=`${p*100}%`; });
+  $('xgA').innerText=lam.toFixed(2);$('xgB').innerText=mu.toFixed(2);
 
   $('matrixHead').innerHTML='<th class="p-2 text-slate-600 border-b border-slate-800 text-[10px]">C \\ F</th>'+
     [0,1,2,3,4].map(i=>`<th class="p-2 text-slate-400 text-[10px] border-b border-slate-800">${i}</th>`).join('');
@@ -439,7 +442,6 @@ function showResults(res, lam, mu) {
     body+='</tr>'; }
   $('matrixBody').innerHTML=body;
 
-  // Mercados derivados + diagnóstico do modelo
   const c=ENGINE.cal, a=c.after;
   let box=$('extraBox'); if(!box){ box=document.createElement('div'); box.id='extraBox';
     box.className='glass rounded-2xl p-6 border border-slate-800 md:col-span-2'; $('resultsPanel').appendChild(box); }
@@ -457,7 +459,7 @@ function showResults(res, lam, mu) {
       ${cell('Acerto 1X2',(a.acc*100).toFixed(1)+'%')}
       ${cell('ρ Dixon-Coles',c.rho.toFixed(3))}
       ${cell('Dispersão',isFinite(c.r)?'NegBin r='+c.r:'Poisson')}
-      ${cell('Meia-vida / k / xG',(c.cfg.halfLife||'∞')+'d / '+c.cfg.k+' / '+Math.round((c.cfg.xw||0)*100)+'%',c.hasXG?'xG ativo no backtest':'sem xG suficiente: só gols')}
+      ${cell('Meia-vida / k / xG',(c.cfg.halfLife||'∞')+'d / '+c.cfg.k+' / '+Math.round((c.cfg.xw||0)*100)+'%',c.hasXG?'xG ativo no backtest':'sem xG (API gratuita)')}
     </div>
     <p class="text-[10px] text-slate-500 mt-3 mono">${a.ll<a.llBase?'Modelo supera o baseline (frequências históricas da liga).':'ATENÇÃO: modelo NÃO supera o baseline — não use para apostas.'} Log-loss menor = melhor.</p>`;
 
@@ -465,7 +467,6 @@ function showResults(res, lam, mu) {
 }
 window.addEventListener('DOMContentLoaded', loadEngine);
 </script>
-
 
 </body>
 </html>
