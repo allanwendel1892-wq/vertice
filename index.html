@@ -324,9 +324,27 @@ async function loadEngine() {
   setStatus("CARREGANDO RESULTADOS...", WARN+" animate-pulse");
   try {
     // Busca os jogos finalizados do Campeonato na Football-Data
-    const res = await fetch(
-  'https://avyphhgctozywfsfaozq.supabase.co/functions/v1/football-matches'
+    const SUPABASE_URL = 'https://avyphhgctozywfsfaozq.supabase.co';
+
+const SUPABASE_ANON_KEY = 'SUA_ANON_KEY_AQUI';
+
+const res = await fetch(
+  `${SUPABASE_URL}/functions/v1/football-matches`,
+  {
+    method: 'GET',
+    headers: {
+      'apikey': eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF2eXBoaGdjdG96eXdmc2Zhb3pxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEyNjIxMzAsImV4cCI6MjEwNjgzODEzMH0.jBj-XZiedluQ60qek9N1WCTEgKKg8PcvxWMxt471otg,
+      'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+    }
+  }
 );
+
+if (!res.ok) {
+  const errorText = await res.text();
+  throw new Error(`Edge Function ${res.status}: ${errorText}`);
+}
+
+const data = await res.json();
 
 if (!res.ok) {
   const errorText = await res.text();
