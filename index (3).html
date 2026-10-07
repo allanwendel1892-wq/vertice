@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>QUANT ENGINE V16.1 – COMBAT ARENA</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet">
+<style>
+  body { font-family: 'Inter', sans-serif; background: #050505; color: #f3f4f6; overflow-x: hidden; }
+  .mono { font-family: 'JetBrains Mono', monospace; }
+  
+  /* Efeitos Glass e Neon */
+  .glass { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); }
+  .neon-border { box-shadow: 0 0 15px rgba(139, 92, 246, 0.2), inset 0 0 10px rgba(139, 92, 246, 0.1); border: 1px solid rgba(139, 92, 246, 0.4); }
+  
+  /* Animações da Arena */
+  .health-bar { transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1); }
+  .combat-log-enter { animation: slideUp 0.3s ease-out forwards; }
+  
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes pulseGlow {
+    0%, 100% { opacity: 1; text-shadow: 0 0 10px rgba(139,92,246,0.8); }
+    50% { opacity: 0.7; text-shadow: 0 0 20px rgba(139,92,246,1); }
+  }
+  .animate-pulse-glow { animation: pulseGlow 2s infinite; }
+  
+  /* Scrollbar customizada */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: #0f172a; }
+  ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+
+  /* Matriz */
+  .matrix-cell { width: 40px; height: 35px; text-align: center; border: 1px solid rgba(255,255,255,0.03); font-size: 0.65rem; }
+</style>
+</head>
+<body class="min-h-screen p-4 md:p-6 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-[#050505] to-black">
+
+<div class="max-w-6xl mx-auto space-y-6">
+
+  <!-- HEADER -->
+  <header class="glass rounded-2xl p-5 flex justify-between items-center border-b-4 border-violet-600">
+    <div>
+      <h1 class="text-3xl font-extrabold mono text-white tracking-tighter">
+        QUANT<span class="text-violet-500">ARENA</span>
+        <span class="text-[10px] bg-violet-500/20 text-violet-400 px-2 py-1 rounded border border-violet-500/30 ml-3 align-middle">V16 INTERACTIVE</span>
+      </h1>
+      <p class="text-slate-400 text-xs mt-1 mono">Data-Driven Combat Simulation // Football-Data.org Edition</p>
+    </div>
+    <div id="apiStatus" class="text-[10px] mono font-bold px-3 py-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 text-amber-400">
+      API STANDBY
+    </div>
+  </header>
+
+  <!-- SELEÇÃO DE TIMES -->
+  <section class="glass rounded-2xl p-6 grid grid-cols-1 md:grid-cols-7 gap-6 items-end">
+    <div class="md:col-span-3">
+      <label class="block text-[10px] uppercase text-slate-400 font-bold mb-2">Mandante (Time A)</label>
+      <select id="teamA" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-4 text-sm text-blue-400 font-bold outline-none"><option>Carregando...</option></select>
+    </div>
+    
+    <div class="md:col-span-1 flex justify-center items-center pb-2">
+      <span class="text-3xl font-black text-slate-700 italic">VS</span>
+    </div>
+
+    <div class="md:col-span-3">
+      <label class="block text-[10px] uppercase text-slate-400 font-bold mb-2">Visitante (Time B)</label>
+      <select id="teamB" class="w-full bg-slate-950 border border-slate-700 rounded-xl p-4 text-sm text-pink-400 font-bold outline-none"><option>Carregando...</option></select>
+    </div>
+  </section>
+
+  <!-- BOTÃO DE COMBATE -->
+  <button id="btnSimulate" onclick="startCombat()" class="w-full bg-violet-700 hover:bg-violet-600 text-white font-black uppercase tracking-widest text-lg p-5 rounded-2xl transition-all neon-border shadow-2xl shadow-violet-900/50 hover:scale-[1.01]">
+    INICIAR SIMULAÇÃO DE COMBATE
+  </button>
+
+  <!-- ARENA DE COMBATE -->
+  <section id="arenaPanel" class="hidden glass rounded-2xl p-6 relative overflow-hidden">
+    <div class="absolute top-0 left-0 w-1/2 h-full bg-blue-900/10 blur-3xl pointer-events-none"></div>
+    <div class="absolute top-0 right-0 w-1/2 h-full bg-pink-900/10 blur-3xl pointer-events-none"></div>
+
+    <div class="grid grid-cols-3 gap-4 items-center">
+      <div class="flex flex-col items-center z-10">
+        <img id="logoA" src="" onerror="this.style.visibility='hidden'" onload="this.style.visibility='visible'" class="w-24 h-24 object-contain drop-shadow-[0_0_15px_rgba(59,130,246,0.5)] mb-3">
+        <h2 id="nameA" class="text-lg font-black uppercase text-blue-400 tracking-wider text-center">TIME A</h2>
+        <div class="w-full bg-slate-900 rounded-full h-3 mt-4 border border-slate-700 overflow-hidden">
+          <div id="hpA" class="bg-blue-500 h-full health-bar w-0 shadow-[0_0_10px_#3b82f6]"></div>
+        </div>
+        <span class="text-[10px] text-slate-400 mt-1 uppercase">Poder de Domínio</span>
+      </div>
+
+      <div class="flex flex-col items-center justify-center h-48 border border-slate-700/50 bg-slate-950/80 rounded-xl p-4 z-10 relative shadow-inner">
+        <div id="matchTimer" class="text-xs text-violet-400 mono font-bold mb-2 animate-pulse-glow">PREPARANDO DADOS...</div>
+        
+        <div class="flex items-center gap-4 mb-4">
+          <span id="scoreA" class="text-5xl font-black text-white mono">0</span>
+          <span class="text-xl text-slate-600 font-black">X</span>
+          <span id="scoreB" class="text-5xl font-black text-white mono">0</span>
+        </div>
+
+        <div id="combatLog" class="w-full h-16 overflow-hidden flex flex-col justify-end text-center space-y-1"></div>
+      </div>
+
+      <div class="flex flex-col items-center z-10">
+        <img id="logoB" src="" onerror="this.style.visibility='hidden'" onload="this.style.visibility='visible'" class="w-24 h-24 object-contain drop-shadow-[0_0_15px_rgba(236,72,153,0.5)] mb-3">
+        <h2 id="nameB" class="text-lg font-black uppercase text-pink-400 tracking-wider text-center">TIME B</h2>
+        <div class="w-full bg-slate-900 rounded-full h-3 mt-4 border border-slate-700 overflow-hidden flex justify-end">
+          <div id="hpB" class="bg-pink-500 h-full health-bar w-0 shadow-[0_0_10px_#ec4899]"></div>
+        </div>
+        <span class="text-[10px] text-slate-400 mt-1 uppercase">Poder de Domínio</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- TERMINAL DE ANÁLISE QUANTITATIVA -->
+  <section id="analysisPanel" class="hidden glass rounded-2xl p-0 border border-violet-900/50 mb-6 relative overflow-hidden">
+    <div class="bg-violet-950/40 p-3 border-b border-violet-900/50 flex justify-between items-center">
+      <h3 class="text-[10px] text-violet-400 uppercase tracking-widest font-black flex items-center gap-2">
+        <span class="animate-pulse w-2 h-2 bg-violet-500 rounded-full inline-block"></span> 
+        Engine Logs // Síntese de Diagnóstico Estatístico
+      </h3>
+      <span class="text-[9px] text-slate-500 mono">MODO: ANÁLISE PROFUNDA</span>
+    </div>
+    <div id="aiVerdict" class="p-6 relative z-10">
+      <!-- O relatório robusto será injetado aqui -->
+    </div>
+  </section>
+
+  <!-- RESULTADOS ANALÍTICOS -->
+  <section id="resultsPanel" class="hidden grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div class="glass rounded-2xl p-6 border border-slate-800">
+      <h3 class="text-[10px] text-slate-500 uppercase tracking-widest font-bold border-b border-slate-800 pb-2 mb-4">Probabilidades 1X2 (Dixon-Coles)</h3>
+      <div class="space-y-4">
+        <div>
+          <div class="flex justify-between text-xs font-bold mb-1"><span class="text-blue-400">VITÓRIA MANDANTE</span><span id="prob1" class="mono">--%</span></div>
+          <div class="w-full bg-slate-900 rounded-full h-1.5"><div id="bar1" class="bg-blue-500 h-full rounded-full"></div></div>
+        </div>
+        <div>
+          <div class="flex justify-between text-xs font-bold mb-1"><span class="text-slate-400">EMPATE</span><span id="probX" class="mono">--%</span></div>
+          <div class="w-full bg-slate-900 rounded-full h-1.5"><div id="barX" class="bg-slate-500 h-full rounded-full"></div></div>
+        </div>
+        <div>
+          <div class="flex justify-between text-xs font-bold mb-1"><span class="text-pink-400">VITÓRIA VISITANTE</span><span id="prob2" class="mono">--%</span></div>
+          <div class="w-full bg-slate-900 rounded-full h-1.5"><div id="bar2" class="bg-pink-500 h-full rounded-full"></div></div>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-4 mt-6 pt-4 border-t border-slate-800">
+        <div class="bg-slate-900/50 p-3 rounded-xl text-center">
+          <span class="block text-[9px] text-slate-500 uppercase">Gols Esperados Casa</span>
+          <span id="xgA" class="text-xl font-black text-white mono">0.00</span>
+        </div>
+        <div class="bg-slate-900/50 p-3 rounded-xl text-center">
+          <span class="block text-[9px] text-slate-500 uppercase">Gols Esperados Fora</span>
+          <span id="xgB" class="text-xl font-black text-white mono">0.00</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="glass rounded-2xl p-6 border border-slate-800">
+      <h3 class="text-[10px] text-slate-500 uppercase tracking-widest font-bold border-b border-slate-800 pb-2 mb-4">Matriz de Probabilidade de Placares</h3>
+      <div class="overflow-x-auto">
+        <table class="w-full mono">
+          <thead><tr id="matrixHead"></tr></thead>
+          <tbody id="matrixBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+// ==========================================
+// CONFIG API - FOOTBALL-DATA.ORG
+// ==========================================
+const LEAGUE_CODE = 'BSA'; // Brasileirão Série A
+const SUPABASE_URL = 'https://avyphhgctozywfsfaozq.supabase.co';
+// Chave anon (pública por design; a proteção real é RLS/verificação na Edge Function)
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF2eXBoaGdjdG96eXdmc2Zhb3pxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTEyNjIxMzAsImV4cCI6MjEwNjgzODEzMH0.jBj-XZiedluQ60qek9N1WCTEgKKg8PcvxWMxt471otg';
+// ==========================================
+// MOTOR MATEMÁTICO (puro, sem DOM)
+// ==========================================
+const MAXG = 10, DAY = 864e5;
+const LF = [0]; for (let i = 1; i < 120; i++) LF[i] = LF[i-1] + Math.log(i);
+
+function lgamma(z) { 
+  const c=[676.5203681218851,-1259.1392167224028,771.32342877765313,-176.61502916214059,12.507343278686905,-0.13857109526572012,9.9843695780195716e-6,1.5056327351493116e-7];
+  if (z < 0.5) return Math.log(Math.PI/Math.sin(Math.PI*z)) - lgamma(1-z);
+  z -= 1; let x = 0.99999999999980993;
+  for (let i=0;i<8;i++) x += c[i]/(z+i+1);
+  const t = z + 7.5;
+  return 0.5*Math.log(2*Math.PI) + (z+0.5)*Math.log(t) - t + Math.log(x);
+}
+
+function pmf(k, m, r) {
+  if (m <= 0) return k === 0 ? 1 : 0;
+  if (!isFinite(r)) return Math.exp(k*Math.log(m) - m - LF[k]);
+  return Math.exp(lgamma(k+r) - LF[k] - lgamma(r) + r*Math.log(r/(r+m)) + k*Math.log(m/(r+m)));
+}
+
+function tau(x, y, lam, mu, rho) { 
+  if (x===0 && y===0) return 1 - lam*mu*rho;
+  if (x===0 && y===1) return 1 + lam*rho;
+  if (x===1 && y===0) return 1 + mu*rho;
+  if (x===1 && y===1) return 1 - rho;
+  return 1;
+}
+
+function buildScoreMatrix(lam, mu, rho = 0, r = Infinity) {
+  const px = [], py = [];
+  for (let k=0;k<=MAXG;k++){ px[k]=pmf(k,lam,r); py[k]=pmf(k,mu,r); }
+  const mat = []; let tot = 0;
+  for (let x=0;x<=MAXG;x++){ mat[x]=[]; for (let y=0;y<=MAXG;y++){
+    const p = Math.max(0, px[x]*py[y]*tau(x,y,lam,mu,rho)); mat[x][y]=p; tot+=p; } }
+  let pH=0,pD=0,pA=0,o25=0,btts=0,best={p:0,x:0,y:0};
+  for (let x=0;x<=MAXG;x++) for (let y=0;y<=MAXG;y++){
+    const p = (mat[x][y] /= tot);
+    if (x>y) pH+=p; else if (x===y) pD+=p; else pA+=p;
+    if (x+y>=3) o25+=p; if (x>0&&y>0) btts+=p;
+    if (p>best.p) best={p,x,y};
+  }
+  return { mat, pH, pD, pA, o25, btts, best };
+}
+
+function fitStrengths(M, tNow, cfg) {
+  const Y = M.map(m => (cfg.xw && m.xh!=null) ? [(1-cfg.xw)*m.hg+cfg.xw*m.xh, (1-cfg.xw)*m.ag+cfg.xw*m.xa] : [m.hg,m.ag]);
+  const w = M.map(m => cfg.halfLife ? Math.pow(0.5, (tNow-m.t)/(cfg.halfLife*DAY)) : 1);
+  const att={}, def={};
+  M.forEach(m => { att[m.h]=att[m.a]=def[m.h]=def[m.a]=1; });
+  let sw=0, sa=0, sh=0; M.forEach((m,i)=>{ sw+=w[i]; sh+=w[i]*Y[i][0]; sa+=w[i]*Y[i][1]; });
+  let base = sa/sw || 1.1, gamma = (sh/sa) || 1.3;
+  for (let it=0; it<30; it++) {
+    const Ga={},Ea={},Gd={},Ed={};
+    for (const id in att){ Ga[id]=Ea[id]=Gd[id]=Ed[id]=0; }
+    M.forEach((m,i)=>{
+      const lamE = base*gamma, muE = base;
+      Ga[m.h]+=w[i]*Y[i][0]; Ea[m.h]+=w[i]*lamE*def[m.a];
+      Ga[m.a]+=w[i]*Y[i][1]; Ea[m.a]+=w[i]*muE*def[m.h];
+      Gd[m.a]+=w[i]*Y[i][0]; Ed[m.a]+=w[i]*lamE*att[m.h];
+      Gd[m.h]+=w[i]*Y[i][1]; Ed[m.h]+=w[i]*muE*att[m.a];
+    });
+    const kb = cfg.k*base;
+    for (const id in att){ att[id]=(Ga[id]+kb)/(Ea[id]+kb); def[id]=(Gd[id]+kb)/(Ed[id]+kb); }
+    let ea=0, eh=0;
+    M.forEach((m,i)=>{ ea+=w[i]*att[m.a]*def[m.h]; });
+    base = sa/ea;                                   
+    M.forEach((m,i)=>{ eh+=w[i]*base*att[m.h]*def[m.a]; });
+    gamma = sh/eh;                                  
+  }
+  return { att, def, base, gamma };
+}
+
+function predict(F, h, a) {
+  const ah=F.att[h]??1, dh=F.def[h]??1, aa=F.att[a]??1, da=F.def[a]??1;
+  return { lam: F.base*F.gamma*ah*da, mu: F.base*aa*dh };
+}
+const outcome = m => m.hg>m.ag ? 0 : (m.hg===m.ag ? 1 : 2);
+
+function walkForward(M, cfg, warm=60) {
+  const out=[], cnt=[1,1,1]; for (let j=0;j<warm;j++) cnt[outcome(M[j])]++;
+  let i=warm;
+  while (i<M.length) {
+    const day = M[i].t - M[i].t%DAY; let j=i;
+    while (j<M.length && M[j].t - M[j].t%DAY === day) j++;
+    const F = fitStrengths(M.slice(0,i), day, cfg), tot=cnt[0]+cnt[1]+cnt[2];
+    for (let q=i;q<j;q++) out.push({ ...predict(F,M[q].h,M[q].a), hg:M[q].hg, ag:M[q].ag, base:cnt.map(c=>c/tot) });
+    for (let q=i;q<j;q++) cnt[outcome(M[q])]++;
+    i=j;
+  }
+  return out;
+}
+
+function score(P, rho=0, r=Infinity) {
+  let ll=0, br=0, acc=0, llB=0, brB=0;
+  P.forEach(p=>{
+    const R=buildScoreMatrix(p.lam,p.mu,rho,r), pr=[R.pH,R.pD,R.pA], o=outcome(p);
+    ll -= Math.log(Math.max(pr[o],1e-9)); llB -= Math.log(p.base[o]);
+    pr.forEach((v,k)=>{ br+=(v-(k===o?1:0))**2; brB+=(p.base[k]-(k===o?1:0))**2; });
+    if (pr.indexOf(Math.max(...pr))===o) acc++;
+  });
+  const n=P.length; return { n, ll:ll/n, llBase:llB/n, brier:br/n, brierBase:brB/n, acc:acc/n };
+}
+
+function fitRho(P) { 
+  let best={rho:0,ll:-Infinity};
+  for (let n=0; n<=90; n++) { const rho=-0.30+n*0.005;
+    let ll=0, ok=true;
+    for (const p of P) { if (p.hg>1||p.ag>1) continue;
+      const t=tau(p.hg,p.ag,p.lam,p.mu,rho); if (t<=0){ok=false;break;} ll+=Math.log(t); }
+    if (ok && ll>best.ll) best={rho:+rho.toFixed(3),ll};
+  }
+  return best.rho;
+}
+
+function fitDispersion(P) { 
+  const LL = r => P.reduce((s,p)=>s+Math.log(pmf(p.hg,p.lam,r)+1e-12)+Math.log(pmf(p.ag,p.mu,r)+1e-12),0);
+  const base=LL(Infinity); let best={r:Infinity,ll:base};
+  for (const r of [80,50,30,20,12,8,5]) { const l=LL(r); if (l>best.ll) best={r,ll:l}; }
+  const useNB = isFinite(best.r) && (2*(best.ll-base) - 2) > 0;
+  return { r: useNB ? best.r : Infinity, gain: best.ll-base };
+}
+
+function calibrate(M) {
+  const hasXG = false; // Football-Data free tier não tem xG
+  let best=null;
+  for (const xw of [0]) // Força uso exclusivo de Gols reais
+  for (const halfLife of [60,120,240,0]) for (const k of [1,3,6,12]) {
+    const P=walkForward(M,{halfLife,k,xw}), s=score(P);   
+    if (!best || s.ll<best.s.ll) best={cfg:{halfLife,k,xw},P,s};
+  }
+  const rho=fitRho(best.P), disp=fitDispersion(best.P);
+  return { cfg:best.cfg, rho, r:disp.r, nbGain:disp.gain, before:best.s, after:score(best.P,rho,disp.r), hasXG, n:M.length };
+}
+
+// ===== UI & INTEGRAÇÃO FOOTBALL-DATA =====
+
+async function loadXG(M) {
+  // Football-Data Free API não fornece xG. O modelo ignora e roda com dados de golos.
+  return 0;
+}
+
+function cachedCalibrate(M, nxg) {
+  try { const k=JSON.parse(localStorage.getItem('cal_fd_v2')||'null');
+    if (k && k.lg===LEAGUE_CODE && Math.abs(M.length-k.n)<10 && Math.abs(nxg-k.nxg)<15) { if (k.cal.r===null) k.cal.r=Infinity; return k.cal; } } catch {}
+  const cal = calibrate(M);
+  try { localStorage.setItem('cal_fd_v2', JSON.stringify({lg:LEAGUE_CODE, n:M.length, nxg, cal})); } catch {}
+  return cal; 
+}
+
+const ENGINE = { M:[], teams:{}, cal:null, F:null };
+const esc = t => String(t).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const $ = id => document.getElementById(id);
+function setStatus(txt, cls) { const s=$('apiStatus'); s.innerText=txt;
+  s.className = `text-[10px] mono font-bold px-3 py-1.5 rounded-lg border ${cls}`; }
+const OK='border-emerald-500/30 bg-emerald-500/10 text-emerald-400', WARN='border-amber-500/30 bg-amber-500/10 text-amber-400', BAD='border-red-500/30 bg-red-500/10 text-red-400';
+
+async function loadEngine() {
+  if (LOADING) return; LOADING=true;
+  const btn=$('btnSimulate'); btn.disabled=true; btn.innerText="CALIBRANDO MODELO...";
+  setStatus("CARREGANDO RESULTADOS...", WARN+" animate-pulse");
+  try {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/football-matches`, {
+      method: 'GET',
+      headers: { 'apikey': SUPABASE_ANON_KEY, 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` }
+    });
+    if (!res.ok) throw new Error(`Edge Function ${res.status}: ${(await res.text()).slice(0,120)}`);
+    const data = await res.json();
+
+    if (data.errorCode) throw new Error(data.message);
+    if (!data.matches) throw new Error("A API não retornou dados de partidas.");
+
+    // Mapeamento e filtragem para a estrutura do Motor Matemático
+    ENGINE.M = data.matches.filter(m => (!m.status || m.status==='FINISHED') && m.homeTeam?.id && m.awayTeam?.id && m.score?.fullTime && m.score.fullTime.home !== null && m.score.fullTime.away !== null).map(m => {
+      const hTeam = { id: m.homeTeam.id, name: m.homeTeam.shortName || m.homeTeam.name, logo: m.homeTeam.crest };
+      const aTeam = { id: m.awayTeam.id, name: m.awayTeam.shortName || m.awayTeam.name, logo: m.awayTeam.crest };
+      
+      ENGINE.teams[hTeam.id] = hTeam;
+      ENGINE.teams[aTeam.id] = aTeam;
+      
+      return { 
+        id: m.id, 
+        t: Date.parse(m.utcDate), 
+        h: hTeam.id, 
+        a: aTeam.id, 
+        hg: m.score.fullTime.home, 
+        ag: m.score.fullTime.away 
+      };
+    }).sort((x,y) => x.t - y.t);
+
+    if (ENGINE.M.length < 80) throw new Error(`Só ${ENGINE.M.length} jogos encontrados; modelo exige 80+.`);
+
+    const opts = Object.values(ENGINE.teams).sort((a,b)=>a.name.localeCompare(b.name)).map(t=>`<option value="${t.id}">${esc(t.name)}</option>`).join('');
+    $('teamA').innerHTML = opts; $('teamB').innerHTML = opts;
+    if ($('teamB').options.length>1)$('teamB').selectedIndex = 1;
+
+    await new Promise(r=>setTimeout(r,30)); 
+    const nxg = await loadXG(ENGINE.M);
+    
+    ENGINE.cal = cachedCalibrate(ENGINE.M, nxg);
+    ENGINE.F = fitStrengths(ENGINE.M, Date.now(), ENGINE.cal.cfg);
+    
+    setStatus(`FOOTBALL-DATA CONECTADA · ${ENGINE.M.length} JOGOS`, OK);
+    btn.disabled=false; btn.innerText="INICIAR SIMULAÇÃO DE COMBATE";
+  } catch (err) {
+    console.error(err); setStatus("ERRO NA API", BAD);
+    btn.innerText="FALHA: "+String(err.message).slice(0,90)+" — CLIQUE PARA TENTAR DE NOVO";
+    btn.disabled=false;
+  } finally { LOADING=false; }
+}
+
+function logMessage(msg, color="text-slate-300") {
+  const box=$('combatLog'), s=document.createElement('span');
+  s.className=`text-[10px] uppercase font-bold mono combat-log-enter ${color}`; s.innerText=`> ${msg}`;
+  box.appendChild(s); if (box.children.length>3) box.removeChild(box.firstChild);
+}
+
+let LOADING=false;
+function startCombat() {
+  if (!ENGINE.cal) return LOADING ? null : loadEngine();
+  const idA=+$('teamA').value, idB=+$('teamB').value;
+  if (idA===idB) return alert("Selecione times diferentes para o combate.");
+  const tA=ENGINE.teams[idA], tB=ENGINE.teams[idB], btn=$('btnSimulate');
+  
+  btn.disabled=true; btn.innerText="SIMULANDO...";
+  $('arenaPanel').classList.remove('hidden');$('resultsPanel').classList.add('hidden');
+  $('analysisPanel').classList.add('hidden'); ENGINE.last={A:idA,B:idB};
+  $('combatLog').innerHTML=""; ['scoreA','scoreB'].forEach(i=>$(i).innerText="0");
+  $('hpA').style.width="0%"; $('hpB').style.width="0%";
+  
+  $('logoA').src=tA.logo; $('nameA').innerText=tA.name; 
+  $('logoB').src=tB.logo; $('nameB').innerText=tB.name;
+
+  const { lam, mu } = predict(ENGINE.F, idA, idB);   
+  const { rho, r } = ENGINE.cal;
+  const res = buildScoreMatrix(lam, mu, rho, r);
+  
+  logMessage(`Ataque/defesa ajustados por adversário (${tA.name} x ${tB.name})`, "text-violet-400");
+  runAnimationSequence(res, lam, mu);
+}
+
+function runAnimationSequence(res, lam, mu) {
+  const timer=$('matchTimer'); let time=0;
+  timer.classList.add("animate-pulse-glow");
+  $('hpA').style.width=`${res.pH*100}%`; $('hpB').style.width=`${res.pA*100}%`;
+  const c=ENGINE.cal;
+  
+  const iv=setInterval(()=>{
+    time+=15; timer.innerText=`${time}' MINUTOS`;
+    if (time===30) logMessage(`λ casa ${lam.toFixed(2)} · μ fora ${mu.toFixed(2)}`, "text-blue-300");
+    if (time===60) logMessage(`Dixon-Coles ρ = ${c.rho.toFixed(3)} (estimado)`, "text-pink-300");
+    if (time===75) logMessage(isFinite(c.r)?`Binomial Negativa r = ${c.r}`:"Dispersão: Poisson", "text-violet-300");
+    if (time>=90) {
+      clearInterval(iv); timer.innerText="PLACAR MAIS PROVÁVEL (MODA)"; timer.classList.remove("animate-pulse-glow");
+      $('scoreA').innerText=res.best.x; $('scoreB').innerText=res.best.y;
+      logMessage(`Prob. do placar: ${(res.best.p*100).toFixed(1)}%`, "text-emerald-400");
+      showResults(res, lam, mu);
+    }
+  },500);
+}
+
+// ===== ANALISTA VIRTUAL: interpreta os números e explica a decisão =====
+function generateVirtualAnalyst(nameA, nameB, lam, mu, res) {
+  const c = ENGINE.cal, a = c.after, F = ENGINE.F;
+  const nA = esc(nameA), nB = esc(nameB);
+  const P = p => Math.round(p * 100) + '%';
+  const P1 = p => (p * 100).toFixed(1) + '%';
+  const ids = ENGINE.last || {};
+
+  // ---------- 1. DECISÃO DO RESULTADO (1X2) ----------
+  const opts = [
+    { k: 'H', p: res.pH, label: `Vitória do ${nA}` },
+    { k: 'D', p: res.pD, label: 'Empate' },
+    { k: 'A', p: res.pA, label: `Vitória do ${nB}` }
+  ].sort((x, y) => y.p - x.p);
+  const top = opts[0], gap = top.p - opts[1].p;
+
+  let strength, strengthTxt, tone;
+  if (top.p >= 0.60 && gap >= 0.25)      { strength = 'forte';    strengthTxt = 'CONFIANÇA ALTA';     tone = 'emerald'; }
+  else if (top.p >= 0.47 && gap >= 0.12) { strength = 'moderado'; strengthTxt = 'CONFIANÇA MÉDIA';    tone = 'sky'; }
+  else                                   { strength = 'fraco';    strengthTxt = 'JOGO EQUILIBRADO';   tone = 'amber'; }
+
+  let headline;
+  if (top.k === 'D') headline = 'Jogo muito parelho: o empate é o resultado isolado mais provável';
+  else {
+    const fav = top.k === 'H' ? nA : nB;
+    headline = strength === 'forte' ? `${fav} é favorito claro`
+             : strength === 'moderado' ? `${fav} é favorito, mas sem folga`
+             : `Jogo equilibrado, com leve vantagem para ${fav}`;
+  }
+
+  // Dupla chance (proteção) quando há um favorito de vitória
+  let dcTxt = '';
+  if (top.k === 'H') dcTxt = `Se quiser mais segurança, "${nA} não perde" (vitória ou empate) tem <strong>${P(res.pH + res.pD)}</strong> de chance.`;
+  if (top.k === 'A') dcTxt = `Se quiser mais segurança, "${nB} não perde" (vitória ou empate) tem <strong>${P(res.pA + res.pD)}</strong> de chance.`;
+  if (top.k === 'D') dcTxt = `Nenhum time se destaca: ${nA} vence em ${P(res.pH)} e ${nB} em ${P(res.pA)} dos cenários simulados.`;
+
+  // ---------- 2. POR QUÊ: força de ataque/defesa de cada time ----------
+  const atkTxt = v => v == null ? null : v >= 1.15 ? 'ataque acima da média da liga' : v <= 0.87 ? 'ataque abaixo da média da liga' : 'ataque na média da liga';
+  const defTxt = v => v == null ? null : v <= 0.87 ? 'defesa sólida (cede menos gols que a média)' : v >= 1.15 ? 'defesa frágil (cede mais gols que a média)' : 'defesa na média da liga';
+  const describe = (nm, id) => {
+    const at = F?.att?.[id], df = F?.def?.[id];
+    const parts = [atkTxt(at), defTxt(df)].filter(Boolean);
+    return parts.length ? `<li><span class="text-slate-500">›</span> <strong>${nm}:</strong> ${parts.join(' e ')}.</li>` : '';
+  };
+  const homeBonus = F && isFinite(F.gamma) ? Math.round((F.gamma - 1) * 100) : null;
+  const ratio = lam / Math.max(mu, 0.01);
+  const edgeTxt = ratio >= 1.6 ? `${nA} deve criar bem mais do que ${nB}`
+                : ratio <= 1 / 1.6 ? `${nB} deve criar bem mais do que ${nA}`
+                : ratio >= 1.15 ? `${nA} tem uma vantagem pequena na criação de gols`
+                : ratio <= 1 / 1.15 ? `${nB} tem uma vantagem pequena na criação de gols`
+                : `os dois times devem criar volume parecido de gols`;
+
+  // ---------- 3. GOLS ----------
+  const total = lam + mu, under = 1 - res.o25;
+  const profile = total < 2.2 ? 'jogo de poucos gols' : total <= 2.9 ? 'jogo de gols na média' : 'jogo aberto, com tendência a muitos gols';
+  const ouTxt = res.o25 >= 0.55 ? `tende ao <strong>Mais de 2,5 gols</strong> (${P(res.o25)})`
+              : res.o25 <= 0.45 ? `tende ao <strong>Menos de 2,5 gols</strong> (${P(under)})`
+              : `a linha de 2,5 gols está praticamente dividida (Mais: ${P(res.o25)} / Menos: ${P(under)})`;
+  const bttsTxt = res.btts >= 0.55 ? `é mais provável que <strong>os dois times marquem</strong> (${P(res.btts)})`
+                : res.btts <= 0.45 ? `é mais provável que <strong>pelo menos um time não marque</strong> (${P(1 - res.btts)})`
+                : `"ambos marcam" está dividido (Sim: ${P(res.btts)} / Não: ${P(1 - res.btts)})`;
+
+  // ---------- 4. PLACARES MAIS PROVÁVEIS ----------
+  const scores = [];
+  for (let x = 0; x < res.mat.length; x++) for (let y = 0; y < res.mat[x].length; y++) scores.push({ x, y, p: res.mat[x][y] });
+  scores.sort((u, v) => v.p - u.p);
+  const top3 = scores.slice(0, 3).map(s => `<span class="inline-block bg-slate-900 border border-slate-700 rounded px-2 py-0.5 mr-1 mono">${s.x} x ${s.y} <span class="text-slate-500">(${P1(s.p)})</span></span>`).join('');
+
+  // ---------- 5. CONFIABILIDADE DO MODELO ----------
+  const gain = a.llBase > 0 ? (a.llBase - a.ll) / a.llBase * 100 : 0;
+  const beats = a.ll < a.llBase;
+  let relLabel, relTone, relTxt;
+  if (!beats) {
+    relLabel = 'BAIXA'; relTone = 'amber';
+    relTxt = `Nos <strong>${a.n} jogos de teste</strong>, o modelo <strong>não foi melhor</strong> do que simplesmente usar as frequências históricas da liga. Trate esta análise como curiosidade, não como base para decisões com dinheiro.`;
+  } else {
+    relLabel = gain >= 4 ? 'BOA' : gain >= 1.5 ? 'MODERADA' : 'LIMITADA';
+    relTone = gain >= 4 ? 'emerald' : gain >= 1.5 ? 'sky' : 'amber';
+    relTxt = `O modelo foi testado em <strong>${a.n} jogos que ele não conhecia</strong> (como se fosse prever a rodada antes de ela acontecer) e errou cerca de <strong>${gain.toFixed(1)}% menos</strong> que o método básico de olhar a história da liga. ` +
+             `Ele acertou o resultado (vitória/empate/derrota) em <strong>${P(a.acc)}</strong> dos casos; chutar ao acaso acertaria cerca de 33%. ` +
+             (gain < 1.5 ? 'A vantagem é pequena, então pese as conclusões com cautela.' : 'Futebol sempre tem surpresas, mas o histórico mostra que as probabilidades são úteis.');
+  }
+
+  // ---------- 6. TÉCNICO (colapsável) ----------
+  const rhoTxt = c.rho < 0
+    ? `ρ = <strong>${c.rho.toFixed(3)}</strong> (Dixon-Coles): o modelo <em>aumenta</em> a chance de 0x0 e 1x1 em relação ao que gols independentes sugeririam, e reduz 1x0 e 0x1. Na prática: placares baixos e empatados aparecem mais do que o "acaso puro" indicaria.`
+    : c.rho > 0
+    ? `ρ = <strong>${c.rho.toFixed(3)}</strong> (Dixon-Coles): o modelo <em>reduz</em> a chance de 0x0 e 1x1 e aumenta 1x0 e 0x1. Na prática: jogos tendem a ser decididos mais cedo do que o "acaso puro" indicaria.`
+    : `ρ = <strong>0</strong>: gols dos dois times tratados como independentes.`;
+  const dispTxt = isFinite(c.r)
+    ? `Dispersão: <strong>Binomial Negativa (r=${c.r})</strong>. Há mais variação nos placares do que Poisson prevê, então goleadas e jogos muito "travados" recebem um pouco mais de peso.`
+    : `Dispersão: <strong>Poisson pura</strong>. A variação de gols nesta liga é compatível com o modelo mais simples.`;
+
+  const badge = (t, tn) => `<span class="px-2 py-0.5 rounded border border-${tn}-500/40 bg-${tn}-500/10 text-${tn}-400 text-[10px] font-black tracking-widest">${t}</span>`;
+  const h = (t, col) => `<h4 class="text-${col}-400 font-bold uppercase tracking-widest text-[10px] mb-2">${t}</h4>`;
+
+  const caution = !beats
+    ? `<div class="p-3 rounded-lg border border-amber-500/40 bg-amber-500/10 text-amber-300 text-[11px]">⚠ Atenção: o histórico de testes deste modelo está fraco nesta liga. O veredito abaixo é apenas indicativo.</div>` : '';
+
+  return `
+  <div class="space-y-5 text-[12px] text-slate-300 font-mono tracking-tight leading-relaxed">
+    ${caution}
+
+    <!-- VEREDITO -->
+    <div class="p-4 bg-slate-950 border border-${tone}-500/30 rounded-xl">
+      <div class="flex flex-wrap items-center gap-2 mb-2">
+        <span class="text-slate-500 text-[10px] uppercase tracking-widest">&gt; Veredito</span>${badge(strengthTxt, tone)}
+      </div>
+      <p class="text-base md:text-lg font-black text-white leading-snug">${headline}</p>
+      <p class="mt-2">Resultado mais provável: <strong class="text-${tone}-400">${top.label} (${P(top.p)})</strong>. ${dcTxt}</p>
+    </div>
+
+    <!-- POR QUÊ -->
+    <div>
+      ${h('§ 1. Por que o modelo chegou a isso', 'blue')}
+      <p class="mb-2">O sistema compara o <strong>ataque</strong> de cada time com a <strong>defesa</strong> do adversário, dando mais peso a jogos recentes${c.cfg.halfLife ? ` (a importância de um jogo cai pela metade a cada ${c.cfg.halfLife} dias)` : ''}.</p>
+      <ul class="space-y-1 mb-2">
+        ${describe(nA, ids.A)}${describe(nB, ids.B)}
+        ${homeBonus != null ? `<li><span class="text-slate-500">›</span> <strong>Fator casa:</strong> mandantes desta liga marcam cerca de ${homeBonus}% mais gols em casa que fora.</li>` : ''}
+      </ul>
+      <p>Resultado do cruzamento: o modelo espera <strong>${lam.toFixed(2)} gol(s) do ${nA}</strong> e <strong>${mu.toFixed(2)} do ${nB}</strong>. Ou seja, ${edgeTxt}. É essa diferença que empurra as probabilidades para <strong>${P(res.pH)}</strong> (${nA}), <strong>${P(res.pD)}</strong> (empate) e <strong>${P(res.pA)}</strong> (${nB}).</p>
+    </div>
+
+    <!-- GOLS -->
+    <div class="pl-4 border-l-2 border-slate-700">
+      ${h('§ 2. Quantidade de gols', 'pink')}
+      <p>Total esperado: <strong>${total.toFixed(2)} gols</strong>, ou seja, ${profile}. Pelo modelo, ${ouTxt}, e ${bttsTxt}.</p>
+    </div>
+
+    <!-- PLACARES -->
+    <div>
+      ${h('§ 3. Placares mais prováveis', 'cyan')}
+      <p class="mb-2">${top3}</p>
+      <p class="text-slate-400">Mesmo o placar mais provável acontece em apenas ${P(res.best.p)} das simulações. Use-o como referência, não como previsão exata.</p>
+    </div>
+
+    <!-- CONFIABILIDADE -->
+    <div>
+      ${h('§ 4. Quanto confiar nesta análise', 'violet')}
+      <p class="mb-1">Confiabilidade do modelo: ${badge(relLabel, relTone)}</p>
+      <p>${relTxt}</p>
+    </div>
+
+    <!-- ODDS -->
+    <div class="p-3 bg-slate-900/60 border border-slate-800 rounded-lg">
+      <p><span class="text-white font-bold">Referência de preço:</span> a odd justa para "${top.label}" é <strong>${(1 / top.p).toFixed(2)}</strong>. Se uma casa de apostas pagar <em>mais</em> que isso, o preço é favorável segundo o modelo; se pagar menos, ele está caro. Isso não garante resultado: é apenas uma comparação de probabilidades.</p>
+    </div>
+
+    <!-- DETALHES TÉCNICOS -->
+    <details class="group">
+      <summary class="cursor-pointer text-[10px] uppercase tracking-widest text-slate-500 hover:text-violet-400 select-none">▸ Detalhes técnicos do motor</summary>
+      <div class="mt-3 space-y-2 text-slate-400">
+        <p>${rhoTxt}</p>
+        <p>${dispTxt}</p>
+        <p>Backtest walk-forward (${a.n} jogos): Log-loss <strong>${a.ll.toFixed(4)}</strong> vs baseline ${a.llBase.toFixed(4)}; Brier <strong>${a.brier.toFixed(4)}</strong> vs baseline ${a.brierBase.toFixed(4)}. Menor é melhor nas duas métricas.</p>
+        <p>Moda da matriz: <strong>${res.best.x} x ${res.best.y}</strong> (${P1(res.best.p)}). Total de xG: ${total.toFixed(2)}.</p>
+      </div>
+    </details>
+  </div>`;
+}
+
+const fo = p => p>0 ? (1/p).toFixed(2) : '—';
+function showResults(res, lam, mu) {
+  $('resultsPanel').classList.remove('hidden');
+  // --- CHAMADA DO TERMINAL DE ANÁLISE ---
+  try {
+    const teamA = $('nameA').innerText, teamB = $('nameB').innerText;
+    $('aiVerdict').innerHTML = generateVirtualAnalyst(teamA, teamB, lam, mu, res);
+    $('analysisPanel').classList.remove('hidden');
+  } catch (e) { console.error('Analista virtual falhou:', e); $('analysisPanel').classList.add('hidden'); }
+  // ---------------------------------
+  [['1',res.pH],['X',res.pD],['2',res.pA]].forEach(([k,p])=>{
+    $('prob'+k).innerText=(p*100).toFixed(1)+"%"; $('bar'+k).style.width=`${p*100}%`; });
+  $('xgA').innerText=lam.toFixed(2);$('xgB').innerText=mu.toFixed(2);
+
+  $('matrixHead').innerHTML='<th class="p-2 text-slate-600 border-b border-slate-800 text-[10px]">Casa↓ Fora→</th>'+
+    [0,1,2,3,4].map(i=>`<th class="p-2 text-slate-400 text-[10px] border-b border-slate-800">${i}</th>`).join('');
+  let body=''; for (let x=0;x<=4;x++){
+    body+=`<tr><th class="bg-slate-950 text-blue-400 p-2 text-[10px] border-r border-slate-800">${x}</th>`;
+    for (let y=0;y<=4;y++){ const p=res.mat[x][y];
+      body+=`<td class="p-2 text-center text-[10px] matrix-cell ${x>y?'text-blue-400':(x<y?'text-pink-400':'text-slate-400')} ${p>0.08?'bg-slate-800/80 font-bold':''}">${(p*100).toFixed(1)}%</td>`; }
+    body+='</tr>'; }
+  $('matrixBody').innerHTML=body;
+
+  const c=ENGINE.cal, a=c.after;
+  let box=$('extraBox'); if(!box){ box=document.createElement('div'); box.id='extraBox';
+    box.className='glass rounded-2xl p-6 border border-slate-800 md:col-span-2'; $('resultsPanel').appendChild(box); }
+  const cell=(l,v,s='')=>`<div class="bg-slate-900/50 p-3 rounded-xl text-center"><span class="block text-[9px] text-slate-500 uppercase">${l}</span><span class="text-lg font-black text-white mono">${v}</span>${s?`<span class="block text-[9px] text-slate-500 mono">${s}</span>`:''}</div>`;
+  box.innerHTML=`
+    <h3 class="text-[10px] text-slate-500 uppercase tracking-widest font-bold border-b border-slate-800 pb-2 mb-4">Odds justas (sem margem) e mercados</h3>
+    <div class="grid grid-cols-2 md:grid-cols-6 gap-3">
+      ${cell('Casa',fo(res.pH))}${cell('Empate',fo(res.pD))}${cell('Fora',fo(res.pA))}
+      ${cell('Over 2.5',fo(res.o25),(res.o25*100).toFixed(1)+'%')}${cell('Under 2.5',fo(1-res.o25),((1-res.o25)*100).toFixed(1)+'%')}${cell('Ambos marcam',fo(res.btts),(res.btts*100).toFixed(1)+'%')}
+    </div>
+    <h3 class="text-[10px] text-slate-500 uppercase tracking-widest font-bold border-b border-slate-800 pb-2 mt-6 mb-4">Diagnóstico (backtest walk-forward, ${a.n} jogos fora da amostra)</h3>
+    <div class="grid grid-cols-2 md:grid-cols-6 gap-3">
+      ${cell('Log-loss modelo',a.ll.toFixed(4),'baseline '+a.llBase.toFixed(4))}
+      ${cell('Brier modelo',a.brier.toFixed(4),'baseline '+a.brierBase.toFixed(4))}
+      ${cell('Acerto 1X2',(a.acc*100).toFixed(1)+'%')}
+      ${cell('ρ Dixon-Coles',c.rho.toFixed(3))}
+      ${cell('Dispersão',isFinite(c.r)?'NegBin r='+c.r:'Poisson')}
+      ${cell('Meia-vida / k / xG',(c.cfg.halfLife||'∞')+'d / '+c.cfg.k+' / '+Math.round((c.cfg.xw||0)*100)+'%',c.hasXG?'xG ativo no backtest':'sem xG (API gratuita)')}
+    </div>
+    <p class="text-[10px] text-slate-500 mt-3 mono">${a.ll<a.llBase?'Modelo supera o baseline (frequências históricas da liga).':'ATENÇÃO: modelo NÃO supera o baseline — não use para apostas.'} Log-loss menor = melhor.</p>`;
+
+  const btn=$('btnSimulate'); btn.innerText="NOVA SIMULAÇÃO"; btn.disabled=false;
+}
+window.addEventListener('DOMContentLoaded', loadEngine);
+</script>
+
+</body>
+</html>
