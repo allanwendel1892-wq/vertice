@@ -3,12 +3,11 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>QUANT ENGINE V16.1 – COMBAT ARENA</title>
+<title>QUANT ENGINE V16.2 – COMBAT ARENA</title>
 <script src="https://cdn.tailwindcss.com"></script>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700;800&display=swap" rel="stylesheet">
 <style>
-  body { font-family: 'Inter', sans-serif; background: #050505; color: #f3f4f6; overflow-x: hidden; }
-  .mono { font-family: 'JetBrains Mono', monospace; }
+  body { font-family: sans-serif; background: #050505; color: #f3f4f6; overflow-x: hidden; }
+  .mono { font-family: monospace; }
   
   /* Efeitos Glass e Neon */
   .glass { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); }
@@ -132,7 +131,7 @@
   <!-- RESULTADOS ANALÍTICOS -->
   <section id="resultsPanel" class="hidden grid grid-cols-1 md:grid-cols-2 gap-6">
     <div class="glass rounded-2xl p-6 border border-slate-800">
-      <h3 class="text-[10px] text-slate-500 uppercase tracking-widest font-bold border-b border-slate-800 pb-2 mb-4">Probabilidades 1X2 (Dixon-Coles)</h3>
+      <h3 class="text-[10px] text-slate-500 uppercase tracking-widest font-bold border-b border-slate-800 pb-2 mb-4">Probabilidades 1X2 (Poisson Bivariada)</h3>
       <div class="space-y-4">
         <div>
           <div class="flex justify-between text-xs font-bold mb-1"><span class="text-blue-400">VITÓRIA MANDANTE</span><span id="prob1" class="mono">--%</span></div>
@@ -186,35 +185,39 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const MAXG = 10, DAY = 864e5;
 const LF = [0]; for (let i = 1; i < 120; i++) LF[i] = LF[i-1] + Math.log(i);
 
-function lgamma(z) { 
-  const c=[676.5203681218851,-1259.1392167224028,771.32342877765313,-176.61502916214059,12.507343278686905,-0.13857109526572012,9.9843695780195716e-6,1.5056327351493116e-7];
-  if (z < 0.5) return Math.log(Math.PI/Math.sin(Math.PI*z)) - lgamma(1-z);
-  z -= 1; let x = 0.99999999999980993;
-  for (let i=0;i<8;i++) x += c[i]/(z+i+1);
-  const t = z + 7.5;
-  return 0.5*Math.log(2*Math.PI) + (z+0.5)*Math.log(t) - t + Math.log(x);
+// Probabilidade Poisson
+function pmfPoisson(k, lam) {
+    if (lam === 0) return k === 0 ? 1 : 0;
+    return Math.exp(-lam + k * Math.log(lam) - LF[k]);
 }
 
-function pmf(k, m, r) {
-  if (m <= 0) return k === 0 ? 1 : 0;
-  if (!isFinite(r)) return Math.exp(k*Math.log(m) - m - LF[k]);
-  return Math.exp(lgamma(k+r) - LF[k] - lgamma(r) + r*Math.log(r/(r+m)) + k*Math.log(m/(r+m)));
+// Bivariate Poisson (via Trivariate Reduction) - Usado ao invés da correção Dixon-Coles que destorcia médias.
+function bivariatePoisson(x, y, lam1, lam2, lam3) {
+    let prob = 0;
+    const minXY = Math.min(x, y);
+    for (let k = 0; k <= minXY; k++) {
+        prob += pmfPoisson(x - k, lam1) * pmfPoisson(y - k, lam2) * pmfPoisson(k, lam3);
+    }
+    return prob;
 }
 
-function tau(x, y, lam, mu, rho) { 
-  if (x===0 && y===0) return 1 - lam*mu*rho;
-  if (x===0 && y===1) return 1 + lam*rho;
-  if (x===1 && y===0) return 1 + mu*rho;
-  if (x===1 && y===1) return 1 - rho;
-  return 1;
-}
-
-function buildScoreMatrix(lam, mu, rho = 0, r = Infinity) {
-  const px = [], py = [];
-  for (let k=0;k<=MAXG;k++){ px[k]=pmf(k,lam,r); py[k]=pmf(k,mu,r); }
+// Matriz de Placares - Usa a Bivariada de Poisson (covariância lam3) em vez de Dixon-Coles
+function buildScoreMatrix(lam, mu, cov = 0) { 
   const mat = []; let tot = 0;
-  for (let x=0;x<=MAXG;x++){ mat[x]=[]; for (let y=0;y<=MAXG;y++){
-    const p = Math.max(0, px[x]*py[y]*tau(x,y,lam,mu,rho)); mat[x][y]=p; tot+=p; } }
+  
+  // Utilizando Poisson Bivariada (onde covariância é > 0)
+  const lam1 = Math.max(0, lam - cov);
+  const lam2 = Math.max(0, mu - cov);
+
+  for (let x=0;x<=MAXG;x++){ 
+      mat[x]=[]; 
+      for (let y=0;y<=MAXG;y++){
+          let p = bivariatePoisson(x, y, lam1, lam2, cov);
+          mat[x][y]=p; 
+          tot+=p; 
+      } 
+  }
+  
   let pH=0,pD=0,pA=0,o25=0,btts=0,best={p:0,x:0,y:0};
   for (let x=0;x<=MAXG;x++) for (let y=0;y<=MAXG;y++){
     const p = (mat[x][y] /= tot);
@@ -228,34 +231,58 @@ function buildScoreMatrix(lam, mu, rho = 0, r = Infinity) {
 function fitStrengths(M, tNow, cfg) {
   const Y = M.map(m => (cfg.xw && m.xh!=null) ? [(1-cfg.xw)*m.hg+cfg.xw*m.xh, (1-cfg.xw)*m.ag+cfg.xw*m.xa] : [m.hg,m.ag]);
   const w = M.map(m => cfg.halfLife ? Math.pow(0.5, (tNow-m.t)/(cfg.halfLife*DAY)) : 1);
-  const att={}, def={};
-  M.forEach(m => { att[m.h]=att[m.a]=def[m.h]=def[m.a]=1; });
+  const att={}, def={}, gamma={}; // gamma agora é um objeto
+  
+  M.forEach(m => { att[m.h]=att[m.a]=def[m.h]=def[m.a]=1; gamma[m.h]=gamma[m.a]=1.1; });
   let sw=0, sa=0, sh=0; M.forEach((m,i)=>{ sw+=w[i]; sh+=w[i]*Y[i][0]; sa+=w[i]*Y[i][1]; });
-  let base = sa/sw || 1.1, gamma = (sh/sa) || 1.3;
-  for (let it=0; it<30; it++) {
-    const Ga={},Ea={},Gd={},Ed={};
-    for (const id in att){ Ga[id]=Ea[id]=Gd[id]=Ed[id]=0; }
-    M.forEach((m,i)=>{
-      const lamE = base*gamma, muE = base;
-      Ga[m.h]+=w[i]*Y[i][0]; Ea[m.h]+=w[i]*lamE*def[m.a];
-      Ga[m.a]+=w[i]*Y[i][1]; Ea[m.a]+=w[i]*muE*def[m.h];
-      Gd[m.a]+=w[i]*Y[i][0]; Ed[m.a]+=w[i]*lamE*att[m.h];
-      Gd[m.h]+=w[i]*Y[i][1]; Ed[m.h]+=w[i]*muE*att[m.a];
-    });
-    const kb = cfg.k*base;
-    for (const id in att){ att[id]=(Ga[id]+kb)/(Ea[id]+kb); def[id]=(Gd[id]+kb)/(Ed[id]+kb); }
-    let ea=0, eh=0;
-    M.forEach((m,i)=>{ ea+=w[i]*att[m.a]*def[m.h]; });
-    base = sa/ea;                                   
-    M.forEach((m,i)=>{ eh+=w[i]*base*att[m.h]*def[m.a]; });
-    gamma = sh/eh;                                  
+  let base = sa/sw || 1.1;
+  
+  // Critério de Convergência (Substitui o loop fixo de 30 iterações)
+  let diff = Infinity;
+  let it = 0;
+  const tol = 1e-5;
+  const maxIt = 100;
+
+  while(diff > tol && it < maxIt) {
+      it++;
+      let oldAttSum = Object.values(att).reduce((a,b)=>a+b,0);
+      
+      const Ga={},Ea={},Gd={},Ed={},Gg={},Eg={};
+      for (const id in att){ Ga[id]=Ea[id]=Gd[id]=Ed[id]=Gg[id]=Eg[id]=0; }
+      
+      M.forEach((m,i)=>{
+          const lamE = base*gamma[m.h], muE = base;
+          
+          Ga[m.h]+=w[i]*Y[i][0]; Ea[m.h]+=w[i]*lamE*def[m.a];
+          Ga[m.a]+=w[i]*Y[i][1]; Ea[m.a]+=w[i]*muE*def[m.h];
+          Gd[m.a]+=w[i]*Y[i][0]; Ed[m.a]+=w[i]*lamE*att[m.h];
+          Gd[m.h]+=w[i]*Y[i][1]; Ed[m.h]+=w[i]*muE*att[m.a];
+          
+          // Fator casa individual
+          Gg[m.h]+=w[i]*Y[i][0]; Eg[m.h]+=w[i]*base*att[m.h]*def[m.a];
+      });
+      
+      const kb = cfg.k*base;
+      for (const id in att){ 
+          att[id]=(Ga[id]+kb)/(Ea[id]+kb); 
+          def[id]=(Gd[id]+kb)/(Ed[id]+kb); 
+          gamma[id] = (Gg[id]+kb)/(Eg[id]+kb); // Atualiza gama individual
+      }
+      
+      let ea=0, eh=0;
+      M.forEach((m,i)=>{ ea+=w[i]*att[m.a]*def[m.h]; });
+      base = sa/ea;                                   
+      
+      let newAttSum = Object.values(att).reduce((a,b)=>a+b,0);
+      diff = Math.abs(newAttSum - oldAttSum);
   }
   return { att, def, base, gamma };
 }
 
 function predict(F, h, a) {
   const ah=F.att[h]??1, dh=F.def[h]??1, aa=F.att[a]??1, da=F.def[a]??1;
-  return { lam: F.base*F.gamma*ah*da, mu: F.base*aa*dh };
+  const gh = F.gamma[h] ?? 1.1; // Usa o fator casa do time
+  return { lam: F.base*gh*ah*da, mu: F.base*aa*dh };
 }
 const outcome = m => m.hg>m.ag ? 0 : (m.hg===m.ag ? 1 : 2);
 
@@ -273,10 +300,10 @@ function walkForward(M, cfg, warm=60) {
   return out;
 }
 
-function score(P, rho=0, r=Infinity) {
+function score(P, cov=0) {
   let ll=0, br=0, acc=0, llB=0, brB=0;
   P.forEach(p=>{
-    const R=buildScoreMatrix(p.lam,p.mu,rho,r), pr=[R.pH,R.pD,R.pA], o=outcome(p);
+    const R=buildScoreMatrix(p.lam,p.mu,cov), pr=[R.pH,R.pD,R.pA], o=outcome(p);
     ll -= Math.log(Math.max(pr[o],1e-9)); llB -= Math.log(p.base[o]);
     pr.forEach((v,k)=>{ br+=(v-(k===o?1:0))**2; brB+=(p.base[k]-(k===o?1:0))**2; });
     if (pr.indexOf(Math.max(...pr))===o) acc++;
@@ -284,23 +311,22 @@ function score(P, rho=0, r=Infinity) {
   const n=P.length; return { n, ll:ll/n, llBase:llB/n, brier:br/n, brierBase:brB/n, acc:acc/n };
 }
 
-function fitRho(P) { 
-  let best={rho:0,ll:-Infinity};
-  for (let n=0; n<=90; n++) { const rho=-0.30+n*0.005;
+// Otimização conjunta de dependência - Substitui o fitRho e fitDispersion avulsos
+// Como as forças dos times já foram estimadas, encontramos a covariância global que maximiza LL
+function fitDependence(P) { 
+  let best={cov:0,ll:-Infinity};
+  // Testando possíveis valores de covariância para a Poisson Bivariada
+  for (let cov=0; cov<=0.5; cov+=0.05) { 
     let ll=0, ok=true;
-    for (const p of P) { if (p.hg>1||p.ag>1) continue;
-      const t=tau(p.hg,p.ag,p.lam,p.mu,rho); if (t<=0){ok=false;break;} ll+=Math.log(t); }
-    if (ok && ll>best.ll) best={rho:+rho.toFixed(3),ll};
+    for (const p of P) { 
+        if(p.lam - cov < 0 || p.mu - cov < 0) { ok=false; break; }
+        const prob = bivariatePoisson(p.hg, p.ag, p.lam - cov, p.mu - cov, cov);
+        if (prob <= 0){ ok=false; break; } 
+        ll+=Math.log(prob); 
+    }
+    if (ok && ll>best.ll) best={cov:cov, ll};
   }
-  return best.rho;
-}
-
-function fitDispersion(P) { 
-  const LL = r => P.reduce((s,p)=>s+Math.log(pmf(p.hg,p.lam,r)+1e-12)+Math.log(pmf(p.ag,p.mu,r)+1e-12),0);
-  const base=LL(Infinity); let best={r:Infinity,ll:base};
-  for (const r of [80,50,30,20,12,8,5]) { const l=LL(r); if (l>best.ll) best={r,ll:l}; }
-  const useNB = isFinite(best.r) && (2*(best.ll-base) - 2) > 0;
-  return { r: useNB ? best.r : Infinity, gain: best.ll-base };
+  return best.cov;
 }
 
 function calibrate(M) {
@@ -311,8 +337,8 @@ function calibrate(M) {
     const P=walkForward(M,{halfLife,k,xw}), s=score(P);   
     if (!best || s.ll<best.s.ll) best={cfg:{halfLife,k,xw},P,s};
   }
-  const rho=fitRho(best.P), disp=fitDispersion(best.P);
-  return { cfg:best.cfg, rho, r:disp.r, nbGain:disp.gain, before:best.s, after:score(best.P,rho,disp.r), hasXG, n:M.length };
+  const cov=fitDependence(best.P); // Encontra covariância da Poisson Bivariada
+  return { cfg:best.cfg, cov, before:best.s, after:score(best.P,cov), hasXG, n:M.length };
 }
 
 // ===== UI & INTEGRAÇÃO FOOTBALL-DATA =====
@@ -323,10 +349,10 @@ async function loadXG(M) {
 }
 
 function cachedCalibrate(M, nxg) {
-  try { const k=JSON.parse(localStorage.getItem('cal_fd_v2')||'null');
-    if (k && k.lg===LEAGUE_CODE && Math.abs(M.length-k.n)<10 && Math.abs(nxg-k.nxg)<15) { if (k.cal.r===null) k.cal.r=Infinity; return k.cal; } } catch {}
+  try { const k=JSON.parse(localStorage.getItem('cal_fd_v3')||'null');
+    if (k && k.lg===LEAGUE_CODE && Math.abs(M.length-k.n)<10 && Math.abs(nxg-k.nxg)<15) { return k.cal; } } catch {}
   const cal = calibrate(M);
-  try { localStorage.setItem('cal_fd_v2', JSON.stringify({lg:LEAGUE_CODE, n:M.length, nxg, cal})); } catch {}
+  try { localStorage.setItem('cal_fd_v3', JSON.stringify({lg:LEAGUE_CODE, n:M.length, nxg, cal})); } catch {}
   return cal; 
 }
 
@@ -405,17 +431,16 @@ function startCombat() {
   const tA=ENGINE.teams[idA], tB=ENGINE.teams[idB], btn=$('btnSimulate');
   
   btn.disabled=true; btn.innerText="SIMULANDO...";
-  $('arenaPanel').classList.remove('hidden');$('resultsPanel').classList.add('hidden');
-  $('analysisPanel').classList.add('hidden'); ENGINE.last={A:idA,B:idB};
+  $('arenaPanel').classList.remove('hidden');$('resultsPanel').classList.add('hidden');$('analysisPanel').classList.add('hidden'); ENGINE.last={A:idA,B:idB};
   $('combatLog').innerHTML=""; ['scoreA','scoreB'].forEach(i=>$(i).innerText="0");
-  $('hpA').style.width="0%"; $('hpB').style.width="0%";
+  $('hpA').style.width="0\%"; $('hpB').style.width="0%";
   
   $('logoA').src=tA.logo; $('nameA').innerText=tA.name; 
   $('logoB').src=tB.logo; $('nameB').innerText=tB.name;
 
   const { lam, mu } = predict(ENGINE.F, idA, idB);   
-  const { rho, r } = ENGINE.cal;
-  const res = buildScoreMatrix(lam, mu, rho, r);
+  const { cov } = ENGINE.cal;
+  const res = buildScoreMatrix(lam, mu, cov);
   
   logMessage(`Ataque/defesa ajustados por adversário (${tA.name} x ${tB.name})`, "text-violet-400");
   runAnimationSequence(res, lam, mu);
@@ -430,8 +455,7 @@ function runAnimationSequence(res, lam, mu) {
   const iv=setInterval(()=>{
     time+=15; timer.innerText=`${time}' MINUTOS`;
     if (time===30) logMessage(`λ casa ${lam.toFixed(2)} · μ fora ${mu.toFixed(2)}`, "text-blue-300");
-    if (time===60) logMessage(`Dixon-Coles ρ = ${c.rho.toFixed(3)} (estimado)`, "text-pink-300");
-    if (time===75) logMessage(isFinite(c.r)?`Binomial Negativa r = ${c.r}`:"Dispersão: Poisson", "text-violet-300");
+    if (time===60) logMessage(`Bivariate Poisson Cov = ${c.cov.toFixed(3)} (estimado)`, "text-pink-300");
     if (time>=90) {
       clearInterval(iv); timer.innerText="PLACAR MAIS PROVÁVEL (MODA)"; timer.classList.remove("animate-pulse-glow");
       $('scoreA').innerText=res.best.x; $('scoreB').innerText=res.best.y;
@@ -485,7 +509,7 @@ function generateVirtualAnalyst(nameA, nameB, lam, mu, res) {
     const parts = [atkTxt(at), defTxt(df)].filter(Boolean);
     return parts.length ? `<li><span class="text-slate-500">›</span> <strong>${nm}:</strong> ${parts.join(' e ')}.</li>` : '';
   };
-  const homeBonus = F && isFinite(F.gamma) ? Math.round((F.gamma - 1) * 100) : null;
+  const homeBonus = F && isFinite(F.gamma?.[ids.A]) ? Math.round((F.gamma[ids.A] - 1) * 100) : null;
   const ratio = lam / Math.max(mu, 0.01);
   const edgeTxt = ratio >= 1.6 ? `${nA} deve criar bem mais do que ${nB}`
                 : ratio <= 1 / 1.6 ? `${nB} deve criar bem mais do que ${nA}`
@@ -525,14 +549,9 @@ function generateVirtualAnalyst(nameA, nameB, lam, mu, res) {
   }
 
   // ---------- 6. TÉCNICO (colapsável) ----------
-  const rhoTxt = c.rho < 0
-    ? `ρ = <strong>${c.rho.toFixed(3)}</strong> (Dixon-Coles): o modelo <em>aumenta</em> a chance de 0x0 e 1x1 em relação ao que gols independentes sugeririam, e reduz 1x0 e 0x1. Na prática: placares baixos e empatados aparecem mais do que o "acaso puro" indicaria.`
-    : c.rho > 0
-    ? `ρ = <strong>${c.rho.toFixed(3)}</strong> (Dixon-Coles): o modelo <em>reduz</em> a chance de 0x0 e 1x1 e aumenta 1x0 e 0x1. Na prática: jogos tendem a ser decididos mais cedo do que o "acaso puro" indicaria.`
-    : `ρ = <strong>0</strong>: gols dos dois times tratados como independentes.`;
-  const dispTxt = isFinite(c.r)
-    ? `Dispersão: <strong>Binomial Negativa (r=${c.r})</strong>. Há mais variação nos placares do que Poisson prevê, então goleadas e jogos muito "travados" recebem um pouco mais de peso.`
-    : `Dispersão: <strong>Poisson pura</strong>. A variação de gols nesta liga é compatível com o modelo mais simples.`;
+  const covTxt = c.cov > 0
+    ? `Covariância = <strong>${c.cov.toFixed(3)}</strong> (Bivariate Poisson): o modelo detectou uma dependência positiva entre os gols, aumentando a probabilidade de empates e placares similares em relação ao modelo Poisson independente.`
+    : `Covariância = <strong>0</strong>: gols dos dois times tratados como independentes.`;
 
   const badge = (t, tn) => `<span class="px-2 py-0.5 rounded border border-${tn}-500/40 bg-${tn}-500/10 text-${tn}-400 text-[10px] font-black tracking-widest">${t}</span>`;
   const h = (t, col) => `<h4 class="text-${col}-400 font-bold uppercase tracking-widest text-[10px] mb-2">${t}</h4>`;
@@ -559,7 +578,7 @@ function generateVirtualAnalyst(nameA, nameB, lam, mu, res) {
       <p class="mb-2">O sistema compara o <strong>ataque</strong> de cada time com a <strong>defesa</strong> do adversário, dando mais peso a jogos recentes${c.cfg.halfLife ? ` (a importância de um jogo cai pela metade a cada ${c.cfg.halfLife} dias)` : ''}.</p>
       <ul class="space-y-1 mb-2">
         ${describe(nA, ids.A)}${describe(nB, ids.B)}
-        ${homeBonus != null ? `<li><span class="text-slate-500">›</span> <strong>Fator casa:</strong> mandantes desta liga marcam cerca de ${homeBonus}% mais gols em casa que fora.</li>` : ''}
+        ${homeBonus != null ? `<li><span class="text-slate-500">›</span> <strong>Fator casa específico (${nA}):</strong> marca cerca de${homeBonus}% mais gols em casa que fora, diferente da média geral da liga.</li>` : ''}
       </ul>
       <p>Resultado do cruzamento: o modelo espera <strong>${lam.toFixed(2)} gol(s) do ${nA}</strong> e <strong>${mu.toFixed(2)} do ${nB}</strong>. Ou seja, ${edgeTxt}. É essa diferença que empurra as probabilidades para <strong>${P(res.pH)}</strong> (${nA}), <strong>${P(res.pD)}</strong> (empate) e <strong>${P(res.pA)}</strong> (${nB}).</p>
     </div>
@@ -593,8 +612,7 @@ function generateVirtualAnalyst(nameA, nameB, lam, mu, res) {
     <details class="group">
       <summary class="cursor-pointer text-[10px] uppercase tracking-widest text-slate-500 hover:text-violet-400 select-none">▸ Detalhes técnicos do motor</summary>
       <div class="mt-3 space-y-2 text-slate-400">
-        <p>${rhoTxt}</p>
-        <p>${dispTxt}</p>
+        <p>${covTxt}</p>
         <p>Backtest walk-forward (${a.n} jogos): Log-loss <strong>${a.ll.toFixed(4)}</strong> vs baseline ${a.llBase.toFixed(4)}; Brier <strong>${a.brier.toFixed(4)}</strong> vs baseline ${a.brierBase.toFixed(4)}. Menor é melhor nas duas métricas.</p>
         <p>Moda da matriz: <strong>${res.best.x} x ${res.best.y}</strong> (${P1(res.best.p)}). Total de xG: ${total.toFixed(2)}.</p>
       </div>
@@ -607,13 +625,12 @@ function showResults(res, lam, mu) {
   $('resultsPanel').classList.remove('hidden');
   // --- CHAMADA DO TERMINAL DE ANÁLISE ---
   try {
-    const teamA = $('nameA').innerText, teamB = $('nameB').innerText;
-    $('aiVerdict').innerHTML = generateVirtualAnalyst(teamA, teamB, lam, mu, res);
-    $('analysisPanel').classList.remove('hidden');
+    const teamA = $('nameA').innerText, teamB =$('nameB').innerText;
+    $('aiVerdict').innerHTML = generateVirtualAnalyst(teamA, teamB, lam, mu, res);$('analysisPanel').classList.remove('hidden');
   } catch (e) { console.error('Analista virtual falhou:', e); $('analysisPanel').classList.add('hidden'); }
   // ---------------------------------
   [['1',res.pH],['X',res.pD],['2',res.pA]].forEach(([k,p])=>{
-    $('prob'+k).innerText=(p*100).toFixed(1)+"%"; $('bar'+k).style.width=`${p*100}%`; });
+    $('prob'+k).innerText=(p*100).toFixed(1)+"\%"; $('bar'+k).style.width=`${p*100}%`; });
   $('xgA').innerText=lam.toFixed(2);$('xgB').innerText=mu.toFixed(2);
 
   $('matrixHead').innerHTML='<th class="p-2 text-slate-600 border-b border-slate-800 text-[10px]">Casa↓ Fora→</th>'+
@@ -640,8 +657,7 @@ function showResults(res, lam, mu) {
       ${cell('Log-loss modelo',a.ll.toFixed(4),'baseline '+a.llBase.toFixed(4))}
       ${cell('Brier modelo',a.brier.toFixed(4),'baseline '+a.brierBase.toFixed(4))}
       ${cell('Acerto 1X2',(a.acc*100).toFixed(1)+'%')}
-      ${cell('ρ Dixon-Coles',c.rho.toFixed(3))}
-      ${cell('Dispersão',isFinite(c.r)?'NegBin r='+c.r:'Poisson')}
+      ${cell('Covariância',c.cov.toFixed(3))}
       ${cell('Meia-vida / k / xG',(c.cfg.halfLife||'∞')+'d / '+c.cfg.k+' / '+Math.round((c.cfg.xw||0)*100)+'%',c.hasXG?'xG ativo no backtest':'sem xG (API gratuita)')}
     </div>
     <p class="text-[10px] text-slate-500 mt-3 mono">${a.ll<a.llBase?'Modelo supera o baseline (frequências históricas da liga).':'ATENÇÃO: modelo NÃO supera o baseline — não use para apostas.'} Log-loss menor = melhor.</p>`;
