@@ -206,13 +206,13 @@ function buildScoreMatrix(lam, mu, cov = 0) {
   const mat = []; let tot = 0;
   
   // Utilizando Poisson Bivariada (onde covariância é > 0)
-  const lam1 = Math.max(0, lam - cov);
-  const lam2 = Math.max(0, mu - cov);
+  const lam1 = Math.max(0, (lam || 0) - (cov || 0));
+  const lam2 = Math.max(0, (mu || 0) - (cov || 0));
 
   for (let x=0;x<=MAXG;x++){ 
       mat[x]=[]; 
       for (let y=0;y<=MAXG;y++){
-          let p = bivariatePoisson(x, y, lam1, lam2, cov);
+          let p = bivariatePoisson(x, y, lam1, lam2, (cov || 0));
           mat[x][y]=p; 
           tot+=p; 
       } 
@@ -454,8 +454,8 @@ function runAnimationSequence(res, lam, mu) {
   
   const iv=setInterval(()=>{
     time+=15; timer.innerText=`${time}' MINUTOS`;
-    if (time===30) logMessage(`λ casa ${lam.toFixed(2)} · μ fora ${mu.toFixed(2)}`, "text-blue-300");
-    if (time===60) logMessage(`Bivariate Poisson Cov = ${c.cov.toFixed(3)} (estimado)`, "text-pink-300");
+    if (time===30) logMessage(`λ casa ${(lam || 0).toFixed(2)} · μ fora ${(mu || 0).toFixed(2)}`, "text-blue-300");
+    if (time===60) logMessage(`Bivariate Poisson Cov = ${(c.cov || 0).toFixed(3)} (estimado)`, "text-pink-300");
     if (time>=90) {
       clearInterval(iv); timer.innerText="PLACAR MAIS PROVÁVEL (MODA)"; timer.classList.remove("animate-pulse-glow");
       $('scoreA').innerText=res.best.x; $('scoreB').innerText=res.best.y;
@@ -469,8 +469,8 @@ function runAnimationSequence(res, lam, mu) {
 function generateVirtualAnalyst(nameA, nameB, lam, mu, res) {
   const c = ENGINE.cal, a = c.after, F = ENGINE.F;
   const nA = esc(nameA), nB = esc(nameB);
-  const P = p => Math.round(p * 100) + '%';
-  const P1 = p => (p * 100).toFixed(1) + '%';
+  const P = p => Math.round((p || 0) * 100) + '%';
+  const P1 = p => ((p || 0) * 100).toFixed(1) + '%';
   const ids = ENGINE.last || {};
 
   // ---------- 1. DECISÃO DO RESULTADO (1X2) ----------
@@ -523,7 +523,7 @@ function generateVirtualAnalyst(nameA, nameB, lam, mu, res) {
   const ouTxt = res.o25 >= 0.55 ? `tende ao <strong>Mais de 2,5 gols</strong> (${P(res.o25)})`
               : res.o25 <= 0.45 ? `tende ao <strong>Menos de 2,5 gols</strong> (${P(under)})`
               : `a linha de 2,5 gols está praticamente dividida (Mais: ${P(res.o25)} / Menos: ${P(under)})`;
-  const bttsTxt = res.btts >= 0.55 ? `é mais provável que <strong>os dois times marquem</strong> (${P(res.btts)})`
+  const bttsTxt = res.btts >= 0.55 ? `é mais provável que <strong>os dois times marcarem</strong> (${P(res.btts)})`
                 : res.btts <= 0.45 ? `é mais provável que <strong>pelo menos um time não marque</strong> (${P(1 - res.btts)})`
                 : `"ambos marcam" está dividido (Sim: ${P(res.btts)} / Não: ${P(1 - res.btts)})`;
 
@@ -534,8 +534,8 @@ function generateVirtualAnalyst(nameA, nameB, lam, mu, res) {
   const top3 = scores.slice(0, 3).map(s => `<span class="inline-block bg-slate-900 border border-slate-700 rounded px-2 py-0.5 mr-1 mono">${s.x} x ${s.y} <span class="text-slate-500">(${P1(s.p)})</span></span>`).join('');
 
   // ---------- 5. CONFIABILIDADE DO MODELO ----------
-  const gain = a.llBase > 0 ? (a.llBase - a.ll) / a.llBase * 100 : 0;
-  const beats = a.ll < a.llBase;
+  const gain = (a.llBase || 0) > 0 ? ((a.llBase || 0) - (a.ll || 0)) / (a.llBase || 0) * 100 : 0;
+  const beats = (a.ll || 0) < (a.llBase || 0);
   let relLabel, relTone, relTxt;
   if (!beats) {
     relLabel = 'BAIXA'; relTone = 'amber';
@@ -549,8 +549,8 @@ function generateVirtualAnalyst(nameA, nameB, lam, mu, res) {
   }
 
   // ---------- 6. TÉCNICO (colapsável) ----------
-  const covTxt = c.cov > 0
-    ? `Covariância = <strong>${c.cov.toFixed(3)}</strong> (Bivariate Poisson): o modelo detectou uma dependência positiva entre os gols, aumentando a probabilidade de empates e placares similares em relação ao modelo Poisson independente.`
+  const covTxt = (c.cov || 0) > 0
+    ? `Covariância = <strong>${(c.cov || 0).toFixed(3)}</strong> (Bivariate Poisson): o modelo detectou uma dependência positiva entre os gols, aumentando a probabilidade de empates e placares similares em relação ao modelo Poisson independente.`
     : `Covariância = <strong>0</strong>: gols dos dois times tratados como independentes.`;
 
   const badge = (t, tn) => `<span class="px-2 py-0.5 rounded border border-${tn}-500/40 bg-${tn}-500/10 text-${tn}-400 text-[10px] font-black tracking-widest">${t}</span>`;
@@ -580,7 +580,7 @@ function generateVirtualAnalyst(nameA, nameB, lam, mu, res) {
         ${describe(nA, ids.A)}${describe(nB, ids.B)}
         ${homeBonus != null ? `<li><span class="text-slate-500">›</span> <strong>Fator casa específico (${nA}):</strong> marca cerca de${homeBonus}% mais gols em casa que fora, diferente da média geral da liga.</li>` : ''}
       </ul>
-      <p>Resultado do cruzamento: o modelo espera <strong>${lam.toFixed(2)} gol(s) do ${nA}</strong> e <strong>${mu.toFixed(2)} do ${nB}</strong>. Ou seja, ${edgeTxt}. É essa diferença que empurra as probabilidades para <strong>${P(res.pH)}</strong> (${nA}), <strong>${P(res.pD)}</strong> (empate) e <strong>${P(res.pA)}</strong> (${nB}).</p>
+      <p>Resultado do cruzamento: o modelo espera <strong>${(lam || 0).toFixed(2)} gol(s) do ${nA}</strong> e <strong>${(mu || 0).toFixed(2)} do ${nB}</strong>. Ou seja, ${edgeTxt}. É essa diferença que empurra as probabilidades para <strong>${P(res.pH)}</strong> (${nA}), <strong>${P(res.pD)}</strong> (empate) e <strong>${P(res.pA)}</strong> (${nB}).</p>
     </div>
 
     <!-- GOLS -->
@@ -613,7 +613,7 @@ function generateVirtualAnalyst(nameA, nameB, lam, mu, res) {
       <summary class="cursor-pointer text-[10px] uppercase tracking-widest text-slate-500 hover:text-violet-400 select-none">▸ Detalhes técnicos do motor</summary>
       <div class="mt-3 space-y-2 text-slate-400">
         <p>${covTxt}</p>
-        <p>Backtest walk-forward (${a.n} jogos): Log-loss <strong>${a.ll.toFixed(4)}</strong> vs baseline ${a.llBase.toFixed(4)}; Brier <strong>${a.brier.toFixed(4)}</strong> vs baseline ${a.brierBase.toFixed(4)}. Menor é melhor nas duas métricas.</p>
+        <p>Backtest walk-forward (${a.n} jogos): Log-loss <strong>${(a.ll || 0).toFixed(4)}</strong> vs baseline ${(a.llBase || 0).toFixed(4)}; Brier <strong>${(a.brier || 0).toFixed(4)}</strong> vs baseline ${(a.brierBase || 0).toFixed(4)}. Menor é melhor nas duas métricas.</p>
         <p>Moda da matriz: <strong>${res.best.x} x ${res.best.y}</strong> (${P1(res.best.p)}). Total de xG: ${total.toFixed(2)}.</p>
       </div>
     </details>
@@ -631,7 +631,7 @@ function showResults(res, lam, mu) {
   // ---------------------------------
   [['1',res.pH],['X',res.pD],['2',res.pA]].forEach(([k,p])=>{
     $('prob'+k).innerText=(p*100).toFixed(1)+"\%"; $('bar'+k).style.width=`${p*100}%`; });
-  $('xgA').innerText=lam.toFixed(2);$('xgB').innerText=mu.toFixed(2);
+  $('xgA').innerText=(lam \vert{}\vert{} 0).toFixed(2);$('xgB').innerText=(mu || 0).toFixed(2);
 
   $('matrixHead').innerHTML='<th class="p-2 text-slate-600 border-b border-slate-800 text-[10px]">Casa↓ Fora→</th>'+
     [0,1,2,3,4].map(i=>`<th class="p-2 text-slate-400 text-[10px] border-b border-slate-800">${i}</th>`).join('');
@@ -654,13 +654,13 @@ function showResults(res, lam, mu) {
     </div>
     <h3 class="text-[10px] text-slate-500 uppercase tracking-widest font-bold border-b border-slate-800 pb-2 mt-6 mb-4">Diagnóstico (backtest walk-forward, ${a.n} jogos fora da amostra)</h3>
     <div class="grid grid-cols-2 md:grid-cols-6 gap-3">
-      ${cell('Log-loss modelo',a.ll.toFixed(4),'baseline '+a.llBase.toFixed(4))}
-      ${cell('Brier modelo',a.brier.toFixed(4),'baseline '+a.brierBase.toFixed(4))}
-      ${cell('Acerto 1X2',(a.acc*100).toFixed(1)+'%')}
-      ${cell('Covariância',c.cov.toFixed(3))}
-      ${cell('Meia-vida / k / xG',(c.cfg.halfLife||'∞')+'d / '+c.cfg.k+' / '+Math.round((c.cfg.xw||0)*100)+'%',c.hasXG?'xG ativo no backtest':'sem xG (API gratuita)')}
+      ${cell('Log-loss modelo', (a.ll || 0).toFixed(4), 'baseline ' + (a.llBase || 0).toFixed(4))}
+      ${cell('Brier modelo', (a.brier || 0).toFixed(4), 'baseline ' + (a.brierBase || 0).toFixed(4))}
+      ${cell('Acerto 1X2', ((a.acc || 0) * 100).toFixed(1) + '%')}
+      ${cell('Covariância', (c.cov || 0).toFixed(3))}
+      ${cell('Meia-vida / k / xG', (c.cfg.halfLife || '∞') + 'd / ' + c.cfg.k + ' / ' + Math.round((c.cfg.xw || 0) * 100) + '%', c.hasXG ? 'xG ativo no backtest' : 'sem xG (API gratuita)')}
     </div>
-    <p class="text-[10px] text-slate-500 mt-3 mono">${a.ll<a.llBase?'Modelo supera o baseline (frequências históricas da liga).':'ATENÇÃO: modelo NÃO supera o baseline — não use para apostas.'} Log-loss menor = melhor.</p>`;
+    <p class="text-[10px] text-slate-500 mt-3 mono">${a.ll < a.llBase ? 'Modelo supera o baseline (frequências históricas da liga).' : 'ATENÇÃO: modelo NÃO supera o baseline — não use para apostas.'} Log-loss menor = melhor.</p>`;
 
   const btn=$('btnSimulate'); btn.innerText="NOVA SIMULAÇÃO"; btn.disabled=false;
 }
