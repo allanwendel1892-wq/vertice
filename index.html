@@ -347,12 +347,19 @@ async function loadXG(M) {
   // Football-Data Free API não fornece xG. O modelo ignora e roda com dados de golos.
   return 0;
 }
-
 function cachedCalibrate(M, nxg) {
-  try { const k=JSON.parse(localStorage.getItem('cal_fd_v3')||'null');
-    if (k && k.lg===LEAGUE_CODE && Math.abs(M.length-k.n)<10 && Math.abs(nxg-k.nxg)<15) { return k.cal; } } catch {}
+  try { 
+    const k = JSON.parse(localStorage.getItem('cal_fd_v4') || 'null');
+    if (k && k.lg === LEAGUE_CODE && Math.abs(M.length - k.n) < 10 && Math.abs(nxg - k.nxg) < 15) { 
+      return k.cal; 
+    } 
+  } catch {}
+  
   const cal = calibrate(M);
-  try { localStorage.setItem('cal_fd_v3', JSON.stringify({lg:LEAGUE_CODE, n:M.length, nxg, cal})); } catch {}
+  try { 
+    localStorage.setItem('cal_fd_v4', JSON.stringify({ lg: LEAGUE_CODE, n: M.length, nxg, cal })); 
+  } catch {}
+  
   return cal; 
 }
 
@@ -466,18 +473,19 @@ function runAnimationSequence(res, lam, mu) {
 }
 
 // ===== ANALISTA VIRTUAL: interpreta os números e explica a decisão =====
+// ===== ANALISTA VIRTUAL: interpreta os números e explica a decisão =====
 function generateVirtualAnalyst(nameA, nameB, lam, mu, res) {
-  const c = ENGINE.cal, a = c.after, F = ENGINE.F;
+  const c = ENGINE.cal || {}, a = c.after || {}, F = ENGINE.F || {};
   const nA = esc(nameA), nB = esc(nameB);
-  const P = p => Math.round(p * 100) + '%';
-  const P1 = p => (p * 100).toFixed(1) + '%';
+  const P = p => Math.round((p || 0) * 100) + '%';
+  const P1 = p => ((p || 0) * 100).toFixed(1) + '%';
   const ids = ENGINE.last || {};
 
   // ---------- 1. DECISÃO DO RESULTADO (1X2) ----------
   const opts = [
-    { k: 'H', p: res.pH, label: `Vitória do ${nA}` },
-    { k: 'D', p: res.pD, label: 'Empate' },
-    { k: 'A', p: res.pA, label: `Vitória do ${nB}` }
+    { k: 'H', p: res?.pH ?? 0, label: `Vitória do ${nA}` },
+    { k: 'D', p: res?.pD ?? 0, label: 'Empate' },
+    { k: 'A', p: res?.pA ?? 0, label: `Vitória do ${nB}` }
   ].sort((x, y) => y.p - x.p);
   const top = opts[0], gap = top.p - opts[1].p;
 
@@ -495,7 +503,7 @@ function generateVirtualAnalyst(nameA, nameB, lam, mu, res) {
              : `Jogo equilibrado, com leve vantagem para ${fav}`;
   }
 
-  // Dupla chance (proteção) quando há um favorito de vitória
+  // Dupla chance (proteção)
   let dcTxt = '';
   if (top.k === 'H') dcTxt = `Se quiser mais segurança, "${nA} não perde" (vitória ou empate) tem <strong>${P(res.pH + res.pD)}</strong> de chance.`;
   if (top.k === 'A') dcTxt = `Se quiser mais segurança, "${nB} não perde" (vitória ou empate) tem <strong>${P(res.pA + res.pD)}</strong> de chance.`;
@@ -518,7 +526,7 @@ function generateVirtualAnalyst(nameA, nameB, lam, mu, res) {
                 : `os dois times devem criar volume parecido de gols`;
 
   // ---------- 3. GOLS ----------
-  const total = lam + mu, under = 1 - res.o25;
+  const total = lam + mu, under = 1 - (res?.o25 ?? 0);
   const profile = total < 2.2 ? 'jogo de poucos gols' : total <= 2.9 ? 'jogo de gols na média' : 'jogo aberto, com tendência a muitos gols';
   const ouTxt = res.o25 >= 0.55 ? `tende ao <strong>Mais de 2,5 gols</strong> (${P(res.o25)})`
               : res.o25 <= 0.45 ? `tende ao <strong>Menos de 2,5 gols</strong> (${P(under)})`
@@ -529,34 +537,48 @@ function generateVirtualAnalyst(nameA, nameB, lam, mu, res) {
 
   // ---------- 4. PLACARES MAIS PROVÁVEIS ----------
   const scores = [];
-  for (let x = 0; x < res.mat.length; x++) for (let y = 0; y < res.mat[x].length; y++) scores.push({ x, y, p: res.mat[x][y] });
+  if (res?.mat) {
+    for (let x = 0; x < res.mat.length; x++) {
+      for (let y = 0; y < res.mat[x].length; y++) {
+        scores.push({ x, y, p: res.mat[x][y] });
+      }
+    }
+  }
   scores.sort((u, v) => v.p - u.p);
   const top3 = scores.slice(0, 3).map(s => `<span class="inline-block bg-slate-900 border border-slate-700 rounded px-2 py-0.5 mr-1 mono">${s.x} x ${s.y} <span class="text-slate-500">(${P1(s.p)})</span></span>`).join('');
 
-  // ---------- 5. CONFIABILIDADE DO MODELO ----------
-  const gain = a.llBase > 0 ? (a.llBase - a.ll) / a.llBase * 100 : 0;
-  const beats = a.ll < a.llBase;
+  // ---------- 5. CONFIABILIDADE DO MODELO (PROTEÇÃO CONTRA NULL) ----------
+  const aN = a?.n ?? 0;
+  const aLL = a?.ll ?? 0;
+  const aLLBase = a?.llBase ?? 0;
+  const aBrier = a?.brier ?? 0;
+  const aBrierBase = a?.brierBase ?? 0;
+  const aAcc = a?.acc ?? 0;
+
+  const gain = aLLBase > 0 ? (aLLBase - aLL) / aLLBase * 100 : 0;
+  const beats = aLLBase > 0 && aLL < aLLBase;
   let relLabel, relTone, relTxt;
-  if (!beats) {
+  if (!beats || aN === 0) {
     relLabel = 'BAIXA'; relTone = 'amber';
-    relTxt = `Nos <strong>${a.n} jogos de teste</strong>, o modelo <strong>não foi melhor</strong> do que simplesmente usar as frequências históricas da liga. Trate esta análise como curiosidade, não como base para decisões com dinheiro.`;
+    relTxt = `Nos <strong>${aN} jogos de teste</strong>, o modelo <strong>não foi melhor</strong> do que simplesmente usar as frequências históricas da liga. Trate esta análise como curiosidade, não como base para decisões com dinheiro.`;
   } else {
     relLabel = gain >= 4 ? 'BOA' : gain >= 1.5 ? 'MODERADA' : 'LIMITADA';
     relTone = gain >= 4 ? 'emerald' : gain >= 1.5 ? 'sky' : 'amber';
-    relTxt = `O modelo foi testado em <strong>${a.n} jogos que ele não conhecia</strong> (como se fosse prever a rodada antes de ela acontecer) e errou cerca de <strong>${gain.toFixed(1)}% menos</strong> que o método básico de olhar a história da liga. ` +
-             `Ele acertou o resultado (vitória/empate/derrota) em <strong>${P(a.acc)}</strong> dos casos; chutar ao acaso acertaria cerca de 33%. ` +
+    relTxt = `O modelo foi testado em <strong>${aN} jogos que ele não conhecia</strong> (como se fosse prever a rodada antes de ela acontecer) e errou cerca de <strong>${gain.toFixed(1)}% menos</strong> que o método básico de olhar a história da liga. ` +
+             `Ele acertou o resultado (vitória/empate/derrota) em <strong>${P(aAcc)}</strong> dos casos; chutar ao acaso acertaria cerca de 33%. ` +
              (gain < 1.5 ? 'A vantagem é pequena, então pese as conclusões com cautela.' : 'Futebol sempre tem surpresas, mas o histórico mostra que as probabilidades são úteis.');
   }
 
-  // ---------- 6. TÉCNICO (colapsável) ----------
-  const covTxt = c.cov > 0
-    ? `Covariância = <strong>${c.cov.toFixed(3)}</strong> (Bivariate Poisson): o modelo detectou uma dependência positiva entre os gols, aumentando a probabilidade de empates e placares similares em relação ao modelo Poisson independente.`
+  // ---------- 6. TÉCNICO ----------
+  const covVal = c?.cov ?? 0;
+  const covTxt = covVal > 0
+    ? `Covariância = <strong>${covVal.toFixed(3)}</strong> (Bivariate Poisson): o modelo detectou uma dependência positiva entre os gols, aumentando a probabilidade de empates e placares similares em relação ao modelo Poisson independente.`
     : `Covariância = <strong>0</strong>: gols dos dois times tratados como independentes.`;
 
   const badge = (t, tn) => `<span class="px-2 py-0.5 rounded border border-${tn}-500/40 bg-${tn}-500/10 text-${tn}-400 text-[10px] font-black tracking-widest">${t}</span>`;
   const h = (t, col) => `<h4 class="text-${col}-400 font-bold uppercase tracking-widest text-[10px] mb-2">${t}</h4>`;
 
-  const caution = !beats
+  const caution = (!beats || aN === 0)
     ? `<div class="p-3 rounded-lg border border-amber-500/40 bg-amber-500/10 text-amber-300 text-[11px]">⚠ Atenção: o histórico de testes deste modelo está fraco nesta liga. O veredito abaixo é apenas indicativo.</div>` : '';
 
   return `
@@ -575,7 +597,7 @@ function generateVirtualAnalyst(nameA, nameB, lam, mu, res) {
     <!-- POR QUÊ -->
     <div>
       ${h('§ 1. Por que o modelo chegou a isso', 'blue')}
-      <p class="mb-2">O sistema compara o <strong>ataque</strong> de cada time com a <strong>defesa</strong> do adversário, dando mais peso a jogos recentes${c.cfg.halfLife ? ` (a importância de um jogo cai pela metade a cada ${c.cfg.halfLife} dias)` : ''}.</p>
+      <p class="mb-2">O sistema compara o <strong>ataque</strong> de cada time com a <strong>defesa</strong> do adversário, dando mais peso a jogos recentes${c?.cfg?.halfLife ? ` (a importância de um jogo cai pela metade a cada ${c.cfg.halfLife} dias)` : ''}.</p>
       <ul class="space-y-1 mb-2">
         ${describe(nA, ids.A)}${describe(nB, ids.B)}
         ${homeBonus != null ? `<li><span class="text-slate-500">›</span> <strong>Fator casa específico (${nA}):</strong> marca cerca de${homeBonus}% mais gols em casa que fora, diferente da média geral da liga.</li>` : ''}
@@ -593,7 +615,7 @@ function generateVirtualAnalyst(nameA, nameB, lam, mu, res) {
     <div>
       ${h('§ 3. Placares mais prováveis', 'cyan')}
       <p class="mb-2">${top3}</p>
-      <p class="text-slate-400">Mesmo o placar mais provável acontece em apenas ${P(res.best.p)} das simulações. Use-o como referência, não como previsão exata.</p>
+      <p class="text-slate-400">Mesmo o placar mais provável acontece em apenas ${P(res?.best?.p ?? 0)} das simulações. Use-o como referência, não como previsão exata.</p>
     </div>
 
     <!-- CONFIABILIDADE -->
@@ -605,7 +627,7 @@ function generateVirtualAnalyst(nameA, nameB, lam, mu, res) {
 
     <!-- ODDS -->
     <div class="p-3 bg-slate-900/60 border border-slate-800 rounded-lg">
-      <p><span class="text-white font-bold">Referência de preço:</span> a odd justa para "${top.label}" é <strong>${(1 / top.p).toFixed(2)}</strong>. Se uma casa de apostas pagar <em>mais</em> que isso, o preço é favorável segundo o modelo; se pagar menos, ele está caro. Isso não garante resultado: é apenas uma comparação de probabilidades.</p>
+      <p><span class="text-white font-bold">Referência de preço:</span> a odd justa para "${top.label}" é <strong>${(top.p > 0 ? (1 / top.p).toFixed(2) : '—')}</strong>. Se uma casa de apostas pagar <em>mais</em> que isso, o preço é favorável segundo o modelo; se pagar menos, ele está caro. Isso não garante resultado: é apenas uma comparação de probabilidades.</p>
     </div>
 
     <!-- DETALHES TÉCNICOS -->
@@ -613,56 +635,94 @@ function generateVirtualAnalyst(nameA, nameB, lam, mu, res) {
       <summary class="cursor-pointer text-[10px] uppercase tracking-widest text-slate-500 hover:text-violet-400 select-none">▸ Detalhes técnicos do motor</summary>
       <div class="mt-3 space-y-2 text-slate-400">
         <p>${covTxt}</p>
-        <p>Backtest walk-forward (${a.n} jogos): Log-loss <strong>${a.ll.toFixed(4)}</strong> vs baseline ${a.llBase.toFixed(4)}; Brier <strong>${a.brier.toFixed(4)}</strong> vs baseline ${a.brierBase.toFixed(4)}. Menor é melhor nas duas métricas.</p>
-        <p>Moda da matriz: <strong>${res.best.x} x ${res.best.y}</strong> (${P1(res.best.p)}). Total de xG: ${total.toFixed(2)}.</p>
+        <p>Backtest walk-forward (${aN} jogos): Log-loss <strong>${aLL.toFixed(4)}</strong> vs baseline ${aLLBase.toFixed(4)}; Brier <strong>${aBrier.toFixed(4)}</strong> vs baseline ${aBrierBase.toFixed(4)}. Menor é melhor nas duas métricas.</p>
+        <p>Moda da matriz: <strong>${res?.best?.x ?? 0} x ${res?.best?.y ?? 0}</strong> (${P1(res?.best?.p ?? 0)}). Total de xG: ${total.toFixed(2)}.</p>
       </div>
     </details>
   </div>`;
 }
 
-const fo = p => p>0 ? (1/p).toFixed(2) : '—';
+// ===== EXIBIÇÃO DOS RESULTADOS E TABELAS =====
+const fo = p => p > 0 ? (1 / p).toFixed(2) : '—';
 function showResults(res, lam, mu) {
   $('resultsPanel').classList.remove('hidden');
+
   // --- CHAMADA DO TERMINAL DE ANÁLISE ---
   try {
     const teamA = $('nameA').innerText, teamB =$('nameB').innerText;
     $('aiVerdict').innerHTML = generateVirtualAnalyst(teamA, teamB, lam, mu, res);$('analysisPanel').classList.remove('hidden');
-  } catch (e) { console.error('Analista virtual falhou:', e); $('analysisPanel').classList.add('hidden'); }
+  } catch (e) { 
+    console.error('Analista virtual falhou:', e); 
+    $('analysisPanel').classList.add('hidden'); 
+  }
   // ---------------------------------
-  [['1',res.pH],['X',res.pD],['2',res.pA]].forEach(([k,p])=>{
-    $('prob'+k).innerText=(p*100).toFixed(1)+"\%"; $('bar'+k).style.width=`${p*100}%`; });
-  $('xgA').innerText=lam.toFixed(2);$('xgB').innerText=mu.toFixed(2);
 
-  $('matrixHead').innerHTML='<th class="p-2 text-slate-600 border-b border-slate-800 text-[10px]">Casa↓ Fora→</th>'+
-    [0,1,2,3,4].map(i=>`<th class="p-2 text-slate-400 text-[10px] border-b border-slate-800">${i}</th>`).join('');
-  let body=''; for (let x=0;x<=4;x++){
-    body+=`<tr><th class="bg-slate-950 text-blue-400 p-2 text-[10px] border-r border-slate-800">${x}</th>`;
-    for (let y=0;y<=4;y++){ const p=res.mat[x][y];
-      body+=`<td class="p-2 text-center text-[10px] matrix-cell ${x>y?'text-blue-400':(x<y?'text-pink-400':'text-slate-400')} ${p>0.08?'bg-slate-800/80 font-bold':''}">${(p*100).toFixed(1)}%</td>`; }
-    body+='</tr>'; }
-  $('matrixBody').innerHTML=body;
+  [['1', res.pH], ['X', res.pD], ['2', res.pA]].forEach(([k, p]) => {
+    $('prob' + k).innerText = ((p || 0) * 100).toFixed(1) + "%"; 
+    $('bar' + k).style.width = `${(p || 0) * 100}%`; 
+  });
+  $('xgA').innerText = lam.toFixed(2);$('xgB').innerText = mu.toFixed(2);
 
-  const c=ENGINE.cal, a=c.after;
-  let box=$('extraBox'); if(!box){ box=document.createElement('div'); box.id='extraBox';
-    box.className='glass rounded-2xl p-6 border border-slate-800 md:col-span-2'; $('resultsPanel').appendChild(box); }
-  const cell=(l,v,s='')=>`<div class="bg-slate-900/50 p-3 rounded-xl text-center"><span class="block text-[9px] text-slate-500 uppercase">${l}</span><span class="text-lg font-black text-white mono">${v}</span>${s?`<span class="block text-[9px] text-slate-500 mono">${s}</span>`:''}</div>`;
-  box.innerHTML=`
+  $('matrixHead').innerHTML = '<th class="p-2 text-slate-600 border-b border-slate-800 text-[10px]">Casa↓ Fora→</th>' +
+    [0, 1, 2, 3, 4].map(i => `<th class="p-2 text-slate-400 text-[10px] border-b border-slate-800">${i}</th>`).join('');
+  
+  let body = ''; 
+  for (let x = 0; x <= 4; x++) {
+    body += `<tr><th class="bg-slate-950 text-blue-400 p-2 text-[10px] border-r border-slate-800">${x}</th>`;
+    for (let y = 0; y <= 4; y++) { 
+      const p = res?.mat?.[x]?.[y] ?? 0;
+      body += `<td class="p-2 text-center text-[10px] matrix-cell ${x > y ? 'text-blue-400' : (x < y ? 'text-pink-400' : 'text-slate-400')} ${p > 0.08 ? 'bg-slate-800/80 font-bold' : ''}">${(p * 100).toFixed(1)}%</td>`; 
+    }
+    body += '</tr>'; 
+  }
+  $('matrixBody').innerHTML = body;
+
+  // Extração segura das variáveis do motor
+  const c = ENGINE.cal || {}, a = c.after || {};
+  const aN = a?.n ?? 0;
+  const aLL = a?.ll ?? 0;
+  const aLLBase = a?.llBase ?? 0;
+  const aBrier = a?.brier ?? 0;
+  const aBrierBase = a?.brierBase ?? 0;
+  const aAcc = a?.acc ?? 0;
+  const cCov = c?.cov ?? 0;
+  const cfgHalfLife = c?.cfg?.halfLife || '∞';
+  const cfgK = c?.cfg?.k ?? 0;
+  const cfgXw = Math.round((c?.cfg?.xw || 0) * 100);
+
+  let box = $('extraBox'); 
+  if (!box) { 
+    box = document.createElement('div'); 
+    box.id = 'extraBox';
+    box.className = 'glass rounded-2xl p-6 border border-slate-800 md:col-span-2'; 
+    $('resultsPanel').appendChild(box); 
+  }
+
+  const cell = (l, v, s = '') => `<div class="bg-slate-900/50 p-3 rounded-xl text-center"><span class="block text-[9px] text-slate-500 uppercase">${l}</span><span class="text-lg font-black text-white mono">${v}</span>${s ? `<span class="block text-[9px] text-slate-500 mono">${s}</span>` : ''}</div>`;
+
+  box.innerHTML = `
     <h3 class="text-[10px] text-slate-500 uppercase tracking-widest font-bold border-b border-slate-800 pb-2 mb-4">Odds justas (sem margem) e mercados</h3>
     <div class="grid grid-cols-2 md:grid-cols-6 gap-3">
-      ${cell('Casa',fo(res.pH))}${cell('Empate',fo(res.pD))}${cell('Fora',fo(res.pA))}
-      ${cell('Over 2.5',fo(res.o25),(res.o25*100).toFixed(1)+'%')}${cell('Under 2.5',fo(1-res.o25),((1-res.o25)*100).toFixed(1)+'%')}${cell('Ambos marcam',fo(res.btts),(res.btts*100).toFixed(1)+'%')}
+      ${cell('Casa', fo(res.pH))}
+      ${cell('Empate', fo(res.pD))}
+      ${cell('Fora', fo(res.pA))}
+      ${cell('Over 2.5', fo(res.o25), (res.o25 * 100).toFixed(1) + '%')}
+      ${cell('Under 2.5', fo(1 - res.o25), ((1 - res.o25) * 100).toFixed(1) + '%')}
+      ${cell('Ambos marcam', fo(res.btts), (res.btts * 100).toFixed(1) + '%')}
     </div>
-    <h3 class="text-[10px] text-slate-500 uppercase tracking-widest font-bold border-b border-slate-800 pb-2 mt-6 mb-4">Diagnóstico (backtest walk-forward, ${a.n} jogos fora da amostra)</h3>
+    <h3 class="text-[10px] text-slate-500 uppercase tracking-widest font-bold border-b border-slate-800 pb-2 mt-6 mb-4">Diagnóstico (backtest walk-forward, ${aN} jogos fora da amostra)</h3>
     <div class="grid grid-cols-2 md:grid-cols-6 gap-3">
-      ${cell('Log-loss modelo',a.ll.toFixed(4),'baseline '+a.llBase.toFixed(4))}
-      ${cell('Brier modelo',a.brier.toFixed(4),'baseline '+a.brierBase.toFixed(4))}
-      ${cell('Acerto 1X2',(a.acc*100).toFixed(1)+'%')}
-      ${cell('Covariância',c.cov.toFixed(3))}
-      ${cell('Meia-vida / k / xG',(c.cfg.halfLife||'∞')+'d / '+c.cfg.k+' / '+Math.round((c.cfg.xw||0)*100)+'%',c.hasXG?'xG ativo no backtest':'sem xG (API gratuita)')}
+      ${cell('Log-loss modelo', aLL.toFixed(4), 'baseline ' + aLLBase.toFixed(4))}
+      ${cell('Brier modelo', aBrier.toFixed(4), 'baseline ' + aBrierBase.toFixed(4))}
+      ${cell('Acerto 1X2', (aAcc * 100).toFixed(1) + '%')}
+      ${cell('Covariância', cCov.toFixed(3))}
+      ${cell('Meia-vida / k / xG', cfgHalfLife + 'd / ' + cfgK + ' / ' + cfgXw + '%', c?.hasXG ? 'xG ativo no backtest' : 'sem xG (API gratuita)')}
     </div>
-    <p class="text-[10px] text-slate-500 mt-3 mono">${a.ll<a.llBase?'Modelo supera o baseline (frequências históricas da liga).':'ATENÇÃO: modelo NÃO supera o baseline — não use para apostas.'} Log-loss menor = melhor.</p>`;
+    <p class="text-[10px] text-slate-500 mt-3 mono">${aLL < aLLBase && aN > 0 ? 'Modelo supera o baseline (frequências históricas da liga).' : 'ATENÇÃO: modelo NÃO supera o baseline — não use para apostas.'} Log-loss menor = melhor.</p>`;
 
-  const btn=$('btnSimulate'); btn.innerText="NOVA SIMULAÇÃO"; btn.disabled=false;
+  const btn = $('btnSimulate'); 
+  btn.innerText = "NOVA SIMULAÇÃO"; 
+  btn.disabled = false;
 }
 window.addEventListener('DOMContentLoaded', loadEngine);
 </script>
